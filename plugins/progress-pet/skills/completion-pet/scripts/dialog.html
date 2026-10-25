@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; img-src data:;">
+<title>Mochi · Codex companion</title><style>
+:root{color-scheme:dark;font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#ecf4e7;background:transparent}*{box-sizing:border-box}[hidden]{display:none!important}html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}body{padding:9px}button,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #b5e4ac;outline-offset:3px}button{color:inherit}button:disabled{opacity:.45;cursor:default}.stage{height:100%;position:relative;max-width:680px;margin:auto}.dog{position:absolute;left:0;top:40px;width:112px;height:112px;transform-origin:50% 82%;filter:drop-shadow(0 5px 5px #10291b25);cursor:pointer}.dog svg{width:100%;height:100%}.shell{height:100%;margin-left:122px;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px;opacity:1;transform:translateY(0);transition:opacity .3s ease,transform .35s ease;background:transparent;min-width:0}.intro .shell{transition:none;opacity:0;transform:translateY(12px);pointer-events:none}.glass{background:rgba(24,48,39,.92);border:1px solid #b1d4b84d;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:17px;box-shadow:0 4px 13px #06241612}.head{display:flex;gap:9px;align-items:center;padding:11px 14px;flex-shrink:0}.logo{color:#c2e7ab;font-size:18px}.head strong{font-size:11px;letter-spacing:2px}.sub{font-size:10px;color:#b1c8b7;margin-top:3px}.close{margin-left:auto;border:0;border-radius:50%;background:#cadfc416;width:26px;height:26px;font-size:18px;color:#c9dfc9}.picker{display:flex;align-items:center;gap:8px;padding:9px 12px;flex-shrink:0}.picker label{font-size:10px;color:#b5cdbb;white-space:nowrap}.picker select{flex:1;min-width:0;background:transparent;color:#e6f2df;border:0;font-size:11px;padding:3px}.picker option{background:#1a3429}.refresh{background:none;border:0;color:#b7d9ae;font-size:20px;padding:0 2px}.speech{padding:12px 14px;position:relative;flex-shrink:0}.speech:before{content:"";position:absolute;left:-6px;top:22px;width:10px;height:10px;background:#1b342a;border-left:1px solid #b1d4b84d;border-bottom:1px solid #b1d4b84d;transform:rotate(45deg)}.speech p{font-size:13px;line-height:1.45;margin:0}.metric{display:flex;align-items:center;gap:9px;padding-top:9px}.ring{width:42px;height:42px;border-radius:50%;background:conic-gradient(#b6d8a0 var(--sweep,0deg),#516858 0);padding:4px;flex-shrink:0}.ring span{height:100%;display:grid;place-items:center;border-radius:50%;background:#203c2d;font-size:11px;font-weight:700}.counts{font-size:10px;line-height:1.6;color:#b4cbb6}.counts b{display:block;color:#e3f0da;font-size:11px}.status{font-size:9px;color:#b9d1bf;padding:1px 4px;flex-shrink:0;text-shadow:0 1px 4px #122a1a}.dot{display:inline-block;width:5px;height:5px;background:#c1dfa6;border-radius:50%;margin-right:4px}.attention{padding:11px 13px;background:rgba(68,61,34,.97);border-color:#d7c08d66;flex-shrink:0;max-height:160px;overflow:auto}.attention b{color:#f1dfad;font-size:11px}.attention p{margin:5px 0 8px;font-size:12px;line-height:1.5;white-space:pre-wrap}.attention button,.option{background:#eee2ba;color:#3b432b;border:0;border-radius:8px;padding:6px 9px;font-size:10px}.attention[hidden]{display:none}.options{display:flex;gap:5px;flex-wrap:wrap}.conversation{flex:1;min-height:48px;overflow:auto;padding:10px;scrollbar-width:thin;scrollbar-color:#67846e transparent}.empty{color:#afc5b3;font-size:11px;line-height:1.5;text-align:center;padding:10px 2px}.msg{padding:9px 10px;font-size:11px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;background:#c1dec00e;border-radius:11px;margin-bottom:7px;max-width:96%}.msg.user{background:#b7dba31c;margin-left:auto;max-width:91%}.who{display:block;font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:#bdd0b7;margin-bottom:3px}.chips{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}.chips button{background:#203d2ff0;border:1px solid #b4d4b34d;border-radius:20px;color:#d8e9cf;padding:5px 8px;font-size:9px}.composer{display:flex;gap:7px;padding:10px;flex-shrink:0}.composer textarea{flex:1;min-width:0;resize:none;outline:none!important;background:none;border:0;color:#f0f5e9;font-size:11px;line-height:1.5}.composer textarea::placeholder{color:#adc4ae}.composer button{align-self:flex-end;background:#bbd99f;border:0;border-radius:9px;padding:8px 11px;color:#233c28;font-size:11px;font-weight:600}.foot{display:flex;justify-content:space-between;gap:6px;font-size:8px;color:#c7d8c6;padding:0 3px;text-shadow:0 1px 4px #122a1a;flex-shrink:0}.foot button{border:0;background:none;color:inherit;font-size:8px;padding:0}.dismissed .stage{opacity:0;pointer-events:none}.preview{background-color:#34483e;background-image:linear-gradient(45deg,#8ca89515 25%,transparent 25%),linear-gradient(-45deg,#8ca89515 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#8ca89515 75%),linear-gradient(-45deg,transparent 75%,#8ca89515 75%);background-size:28px 28px;background-position:0 0,0 14px,14px -14px,-14px 0}.replay{position:absolute;bottom:10px;left:10px;font-size:9px;border:1px solid #c1d5bd44;color:#c2d6bd;background:#254030d9;border-radius:14px;padding:7px 9px}.native .replay{display:none}@media(max-width:480px){.shell{margin-left:91px}.dog{width:88px;height:88px;top:48px}.sub{font-size:9px}.picker label{display:none}.head{padding:10px}.foot span{max-width:125px}.stage{max-width:none}}@media(max-height:520px){.shell{gap:5px}.head{padding:8px 11px}.sub{display:none}.speech{padding:9px 11px}.metric{padding-top:4px}.attention{max-height:100px}.conversation{min-height:30px}.composer{padding:8px}.dog{top:34px}}@media(prefers-reduced-motion:reduce){.shell{transition:none}}
+
+.ground{position:absolute;left:12px;top:149px;width:90px;height:3px;border-radius:50%;background:linear-gradient(90deg,transparent,#b4d7a6 18%,#d8eabc 50%,#b4d7a6 82%,transparent);box-shadow:0 2px 8px #b4d7a644;transform-origin:center;pointer-events:none}.dog{top:45px}.dog svg{overflow:visible}.tracking-note{position:absolute;left:130px;top:68px;width:280px;padding:16px 18px;line-height:1.5;font-size:13px;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none}.tracking-note b{display:block;color:#c0dfa9;font-size:10px;letter-spacing:1px;margin-bottom:5px}.tracking .shell,.tracking .replay{visibility:hidden;pointer-events:none}.tracking:not(.intro) .tracking-note{opacity:1;transform:none}.intro .tracking-note{transition:none}.departing .shell,.departing .tracking-note{opacity:0;pointer-events:none}.follow{background:#c4dfad;color:#24432d;border:0;border-radius:12px;font-size:9px;padding:5px 7px;white-space:nowrap}.follow[aria-pressed=false]{background:#b1c5b119;color:#c2d6bd}.following{color:#c5dfb8}.foot{font-size:9px}.preview .replay{bottom:42px}.preview .tracking-demo{position:absolute;bottom:10px;left:10px;font-size:9px;border:1px solid #c1d5bd44;color:#c2d6bd;background:#254030d9;border-radius:14px;padding:7px 9px}.native .tracking-demo{display:none}@media(max-width:480px){.ground{top:130px;left:2px;width:80px}.tracking-note{left:97px;width:calc(100% - 105px)}.follow{font-size:8px}}@media(prefers-reduced-motion:reduce){.tracking-note{transition:none}}
+.departing .stage{pointer-events:none}.departing .shell{transform:translateY(10px) scale(.985)}.departing .replay,.departing .tracking-demo{visibility:hidden}.preview.dismissed .stage{opacity:1;pointer-events:none}.preview.dismissed .shell,.preview.dismissed .dog,.preview.dismissed .ground,.preview.dismissed .tracking-note,.preview.dismissed .tracking-demo{visibility:hidden}.preview.dismissed .replay{visibility:visible;pointer-events:auto}
+.tracking .dog{width:112px;height:112px;top:45px}.tracking .tracking-note{left:125px;top:48px;width:calc(100% - 132px);max-height:125px;overflow:hidden;font-size:12px;padding:13px 14px}.tracking .ground{top:149px}.attention button{margin:3px 0}.tracking .tracking-demo{visibility:hidden}.preview.announcement .stage{margin-left:auto;margin-right:0}.tracking .tracking-note{transition:opacity .2s,transform .2s}.task-actions{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0}.task-actions button{font-size:9px;padding:5px 8px;border:1px solid #b4d4b34d;background:#203d2ff0;border-radius:12px}.task-actions button[aria-pressed=true]{background:#bbd99f;color:#233c28}.approval-card{padding:8px 0;border-bottom:1px solid #d7c08d30}.approval-card:last-child{border:0}.approval-card pre{font:10px ui-monospace,monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#e7debf}.approval-card .actions{display:flex;gap:6px;flex-wrap:wrap}.approval-card button.deny{background:#dac5b7}.approval-card .scope-note{font-size:10px;color:#dfd0ad}.attention{max-height:205px}.task-hint{font-size:10px;color:#c8dabf;padding:0 4px;flex-shrink:0}.request-mode{font-size:10px;color:#f1dfad;padding:0 4px;flex-shrink:0}body.has-attention .metric{display:none}body.has-attention .chips{display:none}body.has-attention .shell{gap:6px}.approval-card .actions{position:sticky;bottom:0;background:#443d22;padding:4px 0}@media(max-height:650px){body.has-attention .attention{max-height:165px}body.has-attention .head{padding:8px 11px}body.has-attention .speech{padding:8px 11px}body.has-attention .composer{padding:8px}body.has-attention .conversation{min-height:50px}}
+body.checklist-open .metric{display:none}body.checklist-open .chips{display:none}.checklist-panel{padding:8px 11px;flex-shrink:0;min-height:0}.checklist-panel summary{cursor:pointer;font-size:11px;color:#d6e8ca;display:flex;justify-content:space-between;gap:8px}.checklist-panel summary span{font-size:9px;color:#acc5ad}.checklist-list{max-height:112px;overflow:auto;margin-top:7px}.checklist-row{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.4;padding:5px 0;cursor:pointer}.checklist-row input{accent-color:#badb9f;flex-shrink:0;margin:2px 0}.checklist-row.done span{text-decoration:line-through;color:#9db09c}.checklist-note{font-size:10px;color:#c5d2b8;margin-top:5px}.checklist-panel button{font-size:10px;background:#c2dda81c;border:1px solid #b7d4ac55;border-radius:12px;padding:4px 8px;margin-top:6px}body.has-attention .checklist-panel:not([open]){padding:6px 10px}@media(max-height:650px){.shell{gap:6px}.head{padding:8px 11px}.speech{padding:9px 11px}.metric{padding-top:5px}.checklist-list{max-height:88px}.chips{display:none}.conversation{min-height:45px}.composer{padding:8px}}
+</style></head><body class="intro"><main class="stage" aria-label="Mochi project dialog">
+<div class="ground" aria-hidden="true"></div><div class="dog" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210" role="img" aria-label="Mochi, an anime puppy with floppy brown ears and a green scarf">
+<ellipse cx="120" cy="193" rx="65" ry="8" fill="#cfddd1"/>
+<g class="tail"><ellipse cx="182" cy="148" rx="15" ry="34" transform="rotate(20 182 148)" fill="#c28a51" stroke="#594333" stroke-width="3"/></g>
+<ellipse cx="120" cy="145" rx="48" ry="46" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="120" cy="154" rx="26" ry="28" fill="#fff9e9"/>
+<ellipse cx="91" cy="184" rx="24" ry="12" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="149" cy="184" rx="24" ry="12" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="120" cy="85" rx="73" ry="59" fill="#ffedc5" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="53" cy="71" rx="20" ry="45" transform="rotate(12 53 71)" fill="#c28a51" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="187" cy="71" rx="20" ry="45" transform="rotate(-12 187 71)" fill="#c28a51" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="52" cy="75" rx="8" ry="26" fill="#eab09a"/><ellipse cx="188" cy="75" rx="8" ry="26" fill="#eab09a"/>
+<ellipse cx="120" cy="111" rx="34" ry="19" fill="#fff9e9"/>
+<g fill="#50392c"><ellipse cx="89" cy="80" rx="13" ry="18"/><ellipse cx="151" cy="80" rx="13" ry="18"/></g>
+<g fill="#fff"><ellipse cx="85" cy="73" rx="5.5" ry="6"/><ellipse cx="147" cy="73" rx="5.5" ry="6"/><circle cx="94" cy="87" r="3"/><circle cx="156" cy="87" r="3"/></g>
+<g fill="#b68047"><ellipse cx="89" cy="93" rx="7" ry="3"/><ellipse cx="151" cy="93" rx="7" ry="3"/></g>
+<g fill="#efad9c"><ellipse cx="69" cy="107" rx="13" ry="6"/><ellipse cx="171" cy="107" rx="13" ry="6"/></g>
+<ellipse cx="120" cy="104" rx="10" ry="6" fill="#50392c"/>
+<ellipse cx="120" cy="120" rx="10" ry="10" fill="#efa5a0"/>
+<path d="M120 109 Q111 125 101 115 M120 109 Q129 125 139 115" fill="none" stroke="#594333" stroke-width="3" stroke-linecap="round"/>
+<path d="M79 137 Q120 150 161 137 L159 152 Q120 163 81 152Z" fill="#629b7d" stroke="#527960" stroke-width="2.5"/>
+<path d="M141 151 L156 151 L158 178 L144 173Z" fill="#78aa8c" stroke="#527960" stroke-width="2.5"/>
+<path d="M85 181V187 M96 181V187 M144 181V187 M155 181V187" stroke="#c5aa84" stroke-width="2" stroke-linecap="round"/>
+</svg></div>
+<div class="tracking-note glass" role="status"><b>ON IT · MOCHI</b><span id="trackingText">I’m tracking the progress.</span></div>
+<section class="shell" aria-label="Mochi chat">
+<header class="head glass"><span class="logo">🐾</span><div><strong>MOCHI</strong><div class="sub">Your little window into Codex.</div></div><button class="close" id="close" aria-label="Dismiss dialog">×</button></header>
+<div class="picker glass"><label for="project">Looking at</label><select id="project" aria-label="Choose project"><option>Connecting to your projects…</option></select><button class="follow" id="follow" aria-label="Follow working chat automatically" aria-pressed="true">Auto ✓</button><button class="refresh" id="refresh" aria-label="Refresh projects">↻</button></div>
+<section class="speech glass" aria-label="Dog says"><p id="greeting">Hi! I’m finding your projects.</p><div class="metric"><div class="ring" id="ring"><span id="percent">—</span></div><div class="counts"><b id="count">Getting ready</b><span id="remaining">Let’s see what’s next.</span></div></div></section>
+<div class="status"><span class="dot"></span><span id="status">Connecting to Codex…</span></div>
+<aside class="attention glass" id="attention" hidden aria-live="polite"><b id="attentionTitle">Codex needs you</b><p id="attentionText"></p><div class="options" id="options"></div><button id="review">Open Codex to reply ↗</button></aside>
+<details class="checklist-panel glass" id="checklistPanel"><summary>Project checklist <span id="checklistCount">0 tasks</span></summary><div id="checklistList" class="checklist-list"></div><div id="checklistNote" class="checklist-note"></div><div id="savedWork"></div><button id="addChecklist" type="button">＋ Checklist task</button></details>
+<section class="conversation glass" id="messages" aria-label="Conversation" aria-live="polite"><div class="empty">Ask me about this project. I’m all ears.</div></section>
+<div class="chips"><button data-question="progress">Progress</button><button data-question="what's left?">What’s left?</button><button data-question="What happened recently in this project?">Catch me up</button></div>
+<div class="task-actions"><button id="newTask" type="button">Start Codex task</button><button id="continueTask" type="button" hidden>Add work to Codex</button><button id="askMode" type="button" hidden>Ask Mochi</button><button id="stopTask" type="button" hidden>Stop task</button></div><div id="taskHint" class="task-hint" hidden></div><div id="requestMode" class="request-mode" hidden></div><form class="composer glass" id="composer"><textarea id="question" aria-label="Ask Mochi a question" placeholder="Ask Mochi about this project…" rows="2" maxlength="3000"></textarea><button id="send" type="submit">Ask ↑</button></form>
+<footer class="foot"><span>Click outside to tuck me away · Esc closes</span><button id="open">Open in Codex ↗</button></footer>
+</section><button class="replay" id="replay">Replay entrance</button><button class="tracking-demo" id="trackingDemo">Preview tracking</button></main><script>
+
+const $=id=>document.getElementById(id);
+let items=[],selected='',autoFollow=true,conversations=new Map(),drafts=new Map(),pending=new Map(),nextId=0,introTimer=null,departureTimer=null,entranceOrigin={},presentSequence=0,focusId='',focusTaskKey='',recommendationKey='',knownTasks=new Set(),approvalFocus=new Map(),composeMode='ask',controlBusy=new Set();
+const native=!!window.webkit?.messageHandlers?.dog;
+document.body.classList.add(native?'native':'preview');
+window.presentMochi=function(origin={}){
+ clearTimeout(introTimer);clearTimeout(departureTimer);presentSequence++;
+ entranceOrigin=origin;document.body.classList.remove('dismissed','departing');document.body.classList.add('announcement');
+ document.body.classList.toggle('tracking',origin.mode==='tracking');document.querySelector('.tracking-note').setAttribute('aria-hidden',String(origin.mode!=='tracking'));document.body.classList.add('intro');
+ $('trackingText').textContent=origin.projectTitle?`I’m tracking the progress of “${origin.projectTitle}”.`:'I’m tracking the progress.';
+ const dog=document.querySelector('.dog'),ground=document.querySelector('.ground');
+ [dog,ground].forEach(el=>el.getAnimations().forEach(a=>a.cancel()));
+ const rect=dog.getBoundingClientRect(),gr=ground.getBoundingClientRect();
+ const x=(origin.x??rect.left+rect.width/2)-(rect.left+rect.width/2);
+ const y=(origin.y??rect.top+rect.height*.92)-(rect.top+rect.height*.92);
+ const gx=(origin.x??gr.left+gr.width/2)-(gr.left+gr.width/2),gy=(origin.y??gr.top)-(gr.top);
+ const reduced=origin.reduceMotion||window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+ const announcement=origin.mode==='tracking';
+ if(reduced){document.body.classList.remove('intro');return}
+ ground.animate([{transform:`translate(${gx}px,${gy}px) scaleX(0)`,opacity:0,offset:0},{transform:`translate(${gx}px,${gy}px) scaleX(.65)`,opacity:1,offset:.19},{transform:'translate(0,0) scaleX(1)',opacity:1,offset:1}],{duration:announcement?260:1350,easing:'cubic-bezier(.23,.7,.25,1)'});
+ dog.animate([
+ {transform:`translate(${x}px,${y+12}px) scale(.03,.01) rotate(-18deg)`,opacity:0,offset:0},
+ {transform:`translate(${x}px,${y+12}px) scale(.03,.01) rotate(-18deg)`,opacity:0,offset:.17},
+ {transform:`translate(${x*.72}px,${y*.55-30}px) scale(.56,.72) rotate(-14deg)`,opacity:1,offset:.39},
+ {transform:`translate(${x*.25}px,-32px) scale(.98,1.06) rotate(5deg)`,opacity:1,offset:.62},
+ {transform:'translate(0,3px) scale(1.1,.89) rotate(-2deg)',opacity:1,offset:.83},
+ {transform:'translate(0,-3px) scale(.98,1.025)',opacity:1,offset:.93},
+ {transform:'translate(0,0) scale(1)',opacity:1,offset:1}
+ ],{duration:announcement?280:1420,easing:'linear'});
+ introTimer=setTimeout(()=>document.body.classList.remove('intro'),announcement?180:1480);
+};
+window.departMochi=function(){
+ clearTimeout(introTimer);clearTimeout(departureTimer);document.body.classList.add('departing');
+ const dog=document.querySelector('.dog'),ground=document.querySelector('.ground'),stage=document.querySelector('.stage').getBoundingClientRect();
+ const computed=getComputedStyle(dog),firstTransform=computed.transform,firstOpacity=computed.opacity;
+ [dog,ground].forEach(el=>el.getAnimations().forEach(a=>a.cancel()));
+ if(entranceOrigin.mode==='tracking'){
+ dog.animate([{transform:firstTransform,opacity:firstOpacity},{transform:'translateY(-8px) scale(.85)',opacity:0}],{duration:200,fill:'forwards'});
+ ground.animate([{opacity:1},{opacity:0}],{duration:200,fill:'forwards'});return;
+ }
+ const cx=stage.left+dog.offsetLeft+dog.offsetWidth/2,cy=stage.top+dog.offsetTop+dog.offsetHeight*.92;
+ const x=(entranceOrigin.x??cx)-cx,y=(entranceOrigin.y??cy)-cy;
+ if(!entranceOrigin.reduceMotion&&!window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+ dog.animate([
+ {transform:firstTransform==='none'?'translate(0,0) scale(1)':firstTransform,opacity:firstOpacity},
+ {transform:'translate(0,5px) scale(1.11,.87) rotate(-3deg)',offset:.18,opacity:1},
+ {transform:`translate(${x*.28}px,-32px) scale(.88,1.06) rotate(10deg)`,offset:.48,opacity:1},
+ {transform:`translate(${x*.76}px,${y*.45-12}px) scale(.38,.55) rotate(17deg)`,offset:.78,opacity:1},
+ {transform:`translate(${x}px,${y+12}px) scale(.02,.01) rotate(20deg)`,offset:1,opacity:0}
+ ],{duration:700,easing:'cubic-bezier(.35,0,.55,1)',fill:'forwards'});
+ ground.animate([{opacity:1,transform:'scaleX(1)'},{opacity:0,transform:'scaleX(0)'}],{duration:350,delay:380,fill:'forwards'});
+ }
+};
+function dismiss(){
+ if(document.body.classList.contains('departing')||document.body.classList.contains('dismissed'))return;
+ if(native){window.webkit.messageHandlers.dog.postMessage({action:'dismiss'});return}
+ const sequence=++presentSequence;departMochi();
+ const reduced=entranceOrigin.reduceMotion||window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+ departureTimer=setTimeout(()=>{if(sequence===presentSequence)document.body.classList.add('dismissed')},reduced?0:780);
+}
+function send(action){
+ if(native){window.webkit.messageHandlers.dog.postMessage(action);return}
+ if(action.action==='snapshot'||action.action==='refresh'){
+ fetch('/snapshot').then(r=>r.json()).then(data=>receive({type:'snapshot',...data})).catch(()=>{$('status').textContent='Open Mochi to connect your projects.'});
+ }else if(['ask','replyQuestion','askApproval','decideApproval','startTask','sendTurn','stopTask','addWork','addChecklist','setChecklistDone','retryWork'].includes(action.action)){
+ fetch(action.action==='ask'?'/ask':action.action==='replyQuestion'?'/reply':'/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(action)}).then(r=>r.json()).then(data=>receive({type:'answer',...action,...data})).catch(()=>receive({type:'answer',...action,error:'Connection unavailable. Reopen Mochi to reconnect.'}));
+ }
+}
+function current(){return items.find(x=>x.id===selected)}
+function directQuestion(){return current()?.questions?.find(q=>q.canReply&&q.source!=='checklist')||current()?.questions?.find(q=>q.canReply)}
+function focusedApproval(){return current()?.approvals?.find(a=>a.canDecide&&a.id===approvalFocus.get(selected))}
+function control(action,extra={}){
+ if(controlBusy.has(selected))return;
+ const id=String(++nextId);controlBusy.add(selected);pending.set(id,{selection:selected,direct:true,control:true,action,text:''});render();
+ send({action,selection:selected,requestId:id,operationId:crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2),...extra});
+}
+
+function revealAnswer(key){
+ if(!items.some(i=>i.id===key))return;
+ selectProject(key);focusId=key;focusTaskKey=recommendationKey;
+ send({action:'select',selection:key,autoFollow,keepConversation:true});render();syncEditing();
+ if(!native)presentMochi({placement:'topRight',x:65,y:158});
+}
+function busy(){return [...pending.values()].some(p=>p.selection===selected)}
+function editing(){return !!$('question').value.trim()||busy()}
+function syncEditing(){send({action:'editing',editing:editing()})}
+function selectProject(id){
+ if(id!==selected){drafts.set(selected,$('question').value);selected=id;composeMode='ask';$('question').value=drafts.get(id)||'';syncEditing()}
+ $('project').value=selected;
+}
+function redrawMessages(){
+ const list=[...(conversations.get(selected)||[]),...(current()?.managedCodex?(current().activity?.notes||[]).map(text=>({role:'codex',text})):[])];$('messages').replaceChildren();
+ if(!list.length){const d=document.createElement('div');d.className='empty';d.textContent=directQuestion()?(directQuestion().source==='checklist'?'Choose whether this is the same task or new work.':'Codex is waiting. Your reply below goes back to the run that asked.'):'Ask what’s been done — I can answer from the latest project updates.';$('messages').append(d)}
+ for(const item of list){const d=document.createElement('div');d.className='msg '+(item.role==='user'?'user':'mochi');const label=document.createElement('span');label.className='who';label.textContent=item.role==='user'?'You':item.role==='codex'?'Codex connection':'Mochi';d.append(label,document.createTextNode(item.text));$('messages').append(d)}
+ $('send').disabled=busy();
+ if(busy()){const d=document.createElement('div');d.className='empty';d.textContent='Mochi is checking…';$('messages').append(d)}
+ $('messages').scrollTop=$('messages').scrollHeight;
+}
+function renderChecklist(item){
+ const c=item.checklist||{},tasks=c.tasks||[];
+ $('checklistCount').textContent=`${tasks.filter(t=>t.done).length} / ${tasks.length}`;
+ const key=JSON.stringify([item.id,c.revision,tasks,controlBusy.has(selected)]);
+ if($('checklistList').dataset.state!==key){
+ $('checklistList').dataset.state=key;$('checklistList').replaceChildren();
+ for(const task of tasks){const label=document.createElement('label');label.className='checklist-row'+(task.done?' done':'');
+ const box=document.createElement('input');box.type='checkbox';box.checked=task.done;box.disabled=controlBusy.has(selected);box.setAttribute('aria-label',task.title);
+ box.onchange=()=>control('setChecklistDone',{taskId:task.id,done:box.checked,revision:c.revision});
+ const text=document.createElement('span');text.textContent=task.title;if(task.evidence?.quote)text.title=task.evidence.kind+': '+task.evidence.quote;
+ label.append(box,text);$('checklistList').append(label)}
+ if(!tasks.length){const text=document.createElement('div');text.className='empty';text.textContent='I’ll build this from your chat and Codex plans. You can add a task too.';$('checklistList').append(text)}
+ }
+ const deliveries=(c.deliveries||[]).map(d=>`${d.title}: ${d.status==='notSent'?'saved, prompt not sent':d.status==='uncertain'||d.status==='sending'?'check Codex before resending':'ready to send'}${d.error?' · '+d.error:''}`);
+ $('savedWork').replaceChildren();for(const d of c.deliveries||[]){if(d.status==='notSent'){const b=document.createElement('button');b.textContent='Send saved task: '+d.title;b.disabled=controlBusy.has(selected);b.onclick=()=>control('retryWork',{proposalId:d.id});$('savedWork').append(b)}}
+ $('checklistNote').textContent=[c.syncing?'Reading chat history…':c.issue||'Syncs from chat and recorded plans. You can edit the boxes.',...deliveries].join('\n');
+}
+function render(){
+ const item=current();if(!item)return;
+ const p=item.progress||{},approvals=item.approvals||[],questions=item.questions||[],a=focusedApproval(),q=a?null:directQuestion();
+ renderChecklist(item);
+ $('greeting').textContent=q?.source==='checklist'?'Is this the same task, or something new?':questions.length?'Codex has a question for you.':approvals.length?'Codex needs your approval.':p.source==='plan'?'I’m following Codex’s current task plan.':item.status==='active'?'I’m tracking the progress.':p.total&&p.completed===p.total?'All paws up — your checklist is finished!':p.issue?'I’m watching the latest project updates.':'One paw at a time. Here’s our progress.';
+ $('percent').textContent=p.percent==null?'—':p.percent+'%';$('ring').style.setProperty('--sweep',((p.percent||0)*3.6)+'deg');
+ $('count').textContent=p.issue?'Activity tracking':`${p.completed} of ${p.total} tasks complete`;
+ $('remaining').textContent=p.issue?'A percentage appears when Codex records a task plan':p.source==='plan'?'Current task plan · '+(p.total-p.completed)+' remaining':p.total?`${p.total-p.completed} remaining`:'No tasks yet';
+ const activity=questions.length?'Waiting for your reply':item.status==='active'?'Working now':item.status==='waitingOnApproval'?'Approval requested':item.status==='idle'?'Latest turn finished':'Recent project';
+ $('status').textContent=(autoFollow?'Auto-follow · ':'Pinned · ')+activity+' · '+(item.managedCodex?(item.status==='disconnected'?'Codex task disconnected':'Live Codex task connection'):item.mochiConnected?'Mochi ↔ Codex connected':item.activity?.observed?'Local activity connected':item.hookConnected?'Codex alerts connected':'Local project');
+ $('follow').textContent=autoFollow?'Auto ✓':'Auto';$('follow').setAttribute('aria-pressed',String(autoFollow));
+ const attentionKey=JSON.stringify([selected,questions.map(q=>q.id),approvals.map(a=>a.id)]);if($('checklistPanel').dataset.attention!==attentionKey){$('checklistPanel').dataset.attention=attentionKey;if(questions.length||approvals.length)$('checklistPanel').open=false;}
+ document.body.classList.toggle('has-attention',!!questions.length||!!approvals.length);$('attention').hidden=!questions.length&&!approvals.length;$('attentionTitle').textContent=questions.length&&approvals.length?'Codex needs your input and approval':q?.source==='checklist'?'Mochi is asking':questions.length?'Codex is asking':approvals.some(a=>a.canDecide)?'Codex needs your permission':'Permission requested in Codex';
+ $('attentionText').textContent=[...approvals.filter(a=>!a.canDecide).map(a=>'Permission: '+a.reason),...(q?[q]:questions.filter(x=>!x.canReply)).map(x=>x.question)].join('\n\n');
+ $('review').hidden=!approvals.some(a=>!a.canDecide)&&!questions.some(x=>!x.canReply);$('review').textContent=approvals.length?'Review in Codex ↗':'Open Codex to reply ↗';$('review').disabled=!item.threadId;$('options').replaceChildren();
+ const cardKey=JSON.stringify([selected,approvals.filter(a=>a.canDecide),controlBusy.has(selected)]);
+ if($('approvalCards')?.dataset.state!==cardKey){$('approvalCards')?.remove();const cards=document.createElement('div');cards.id='approvalCards';cards.dataset.state=cardKey;
+ for(const approval of approvals.filter(a=>a.canDecide)){
+ const card=document.createElement('section');card.className='approval-card';
+ const reason=document.createElement('p');reason.textContent=approval.reason;card.append(reason);
+ const details=document.createElement('pre');details.textContent=approval.details||'';card.append(details);
+ const note=document.createElement('p');note.className='scope-note';note.textContent=approval.source==='permissionHook'?'Replies directly to this waiting Codex request. No always-allow rule is added.':approval.kind==='permissions'?'Allow grants only the displayed access for this turn.':'Decision applies to this request; no always-allow rule is added.';card.append(note);
+ const actions=document.createElement('div');actions.className='actions';
+ for(const decision of approval.decisions||[]){const b=document.createElement('button');b.type='button';b.textContent=decision==='allow'?'Allow once':'Deny';b.className=decision==='deny'?'deny':'';b.disabled=controlBusy.has(selected);b.onclick=()=>control('decideApproval',{approvalId:approval.id,decision});actions.append(b)}
+ const ask=document.createElement('button');ask.type='button';ask.textContent='Ask about this request';ask.onclick=()=>{approvalFocus.set(selected,approval.id);composeMode='ask';render();$('question').focus()};actions.append(ask);card.append(actions);cards.append(card);
+ }$('attention').insertBefore(cards,$('options'));}
+ $('requestMode').hidden=!a;$('requestMode').textContent=a?'Discussing this permission · it stays pending until you choose a button.':'';
+ const active=['active','starting','waitingOnApproval','waitingOnInput'].includes(item.status);
+ $('newTask').disabled=busy();$('newTask').setAttribute('aria-pressed',String(composeMode==='startTask'));
+ $('continueTask').hidden=!item.managedCodex;$('continueTask').disabled=busy();$('continueTask').setAttribute('aria-pressed',String(composeMode==='addWork'));
+ $('stopTask').hidden=!item.managedCodex||!active;$('stopTask').disabled=controlBusy.has(selected);
+ $('askMode').hidden=composeMode==='ask'&&!a;
+ $('taskHint').hidden=composeMode==='ask';$('taskHint').textContent=composeMode==='startTask'?'Starts a separate Codex chat in this project. Its approvals return here.':composeMode==='addChecklist'?'Adds an item to this project checklist. Similar tasks need your choice.':'Adds a checklist item and sends your instructions to this Codex chat. Answer pending questions or permissions first.';
+ if(q){for(const option of q.options||[]){const b=document.createElement('button');b.type='button';b.textContent=option;b.onclick=()=>submit(option);$('options').append(b)}}
+ $('question').placeholder=a?'Ask why this access is needed…':q?(q.source==='checklist'?'Choose Same task or Different task above…':'Reply to Codex…'):composeMode==='startTask'?'Describe the task for Codex…':composeMode==='addWork'?'Describe the additional work…':composeMode==='addChecklist'?'What needs to be done?':'Ask Mochi about this project…';$('question').setAttribute('aria-label',q?(q.source==='checklist'?'Reply to Mochi':'Reply to Codex'):'Ask Mochi a question');$('send').textContent=a?'Ask ↑':q?'Reply ↑':composeMode==='startTask'?'Start task ↑':composeMode==='addWork'?'Add work ↑':composeMode==='addChecklist'?'Add task ↑':'Ask ↑';$('open').disabled=!item.threadId;document.querySelector('.chips').hidden=!!q;redrawMessages();
+}
+window.receive=function(data){
+ if(data.type==='snapshot'){
+ items=data.items||[];if(typeof data.autoFollow==='boolean')autoFollow=data.autoFollow;
+ const recommendation=items.find(i=>i.id===(data.autoSelection||data.selection));recommendationKey=recommendation?.trackingKey||recommendation?.id||'';
+ const taskKeys=items.map(i=>i.trackingKey).filter(Boolean);if(knownTasks.size&&taskKeys.some(k=>!knownTasks.has(k))){focusId='';focusTaskKey=''}taskKeys.forEach(k=>knownTasks.add(k));
+ const preferred=data.attentionSelection||(autoFollow&&!editing()&&!directQuestion()?(focusId||data.autoSelection||data.selection):selected);
+ const next=items.some(x=>x.id===preferred)?preferred:items.some(x=>x.id===selected)?selected:(items[0]?.id||'');
+ const keys=items.map(i=>i.id+'|'+i.title+'|'+i.status).join('\n');
+ if($('project').dataset.keys!==keys){$('project').replaceChildren(...items.map(i=>{const o=document.createElement('option');o.value=i.id;o.textContent=((i.approvals?.length||i.questions?.length)?'⚑ ':i.status==='active'?'● ':'')+i.title;return o}));$('project').dataset.keys=keys}
+ selectProject(next);render();
+ }else if(data.type==='showAnswer'){
+ revealAnswer(data.selection);
+ }else if(data.type==='answer'){
+ const returnWhenReady=!native&&(document.body.classList.contains('departing')||document.body.classList.contains('dismissed'));
+ const entry=pending.get(String(data.requestId));pending.delete(String(data.requestId));if(entry?.control)controlBusy.delete(entry.selection);
+ const key=data.routedSelection||entry?.selection||data.selection;
+ if(!data.error&&entry?.action==='startTask'&&key&&!items.some(i=>i.id===key)){items.push({id:key,threadId:key,title:'Codex task',cwd:current()?.cwd,status:'starting',managedCodex:true,questions:[],approvals:[],progress:{issue:'Connecting'}})}
+ if(entry?.control&&!data.error){composeMode='ask';send({action:'snapshot'})}else if(entry?.direct&&!data.error){send({action:'snapshot'})}
+
+ if(key&&entry?.action!=='setChecklistDone'){const list=conversations.get(key)||[];
+ if(entry&&!entry.control&&key!==entry.selection){const old=conversations.get(entry.selection)||[];const idx=old.findLastIndex?old.findLastIndex(x=>x.role==='user'&&x.text===entry.text):-1;if(idx>=0)old.splice(idx,1);list.push({role:'user',text:entry.text})}
+ list.push({role:entry?.direct&&!['addChecklist','setChecklistDone','replyQuestion'].includes(entry?.action)?'codex':'mochi',text:data.error||data.text||'I couldn’t get a reply.'});conversations.set(key,list)}
+ if(key&&data.routedSelection&&selected===entry?.selection&&!$('question').value.trim()){selectProject(key);if(autoFollow&&!entry.direct){focusId=key;focusTaskKey=recommendationKey}send({action:'select',selection:key,autoFollow,keepConversation:!entry.direct});}
+ render();syncEditing();
+ if(returnWhenReady&&entry&&!entry.direct&&key)revealAnswer(key);
+ }else if(data.type==='error'){$('status').textContent=data.error}
+};
+function submit(text,forceAsk=false){
+ if(!selected||busy()||!text.trim())return;
+ const a=forceAsk?null:focusedApproval();
+ if(!forceAsk&&!a&&composeMode!=='ask'&&!directQuestion()){const taskText=text.trim();$('question').value='';drafts.set(selected,'');control(composeMode,{text:taskText});return}
+ const id=String(++nextId),list=conversations.get(selected)||[],q=forceAsk||a?null:directQuestion();
+ list.push({role:'user',text:text.trim()});conversations.set(selected,list);pending.set(id,{selection:selected,direct:!!q,text:text.trim()});$('question').value='';drafts.set(selected,'');redrawMessages();syncEditing();
+ send({action:a?'askApproval':q?'replyQuestion':'ask',selection:selected,autoFollow,approvalId:a?.id,questionId:q?.id,text:text.trim(),requestId:id});
+}
+$('newTask').onclick=()=>{composeMode='startTask';approvalFocus.delete(selected);render();$('question').focus()};
+$('continueTask').onclick=()=>{composeMode='addWork';approvalFocus.delete(selected);render();$('question').focus()};
+$('checklistPanel').addEventListener('toggle',()=>document.body.classList.toggle('checklist-open',$('checklistPanel').open));
+$('addChecklist').onclick=()=>{composeMode='addChecklist';approvalFocus.delete(selected);render();$('question').focus()};
+$('askMode').onclick=()=>{composeMode='ask';approvalFocus.delete(selected);render()};
+$('stopTask').onclick=()=>control('stopTask');
+$('composer').addEventListener('submit',e=>{e.preventDefault();submit($('question').value)});
+$('question').addEventListener('input',syncEditing);
+$('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit($('question').value)}});
+document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>submit(b.dataset.question,true)));
+$('project').addEventListener('change',()=>{autoFollow=false;focusId='';focusTaskKey='';selectProject($('project').value);send({action:'select',selection:selected,autoFollow});syncEditing();render()});
+$('follow').onclick=()=>{autoFollow=!autoFollow;focusId='';focusTaskKey='';send({action:'follow',autoFollow});send({action:'snapshot'});render()};
+$('refresh').onclick=()=>send({action:'refresh'});$('close').onclick=dismiss;
+document.addEventListener('keydown',e=>{if(e.key==='Escape')dismiss()});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('button,input,label,summary,select,textarea,a,.conversation,.speech,.attention,.picker,.checklist-panel'))dismiss()});
+function openThread(){const item=current();if(item?.threadId)send({action:'openThread',threadId:item.threadId})}
+$('open').onclick=openThread;$('review').onclick=openThread;$('replay').onclick=()=>presentMochi();
+$('trackingDemo').onclick=()=>{presentMochi({mode:'tracking',placement:'topRight',projectTitle:current()?.title});const sequence=presentSequence;departureTimer=setTimeout(()=>{if(sequence===presentSequence){departMochi();departureTimer=setTimeout(()=>{if(sequence===presentSequence)document.body.classList.add('dismissed')},200)}},1300)};
+if(!native)presentMochi();send({action:'ready'});
+if(!native){send({action:'snapshot'});setInterval(()=>send({action:'snapshot'}),2000)}
+</script></body></html>

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "mochi": {
+      "command": "python3",
+      "args": [
+        "${PLUGIN_ROOT}/skills/completion-pet/scripts/mochi_mcp.py"
+      ]
+    }
+  }
+}

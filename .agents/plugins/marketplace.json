@@ -1,0 +1,20 @@
+{
+  "name": "progress-dog-local",
+  "interface": {
+    "displayName": "Progress Dog"
+  },
+  "plugins": [
+    {
+      "name": "progress-pet",
+      "source": {
+        "source": "local",
+        "path": "./plugins/progress-pet"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

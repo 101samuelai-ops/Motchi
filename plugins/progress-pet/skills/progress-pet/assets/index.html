@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Progress Dog</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="topbar">
+      <span class="brand"><span class="brand-icon" aria-hidden="true">✳</span> progress pet</span>
+      <span class="connection" id="connection">Connecting</span>
+    </header>
+    <section class="intro" aria-labelledby="headline">
+      <span class="eyebrow">A LITTLE COMPANY FOR THE FINISH LINE</span>
+      <h1 id="headline">Big things.<br>One little task at a time.</h1>
+      <p>Your project has a companion. Click Mochi to see how far you’ve come.</p>
+    </section>
+    <div class="companion-space">
+      <span class="spark spark-one" aria-hidden="true">✦</span>
+      <span class="spark spark-two" aria-hidden="true">✧</span>
+      <button class="pet" id="pet" aria-label="Mochi: show project progress" aria-expanded="false" aria-controls="progress-panel">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210" role="img" aria-label="Mochi, an anime puppy with floppy brown ears and a green scarf">
+<ellipse cx="120" cy="193" rx="65" ry="8" fill="#cfddd1"/>
+<g class="tail"><ellipse cx="182" cy="148" rx="15" ry="34" transform="rotate(20 182 148)" fill="#c28a51" stroke="#594333" stroke-width="3"/></g>
+<ellipse cx="120" cy="145" rx="48" ry="46" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="120" cy="154" rx="26" ry="28" fill="#fff9e9"/>
+<ellipse cx="91" cy="184" rx="24" ry="12" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="149" cy="184" rx="24" ry="12" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="120" cy="85" rx="73" ry="59" fill="#ffedc5" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="53" cy="71" rx="20" ry="45" transform="rotate(12 53 71)" fill="#c28a51" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="187" cy="71" rx="20" ry="45" transform="rotate(-12 187 71)" fill="#c28a51" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="52" cy="75" rx="8" ry="26" fill="#eab09a"/><ellipse cx="188" cy="75" rx="8" ry="26" fill="#eab09a"/>
+<ellipse cx="120" cy="111" rx="34" ry="19" fill="#fff9e9"/>
+<g fill="#50392c"><ellipse cx="89" cy="80" rx="13" ry="18"/><ellipse cx="151" cy="80" rx="13" ry="18"/></g>
+<g fill="#fff"><ellipse cx="85" cy="73" rx="5.5" ry="6"/><ellipse cx="147" cy="73" rx="5.5" ry="6"/><circle cx="94" cy="87" r="3"/><circle cx="156" cy="87" r="3"/></g>
+<g fill="#b68047"><ellipse cx="89" cy="93" rx="7" ry="3"/><ellipse cx="151" cy="93" rx="7" ry="3"/></g>
+<g fill="#efad9c"><ellipse cx="69" cy="107" rx="13" ry="6"/><ellipse cx="171" cy="107" rx="13" ry="6"/></g>
+<ellipse cx="120" cy="104" rx="10" ry="6" fill="#50392c"/>
+<ellipse cx="120" cy="120" rx="10" ry="10" fill="#efa5a0"/>
+<path d="M120 109 Q111 125 101 115 M120 109 Q129 125 139 115" fill="none" stroke="#594333" stroke-width="3" stroke-linecap="round"/>
+<path d="M79 137 Q120 150 161 137 L159 152 Q120 163 81 152Z" fill="#629b7d" stroke="#527960" stroke-width="2.5"/>
+<path d="M141 151 L156 151 L158 178 L144 173Z" fill="#78aa8c" stroke="#527960" stroke-width="2.5"/>
+<path d="M85 181V187 M96 181V187 M144 181V187 M155 181V187" stroke="#c5aa84" stroke-width="2" stroke-linecap="round"/>
+</svg>
+      </button>
+      <span class="pet-name">MOCHI <span aria-hidden="true">·</span> YOUR PROJECT PAL</span>
+      <span class="click-hint" id="click-hint">Click for a little progress check <span aria-hidden="true">↗</span></span>
+    </div>
+    <section class="panel" id="progress-panel" aria-labelledby="project-label" hidden>
+      <div class="panel-header">
+        <div><span class="eyebrow">CURRENT PROJECT</span><h2 id="project-label">My project</h2></div>
+        <button class="icon-button" id="close-panel" aria-label="Hide project progress">×</button>
+      </div>
+      <div class="progress-overview">
+        <div class="ring" id="ring" role="progressbar" aria-label="Project task completion" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring-track" cx="60" cy="60" r="51"/><circle class="ring-fill" id="ring-fill" cx="60" cy="60" r="51"/></svg>
+          <div class="ring-label"><strong id="percent">0<span>%</span></strong><small>complete</small></div>
+        </div>
+        <div class="progress-copy"><h3 id="encouragement">Every project starts here.</h3><p id="task-count">No tasks yet</p><p class="formula">Completed tasks ÷ total tasks</p></div>
+      </div>
+      <div class="checklist-header"><h3>Your next little steps</h3><span id="remaining"></span></div>
+      <ul class="tasks" id="tasks" aria-label="Project tasks"></ul>
+      <p class="empty" id="empty">Add your first task below.<br>Small steps count, too.</p>
+      <form class="add-form" id="add-form">
+        <label class="sr-only" for="task-title">New task</label>
+        <input id="task-title" name="title" placeholder="Add a little task…" maxlength="300" required autocomplete="off">
+        <button type="submit" id="add-button" aria-label="Add task">+</button>
+      </form>
+      <details class="settings"><summary>Project name</summary><form id="name-form"><label class="sr-only" for="project-name">Project name</label><input id="project-name" maxlength="100" required><button type="submit">Save</button></form></details>
+      <p class="saved-note">Saved in your project · Updates every 2 seconds</p>
+    </section>
+    <p class="error" id="error" role="alert" hidden></p>
+    <footer>A little progress is still progress. <span aria-hidden="true">✿</span></footer>
+  </main>
+</body>
+</html>
