@@ -79,13 +79,13 @@ final class MochiLauncher {
         let action = LaunchGate.action(codexRunning: running, previouslyRunning: previouslyRunning, mochiRunning: mochiRunning())
         if !running && previouslyRunning {
             generation += 1
-            record("codex-closed", "Codex closed. Mochi is left running to preserve its tasks.")
+            record("codex-closed", "Codex closed. Motchi is left running to preserve its tasks.")
         }
         previouslyRunning = running
         switch action {
         case .idle: break
         case .alreadyRunning:
-            record("already-running", "Codex is open; Mochi is already running. No duplicate started.")
+            record("already-running", "Codex is open; Motchi is already running. No duplicate started.")
         case .launch:
             generation += 1; attempts = 0
             launch(generation: generation)
@@ -94,13 +94,13 @@ final class MochiLauncher {
 
     func launch(generation expected: Int) {
         guard expected == generation, codexRunning(), !launching else { return }
-        guard !mochiRunning() else { record("already-running", "Mochi started before launch; no duplicate needed."); return }
+        guard !mochiRunning() else { record("already-running", "Motchi started before launch; no duplicate needed."); return }
         let url = URL(fileURLWithPath: config.mochiAppPath, isDirectory: true)
         guard FileManager.default.fileExists(atPath: url.appendingPathComponent("Contents/Info.plist").path) else {
-            record("missing-app", "Mochi app is missing at \(url.path). Reinstall the launcher."); return
+            record("missing-app", "Motchi app is missing at \(url.path). Reinstall the launcher."); return
         }
         attempts += 1; launching = true
-        record("launching", "Codex opened. Launching Mochi quietly (attempt \(attempts)).")
+        record("launching", "Codex opened. Launching Motchi quietly (attempt \(attempts)).")
         let options = NSWorkspace.OpenConfiguration()
         options.activates = false
         options.addsToRecentItems = false
@@ -117,7 +117,7 @@ final class MochiLauncher {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { self.launch(generation: expected) }
                     }
                 } else {
-                    self.record("launched", "Mochi launched for Codex (pid \(app?.processIdentifier ?? 0)).")
+                    self.record("launched", "Motchi launched for Codex (pid \(app?.processIdentifier ?? 0)).")
                 }
             }
         }
@@ -127,10 +127,10 @@ final class MochiLauncher {
 if CommandLine.arguments.contains("--self-test") {
     let checks: [(Bool, String)] = [
         (LaunchGate.action(codexRunning: false, previouslyRunning: false, mochiRunning: false) == .idle, "No launch without Codex"),
-        (LaunchGate.action(codexRunning: true, previouslyRunning: false, mochiRunning: false) == .launch, "Codex opening launches absent Mochi"),
-        (LaunchGate.action(codexRunning: true, previouslyRunning: false, mochiRunning: true) == .alreadyRunning, "Existing Mochi is preserved"),
-        (LaunchGate.action(codexRunning: true, previouslyRunning: true, mochiRunning: false) == .idle, "Manual Mochi quit is respected until Codex reopens"),
-        (LaunchGate.action(codexRunning: false, previouslyRunning: true, mochiRunning: true) == .idle, "Closing Codex does not stop Mochi")
+        (LaunchGate.action(codexRunning: true, previouslyRunning: false, mochiRunning: false) == .launch, "Codex opening launches absent Motchi"),
+        (LaunchGate.action(codexRunning: true, previouslyRunning: false, mochiRunning: true) == .alreadyRunning, "Existing Motchi is preserved"),
+        (LaunchGate.action(codexRunning: true, previouslyRunning: true, mochiRunning: false) == .idle, "Manual Motchi quit is respected until Codex reopens"),
+        (LaunchGate.action(codexRunning: false, previouslyRunning: true, mochiRunning: true) == .idle, "Closing Codex does not stop Motchi")
     ]
     for (ok, name) in checks { guard ok else { fputs("FAIL: \(name)\n", stderr); exit(1) }; print("PASS: \(name)") }
     exit(0)

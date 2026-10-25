@@ -1,4 +1,4 @@
-# Mochi development context
+# Motchi development context
 
 Before changing the product, read `docs/MEMORY.md`, `ROADMAP.md`, and `docs/BASELINE.md`.
 

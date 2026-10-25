@@ -2,13 +2,13 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "progress-pet",
   "version": "0.11.0",
-  "description": "Mochi returns explicit Allow/Deny decisions through trusted synchronous Codex permission hooks, with a separate explanation chat.",
+  "description": "Motchi returns explicit Allow/Deny decisions through trusted synchronous Codex permission hooks, with a separate explanation chat.",
   "extensions": {
     "com.openai": {
       "interface": {
-        "displayName": "Progress Dog",
+        "displayName": "Motchi",
         "shortDescription": "Your project buddy, a double right-click away",
-        "longDescription": "Reply to supported Codex permission hooks directly with Allow once or Deny in Mochi. Ask about a request before deciding. Exact hook review is required once; unsupported native cards remain in Codex. Includes chat-derived checklists and 1.5-second top-right announcements.",
+        "longDescription": "Reply to supported Codex permission hooks directly with Allow once or Deny in Motchi. Ask about a request before deciding. Exact hook review is required once; unsupported native cards remain in Codex. Includes chat-derived checklists and 1.5-second top-right announcements.",
         "category": "Productivity",
         "capabilities": [
           "Interactive",
@@ -16,7 +16,7 @@
           "Write"
         ],
         "defaultPrompt": [
-          "Open Mochi and automatically follow my working Codex chats.",
+          "Open Motchi and automatically follow my working Codex chats.",
           "Track this project and show me its progress and approval alerts."
         ],
         "brandColor": "#217764",

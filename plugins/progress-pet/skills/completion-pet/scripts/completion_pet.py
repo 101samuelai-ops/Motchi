@@ -54,7 +54,7 @@ def main():
     source = Path(__file__).with_name("CompletionPet.swift")
     digest = hashlib.sha256(b"".join(source.with_name(n).read_bytes() for n in ("CompletionPet.swift", "dog_bridge.py", "dialog.html", "codex_control.py", "checklist_sync.py", "hook_approvals.py")) + (source.parent.parent.parent / "progress-pet/scripts/progress_pet.py").read_bytes()).hexdigest()[:16]
     build = cache / digest
-    bundle = build / "Mochi.app"
+    bundle = build / "Motchi.app"
     binary = bundle / "Contents" / "MacOS" / "CompletionPet"
     with (cache / "build.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
@@ -64,7 +64,7 @@ def main():
             temporary = binary.with_suffix(".building")
             subprocess.run([compiler, str(source), "-module-cache-path", str(cache / "modules"),
                             "-o", str(temporary)], check=True)
-            info = {"CFBundleIdentifier": "local.progress-pet.completion.dog", "CFBundleName": "Mochi",
+            info = {"CFBundleIdentifier": "local.progress-pet.completion.dog", "CFBundleName": "Motchi",
                     "CFBundleExecutable": "CompletionPet", "CFBundlePackageType": "APPL", "LSUIElement": True,
                     "NSHighResolutionCapable": True}
             (bundle / "Contents" / "Info.plist").write_bytes(plistlib.dumps(info))
@@ -75,7 +75,7 @@ def main():
         os.execv(str(binary), [str(binary), "--render-preview", str(Path(args.render_preview).resolve())])
     if args.prepare_app:
         app_key = "hub.dog" + ("-preview" if args.preview else "")
-        app = cache / "apps" / app_key / digest / "Mochi.app"
+        app = cache / "apps" / app_key / digest / "Motchi.app"
         executable = app / "Contents" / "MacOS" / "CompletionPet"
         resources = app / "Contents" / "Resources"
         executable.parent.mkdir(parents=True, exist_ok=True)

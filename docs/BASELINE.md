@@ -1,6 +1,6 @@
 # Existing implementation baseline
 
-Snapshot prepared on 2026-10-25 from the local Progress Dog / Mochi 0.11.0 source, including the later optional auto-launch helper.
+Snapshot prepared on 2026-10-25 from the local Progress Dog / Mochi 0.11.0 (now branded Motchi) source, including the later optional auto-launch helper.
 
 Existing foundations documented by the project:
 
@@ -8,9 +8,9 @@ Existing foundations documented by the project:
 - Local project discovery and automatic topic selection; separate drafts and project histories.
 - Project status answers and a shared checklist with source evidence and manual overrides.
 - Structured-plan and recent-conversation checklist reconciliation; semantic same/different clarification.
-- Additional instructions to Mochi-owned active/idle chats, with uncertain delivery handling.
+- Additional instructions to Motchi-owned active/idle chats, with uncertain delivery handling.
 - Direct clarification replies and supported real approvals via live owned tasks or a trusted synchronous PermissionRequest hook.
-- Optional login helper that launches Mochi when Codex desktop opens; verified live on 2026-10-24.
+- Optional login helper that launches Motchi when Codex desktop opens; verified live on 2026-10-24.
 
 Known limits:
 

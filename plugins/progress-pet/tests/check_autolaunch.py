@@ -7,7 +7,7 @@ source = Path(__file__).resolve().parents[1] / 'skills/completion-pet/scripts/in
 spec = importlib.util.spec_from_file_location('autolaunch', source)
 module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
 home = Path('/Users/Example User')
-app = home / 'Library/Application Support/Mochi/Mochi.app'
+app = home / 'Library/Application Support/Mochi/Motchi.app'
 config, agent = module.config_and_agent(app, home)
 assert agent['ProgramArguments'] == [str(home / 'Library/Application Support/Mochi/Launcher/MochiLauncher'),
     '--config', str(home / 'Library/Application Support/Mochi/Launcher/launcher.json')]

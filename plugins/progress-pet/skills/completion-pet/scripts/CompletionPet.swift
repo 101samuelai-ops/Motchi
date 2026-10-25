@@ -244,17 +244,17 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     }
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem?.button?.title = "🐶"; statusItem?.button?.toolTip = "Mochi · Project companion"
+        statusItem?.button?.title = "🐶"; statusItem?.button?.toolTip = "Motchi · Project companion"
         let menu = NSMenu()
-        let report = menu.addItem(withTitle: "Chat with Mochi / show projects", action: #selector(toggleReport), keyEquivalent: ""); report.target = self
+        let report = menu.addItem(withTitle: "Chat with Motchi / show projects", action: #selector(toggleReport), keyEquivalent: ""); report.target = self
         shortcutEnabled = UserDefaults.standard.object(forKey: shortcutPreference) as? Bool ?? true
-        shortcutItem = menu.addItem(withTitle: "Double right-click for Mochi", action: #selector(toggleShortcut), keyEquivalent: "")
+        shortcutItem = menu.addItem(withTitle: "Double right-click for Motchi", action: #selector(toggleShortcut), keyEquivalent: "")
         shortcutItem?.target = self; shortcutItem?.state = shortcutEnabled ? .on : .off
         let item = menu.addItem(withTitle: "Preview completion celebration", action: #selector(showPreview), keyEquivalent: ""); item.target = self
         menu.addItem(.separator())
         let quit = menu.addItem(withTitle: "Quit Progress Dog", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"); quit.target = NSApp
         statusItem?.menu = menu
-        output("Mochi 0.10.0 active: primary screen top-right; announcements \(duration)s total.")
+        output("Motchi 0.10.0 active: primary screen top-right; announcements \(duration)s total.")
         output("Progress Dog hub watching: \(initialProjectURL.path)")
         configureShortcut(); configureDismissal(); startBridge()
         if preview { showPreview() }
@@ -285,7 +285,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     func readBridge(_ data: Data) {
         guard !data.isEmpty else {
             bridgeOutput?.readabilityHandler = nil
-            sendToDialog(["type": "error", "error": "Project connection closed. Reopen Mochi to reconnect."]); return
+            sendToDialog(["type": "error", "error": "Project connection closed. Reopen Motchi to reconnect."]); return
         }
         bridgeBuffer.append(data)
         while let end = bridgeBuffer.firstIndex(of: 10) {
@@ -458,7 +458,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
             self.outputDismissal()
         }
     }
-    func outputDismissal() { output("Mochi dismissal finished: return leap, then close.") }
+    func outputDismissal() { output("Motchi dismissal finished: return leap, then close.") }
     func showNextAnswer() {
         guard !answerQueue.isEmpty, !hasPendingAttention,
               reportPanel?.isVisible != true || trackingVisible || isDismissing else { return }
@@ -468,7 +468,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         conversationAnchor = catalog.first(where: { $0["id"] as? String == target })?["trackingKey"] as? String ?? target
         showDialog()
         sendToDialog(["type": "showAnswer", "selection": target])
-        output("Mochi returned at top right with the requested answer.")
+        output("Motchi returned at top right with the requested answer.")
     }
     func showNextTracking() {
         guard reportPanel?.isVisible != true, panel?.isVisible != true, !trackingQueue.isEmpty,
@@ -574,7 +574,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         window.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: size), display: false)
         presentEntrance()
         window.orderFrontRegardless(); refreshReport(force: true)
-        output("Mochi 0.10.0 opened at primary screen top right: \(trackingTitle != nil ? "1.5-second tracking announcement" : "Codex dialog").")
+        output("Motchi 0.10.0 opened at primary screen top right: \(trackingTitle != nil ? "1.5-second tracking announcement" : "Codex dialog").")
     }
     func refreshReport(force: Bool = false) {
         let now = ProcessInfo.processInfo.systemUptime
@@ -682,7 +682,7 @@ if flag("--self-test") {
     delivery.begin(id: "two", selection: "project-a"); delivery.dismiss()
     check(!delivery.finish(id: "two", selection: "project-b"), "a mismatched project cannot consume an answer notification")
     check(delivery.finish(id: "two", selection: "project-a"), "a dismissed question returns when its answer arrives")
-    check(!delivery.finish(id: "two", selection: "project-a"), "duplicate answers do not reopen Mochi")
+    check(!delivery.finish(id: "two", selection: "project-a"), "duplicate answers do not reopen Motchi")
     delivery.begin(id: "three", selection: "project-a"); delivery.begin(id: "four", selection: "project-b"); delivery.dismiss()
     check(delivery.finish(id: "four", selection: "project-b") && delivery.finish(id: "three", selection: "project-a"), "concurrent replies retain their project routing")
     check(AnnouncementTiming.fadeStart(lifetime: AnnouncementTiming.lifetime) == 1.3, "announcement fade begins at 1.3 seconds")

@@ -55,7 +55,7 @@ with tempfile.TemporaryDirectory(prefix='mochi-control-') as temp:
     control.connection=conn
     result=control.start_task(str(project),'Example','Build a sample')
     tid=result['selection']
-    check(tid=='chat-1' and control.snapshot()[tid]['status']=='active','A task explicitly started in Mochi owns a live Codex connection')
+    check(tid=='chat-1' and control.snapshot()[tid]['status']=='active','A task explicitly started in Motchi owns a live Codex connection')
     def event(method,params,identity=None):
         message={'method':method,'params':params}
         if identity is not None:message['id']=identity
@@ -68,7 +68,7 @@ with tempfile.TemporaryDirectory(prefix='mochi-control-') as temp:
     def replies():return conn.call('test/replies',{})['replies']
     def clear():conn.call('test/clear',{})
     token=permission()
-    check(token and control.snapshot()[tid]['approvals'][0]['canDecide'],'A server-initiated permission request becomes an answerable Mochi card')
+    check(token and control.snapshot()[tid]['approvals'][0]['canDecide'],'A server-initiated permission request becomes an answerable Motchi card')
     check(not replies(),'Receiving or displaying a request never approves it')
     check(conn.call('test/replies',{})=={'replies':[]},'Ordinary RPC results remain routable while an approval is pending')
     check(rejects(lambda:control.decide('wrong-thread',token,'allow')),'A different project cannot answer the request')

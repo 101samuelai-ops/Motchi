@@ -1,7 +1,7 @@
 {
   "name": "progress-dog-local",
   "interface": {
-    "displayName": "Progress Dog"
+    "displayName": "Motchi"
   },
   "plugins": [
     {

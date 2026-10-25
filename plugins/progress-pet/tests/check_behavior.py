@@ -43,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='progress-pet-test-') as project:
         code,_,_=request('/../progress_pet.py')
         check(code==404,'Non-asset files cannot be served')
         code,html,headers=request('/')
-        check(code==200 and b'Click Mochi' in html and "script-src 'self'" in headers['Content-Security-Policy'],'Pet page loads with a local-only asset policy')
+        check(code==200 and b'Click Motchi' in html and "script-src 'self'" in headers['Content-Security-Policy'],'Pet page loads with a local-only asset policy')
         for asset in ['/app.js','/style.css']:
             check(request(asset)[0]==200,f'{asset} is available')
         check(cli(project,'status')['percent']==100,'Panel changes persist for later CLI sessions')

@@ -1,8 +1,8 @@
-# Mochi product roadmap
+# Motchi product roadmap
 
 Agreed on 2026-10-25. This is a future-work checklist, not a claim that these features are implemented. Existing source provides partial foundations; each item remains unchecked until its acceptance criteria and relevant checks pass.
 
-The canonical planning checklist is this file. `.progress-pet.json` contains the same stable task IDs for the Mochi progress panel. Keep their completion states synchronized when work is actually verified. New ideas and optional experiments should be recorded outside the active milestone until agreed.
+The canonical planning checklist is this file. `.progress-pet.json` contains the same stable task IDs for the Motchi progress panel. Keep their completion states synchronized when work is actually verified. New ideas and optional experiments should be recorded outside the active milestone until agreed.
 
 ## P1 — Trustworthy project understanding
 
@@ -49,7 +49,7 @@ The canonical planning checklist is this file. `.progress-pet.json` contains the
 
 > “How is the website doing? Also add tablet support.”
 
-Mochi explains the current milestone and blocker, checks whether tablet support expands an existing layout task, updates that task after clarification, and reports whether the instruction reached the connected chat. Its answer exposes its sources and any uncertainty.
+Motchi explains the current milestone and blocker, checks whether tablet support expands an existing layout task, updates that task after clarification, and reports whether the instruction reached the connected chat. Its answer exposes its sources and any uncertainty.
 
 ## Research
 

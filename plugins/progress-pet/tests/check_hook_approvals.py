@@ -85,8 +85,8 @@ with tempfile.TemporaryDirectory() as folder:
     check(len(item['approvals']) == 1 and item['approvals'][0]['canDecide'], 'Actual hook replaces its log mirror with direct decision buttons')
     check(not item.get('managedCodex'), 'Existing desktop chats need no duplicate owned task')
     answer = bridge.handle_action({'action': 'decideApproval', 'selection': 'original-chat', 'approvalId': record['id'], 'decision': 'deny'})
-    check('Deny sent' in answer['text'], 'Normal Mochi UI action dispatches a hook decision')
-    check(output(process)['hookSpecificOutput']['decision'] == {'behavior': 'deny', 'message': 'Denied by user in Mochi.'}, 'Deny returns a real Codex denial')
+    check('Deny sent' in answer['text'], 'Normal Motchi UI action dispatches a hook decision')
+    check(output(process)['hookSpecificOutput']['decision'] == {'behavior': 'deny', 'message': 'Denied by user in Motchi.'}, 'Deny returns a real Codex denial')
     item = next(i for i in bridge.snapshot()['items'] if i['id'] == 'original-chat')
     check(not item['approvals'][0].get('canDecide'), 'A log-only request never receives fake approval buttons')
 
@@ -119,7 +119,7 @@ with tempfile.TemporaryDirectory() as folder:
     check(data['hooks']['SessionStart'] == original['hooks']['SessionStart'], 'Installer preserves unrelated event handlers')
     check(data['hooks']['PermissionRequest'][0] == original['hooks']['PermissionRequest'][0], 'Installer preserves another permission policy and its matcher')
     install(root)
-    check((root / 'hooks.json').read_text() == first, 'Repeated installation does not duplicate the Mochi handler')
+    check((root / 'hooks.json').read_text() == first, 'Repeated installation does not duplicate the Motchi handler')
     check(any(json.loads(p.read_text()) == original for p in root.glob('hooks.json.mochi-backup-*')), 'Existing hook configuration has a recoverable backup')
     check(not any('trust' in p.name or 'config.toml' == p.name for p in root.iterdir()), 'Installer never writes trust records or approval policy')
 

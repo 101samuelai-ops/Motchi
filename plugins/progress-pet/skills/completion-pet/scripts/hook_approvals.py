@@ -47,7 +47,7 @@ class HookApprovals:
 
     def path(self, identity):
         if not isinstance(identity, str) or not identity.startswith('hook:'):
-            raise ValueError('Not a live Mochi approval request.')
+            raise ValueError('Not a live Motchi approval request.')
         token = identity[5:]
         if len(token) != 32 or any(c not in '0123456789abcdef' for c in token):
             raise ValueError('Invalid approval identity.')
@@ -179,7 +179,7 @@ class HookApprovals:
                             atomic(path, fresh)
                             output = {'behavior': decision}
                             if decision == 'deny':
-                                output['message'] = 'Denied by user in Mochi.'
+                                output['message'] = 'Denied by user in Motchi.'
                             return {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': output}}
                     time.sleep(.08)
                 return {}

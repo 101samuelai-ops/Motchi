@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Register Mochi's user permission hook; never grant trust or alter policy."""
+"""Register Motchi's user permission hook; never grant trust or alter policy."""
 import argparse
 from datetime import datetime
 import json
@@ -18,7 +18,7 @@ def install(config_root):
     groups = data.setdefault('hooks', {}).setdefault('PermissionRequest', [])
     bridge = Path(__file__).with_name('dog_bridge.py').resolve()
     command = shlex.quote(sys.executable) + ' ' + shlex.quote(str(bridge)) + ' --permission-hook'
-    # Exact command identifies older Mochi registrations without touching other hooks.
+    # Exact command identifies older Motchi registrations without touching other hooks.
     for group in groups:
         group['hooks'] = [h for h in group.get('hooks', []) if not (
             h.get('type') == 'command' and '/progress-pet/' in h.get('command', '') and

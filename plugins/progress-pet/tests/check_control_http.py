@@ -22,7 +22,7 @@ with tempfile.TemporaryDirectory() as project:
    try:
     with urllib.request.urlopen(req,timeout=3) as response:return response.status,response.read()
    except urllib.error.HTTPError as e:return e.code,e.read()
-  check(request(headers={'Content-Type':'application/json','Origin':'https://other.example'})[0]==403,'Another website cannot send a Mochi approval')
+  check(request(headers={'Content-Type':'application/json','Origin':'https://other.example'})[0]==403,'Another website cannot send a Motchi approval')
   check(request(headers={'Content-Type':'application/x-www-form-urlencoded'})[0]==403,'A browser form cannot submit approval decisions')
   check(request(headers={'Content-Type':'application/json','Host':'other.example'})[0]==403,'An unexpected host cannot reach approval controls')
   check(request(path='/snapshot',headers={'Host':'other.example'},method='GET')[0]==403,'An unexpected host cannot read the project snapshot')

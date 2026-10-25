@@ -20,7 +20,7 @@ function panelOpen(open) {
   document.querySelector("main").classList.toggle("is-open", open);
   $("progress-panel").hidden = !open;
   $("pet").setAttribute("aria-expanded", String(open));
-  $("pet").setAttribute("aria-label", `Mochi: ${open ? "hide" : "show"} project progress`);
+  $("pet").setAttribute("aria-label", `Motchi: ${open ? "hide" : "show"} project progress`);
   $("click-hint").hidden = open;
 }
 $("pet").addEventListener("click", () => panelOpen($("progress-panel").hidden));

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP clarification tool: return a human's Mochi reply to the calling Codex run."""
+"""MCP clarification tool: return a human's Motchi reply to the calling Codex run."""
 import json
 import os
 from pathlib import Path
@@ -15,7 +15,7 @@ OWNER = uuid.uuid4().hex
 
 TOOL = {
     "name": "ask_user",
-    "description": "Ask the user an ordinary project clarification through Mochi, their desktop dog. Returns their reply to this exact Codex run. If status is waitingForReply, keep calling wait_for_reply with the returned question_id until answered or expired. Use when Progress Dog is active. Do not use for permissions, authentication, purchases, or approval decisions; keep those in Codex's own approval UI. The Mac companion must be running. Closing the popup does not answer the question.",
+    "description": "Ask the user an ordinary project clarification through Motchi, their desktop dog. Returns their reply to this exact Codex run. If status is waitingForReply, keep calling wait_for_reply with the returned question_id until answered or expired. Use when Progress Dog is active. Do not use for permissions, authentication, purchases, or approval decisions; keep those in Codex's own approval UI. The Mac companion must be running. Closing the popup does not answer the question.",
     "inputSchema": {"type": "object", "properties": {
         "project_path": {"type": "string", "description": "Absolute current project directory."},
         "project_name": {"type": "string", "maxLength": 100},
@@ -60,7 +60,7 @@ def ask_user(args, cancel=None, root=None, timeout=540):
 
 WAIT_TOOL = {
     "name": "wait_for_reply",
-    "description": "Continue waiting for a Mochi ask_user question. Call again whenever status is waitingForReply; do not guess or end the project turn while the user is still deciding. Each wait is shorter than Codex's default tool timeout. Use only the question_id returned by your own ask_user call.",
+    "description": "Continue waiting for a Motchi ask_user question. Call again whenever status is waitingForReply; do not guess or end the project turn while the user is still deciding. Each wait is shorter than Codex's default tool timeout. Use only the question_id returned by your own ask_user call.",
     "inputSchema": {"type": "object", "properties": {"question_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"}}, "required": ["question_id"], "additionalProperties": False},
     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False}
 }
@@ -107,7 +107,7 @@ def wait_for_reply(key, cancel=None, root=None, wait_seconds=45):
     record["status"] = "closed"
     atomic_json(target, record)
     response.unlink(missing_ok=True)
-    raise TimeoutError("Mochi received no reply before the question expired. Ask in Codex instead.")
+    raise TimeoutError("Motchi received no reply before the question expired. Ask in Codex instead.")
 
 
 def main():
@@ -125,7 +125,7 @@ def main():
             elif name == "wait_for_reply":
                 result = wait_for_reply(params.get("arguments", {}).get("question_id"), cancel)
             else:
-                raise ValueError("Unknown Mochi tool.")
+                raise ValueError("Unknown Motchi tool.")
             emit({"id": rid, "result": {"content": [{"type": "text", "text": json.dumps(result, ensure_ascii=False)}], "isError": False}})
         except Exception as exc:
             emit({"id": rid, "result": {"content": [{"type": "text", "text": str(exc)}], "isError": True}})
@@ -151,7 +151,7 @@ def main():
                     emit({"id": rid, "result": {"tools": [TOOL, WAIT_TOOL]}})
                 elif method == "tools/call":
                     if len(active) >= 8 or rid in active:
-                        emit({"id": rid, "error": {"code": -32000, "message": "Mochi has too many pending questions. Try again later."}})
+                        emit({"id": rid, "error": {"code": -32000, "message": "Motchi has too many pending questions. Try again later."}})
                         continue
                     cancel = threading.Event()
                     active[rid] = cancel

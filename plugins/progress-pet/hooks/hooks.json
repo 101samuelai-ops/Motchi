@@ -1,5 +1,5 @@
 {
-  "description": "Mochi lifecycle observers. Direct decisions use the separately registered user PermissionRequest hook; install with install_approval_hook.py.",
+  "description": "Motchi lifecycle observers. Direct decisions use the separately registered user PermissionRequest hook; install with install_approval_hook.py.",
   "hooks": {
     "SessionStart": [
       {

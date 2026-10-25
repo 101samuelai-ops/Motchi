@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install/remove a per-user Mochi launcher that follows Codex desktop starts."""
+"""Install/remove a per-user Motchi launcher that follows Codex desktop starts."""
 import argparse
 import json
 import os
@@ -35,10 +35,10 @@ def prepare(app, output):
     if sys.platform != 'darwin':
         raise RuntimeError('This launcher requires macOS.')
     if not (app / 'Contents/Info.plist').is_file():
-        raise ValueError('Provide the complete Mochi.app path with --app.')
+        raise ValueError('Provide the complete Motchi.app path with --app.')
     info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
     if not str(info.get('CFBundleIdentifier', '')).startswith('local.progress-pet.'):
-        raise ValueError('The provided app is not a Mochi companion bundle.')
+        raise ValueError('The provided app is not a Motchi companion bundle.')
     compiler = shutil.which('swiftc')
     if not compiler:
         raise RuntimeError('Apple Swift command-line tools are required to build the launcher.')
@@ -58,7 +58,7 @@ def prepare(app, output):
     subprocess.run(command + ['-o', str(binary)], env=environment, check=True)
     subprocess.run([str(binary), '--self-test'], check=True)
     support, launcher, plist, logs = paths()
-    config, agent = config_and_agent(support / 'Mochi.app')
+    config, agent = config_and_agent(support / 'Motchi.app')
     (output / 'launcher.json').write_text(json.dumps(config, indent=2) + '\n')
     (output / (LABEL + '.plist')).write_bytes(plistlib.dumps(agent))
     return binary, config, agent
@@ -72,7 +72,7 @@ def install(app, output, login_app=False):
     logs.mkdir(parents=True, exist_ok=True)
     # Install a stable app copy so moving/deleting the original output folder
     # does not break login startup. Do not restart a currently running companion.
-    target = support / 'Mochi.app'
+    target = support / 'Motchi.app'
     if app != target:
         shutil.copytree(app, target, dirs_exist_ok=True, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     launch_path = target / 'Contents/Resources/launch.json'
@@ -84,7 +84,7 @@ def install(app, output, login_app=False):
     shutil.copy2(binary, staged); staged.chmod(0o755); staged.replace(destination)
     (launcher / 'launcher.json').write_text(json.dumps(config, indent=2) + '\n')
     if login_app:
-        helper = support / 'Mochi Launcher.app'
+        helper = support / 'Motchi Launcher.app'
         executable = helper / 'Contents/MacOS/MochiLauncher'
         resources = helper / 'Contents/Resources'
         executable.parent.mkdir(parents=True, exist_ok=True)
@@ -92,8 +92,8 @@ def install(app, output, login_app=False):
         shutil.copy2(binary, executable)
         executable.chmod(0o755)
         (resources / 'launcher.json').write_text(json.dumps(config, indent=2) + '\n')
-        info = {'CFBundleIdentifier': LABEL + '.app', 'CFBundleName': 'Mochi Launcher',
-                'CFBundleDisplayName': 'Mochi Launcher', 'CFBundleExecutable': 'MochiLauncher',
+        info = {'CFBundleIdentifier': LABEL + '.app', 'CFBundleName': 'Motchi Launcher',
+                'CFBundleDisplayName': 'Motchi Launcher', 'CFBundleExecutable': 'MochiLauncher',
                 'CFBundlePackageType': 'APPL', 'CFBundleVersion': '1',
                 'CFBundleShortVersionString': '1.0', 'LSUIElement': True,
                 'NSHighResolutionCapable': True, 'LSMinimumSystemVersion': '12.0'}
@@ -107,7 +107,7 @@ def install(app, output, login_app=False):
         print('Add it in System Settings > General > Login Items > Open at Login.')
         return
     domain = 'gui/' + str(os.getuid())
-    # This label belongs only to this launcher; existing Mochi/Codex processes
+    # This label belongs only to this launcher; existing Motchi/Codex processes
     # and their approval connections are never stopped here.
     if plist.exists():
         shutil.copy2(plist, output / 'previous-launch-agent.plist')
@@ -117,17 +117,17 @@ def install(app, output, login_app=False):
     if result.returncode:
         raise RuntimeError('Startup files are installed, but macOS did not load the launcher: ' + (result.stderr.strip() or result.stdout.strip()))
     print('Installed and loaded:', plist)
-    print('Stable Mochi app:', target)
+    print('Stable Motchi app:', target)
     print('Status:', launcher / 'status.json')
-    print('Mochi will open quietly when Codex desktop starts. Existing Mochi is left running.')
+    print('Motchi will open quietly when Codex desktop starts. Existing Motchi is left running.')
 
 
 def remove():
     support, launcher, plist, logs = paths()
     subprocess.run(['launchctl', 'bootout', 'gui/' + str(os.getuid()) + '/' + LABEL], capture_output=True, text=True)
     plist.unlink(missing_ok=True)
-    print('LaunchAgent disabled. If using Mochi Launcher.app, also remove Mochi Launcher from System Settings > General > Login Items > Open at Login.')
-    print('Mochi and its installed app are left intact.')
+    print('LaunchAgent disabled. If using Motchi Launcher.app, also remove Motchi Launcher from System Settings > General > Login Items > Open at Login.')
+    print('Motchi and its installed app are left intact.')
 
 
 def main():
@@ -144,13 +144,13 @@ def main():
     if args.status:
         support, launcher, plist, logs = paths()
         print('Startup file installed:', plist.exists())
-        print('Login helper installed:', (support / 'Mochi Launcher.app').exists())
+        print('Login helper installed:', (support / 'Motchi Launcher.app').exists())
         print('Login helper registration is managed in System Settings > General > Login Items.')
         path = launcher / 'status.json'
         print(path.read_text() if path.exists() else 'No launcher status yet.')
         return
     if not args.app:
-        parser.error('--app /absolute/path/Mochi.app is required')
+        parser.error('--app /absolute/path/Motchi.app is required')
     app = args.app.expanduser().resolve()
     if args.install:
         install(app, args.output.resolve(), login_app=args.login_app)
@@ -163,4 +163,4 @@ if __name__ == '__main__':
     try:
         main()
     except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError) as exc:
-        sys.exit('Mochi auto-launch: ' + str(exc))
+        sys.exit('Motchi auto-launch: ' + str(exc))

@@ -26,16 +26,16 @@ with tempfile.TemporaryDirectory() as temp:
     activity=dog.LocalActivity(sessions);item={'id':'chat','path':str(log)}
     def state():return activity.read(item)
     def pending():return state()['approvals']
-    args={'permissions':{'file_system':{'write':['/Users/test/.codex']},'network':{'enabled':True}},'reason':'Register Mochi safely','private':'PRIVATE ARGUMENT'}
+    args={'permissions':{'file_system':{'write':['/Users/test/.codex']},'network':{'enabled':True}},'reason':'Register Motchi safely','private':'PRIVATE ARGUMENT'}
     write('response_item',{'type':'function_call','name':'functions.request_permissions','call_id':'direct','arguments':json.dumps(args)})
-    check(len(pending())==1 and 'Register Mochi' in pending()[0]['reason'],'Direct native permission requests become pending approval alerts')
+    check(len(pending())==1 and 'Register Motchi' in pending()[0]['reason'],'Direct native permission requests become pending approval alerts')
     check('Edit /Users/test/.codex' in pending()[0]['reason'] and 'Network access' in pending()[0]['reason'],'Requested filesystem and network scope is shown')
     check('PRIVATE ARGUMENT' not in json.dumps(state()),'Unrelated arguments never enter companion state')
     output('other','anything')
     check(len(pending())==1,'Unrelated output cannot clear another permission')
     output('direct',{'permissions':{}})
     check(not pending(),'A matching direct denial resolves its alert')
-    source='text(await tools.request_permissions({permissions: {file_system: {write: ["/Users/test/.codex"]}}, reason: "Register Mochi safely"}));'
+    source='text(await tools.request_permissions({permissions: {file_system: {write: ["/Users/test/.codex"]}}, reason: "Register Motchi safely"}));'
     call('wrapped',source)
     check(len(pending())==1,'The exact standalone exec wrapper from the screenshot is recognized')
     output('wrapped','Script running with cell ID 42\nWall time 31.0 seconds\nOutput:\n',True)
@@ -56,10 +56,10 @@ with tempfile.TemporaryDirectory() as temp:
         'const example = '+json.dumps(source)+';',
         'text(await tools.request_permissions(getPermissions()));',
         source+'text("other work");',
-        source.replace('"Register Mochi safely"','runCommand()'),
-        source.replace('"Register Mochi safely"','`template ${runCommand()}`'),
-        source.replace('"Register Mochi safely"','process.env.SECRET'),
-        source.replace('"Register Mochi safely"','(()=>{throw Error("oops")})()'),
+        source.replace('"Register Motchi safely"','runCommand()'),
+        source.replace('"Register Motchi safely"','`template ${runCommand()}`'),
+        source.replace('"Register Motchi safely"','process.env.SECRET'),
+        source.replace('"Register Motchi safely"','(()=>{throw Error("oops")})()'),
         source.replace('{permissions:', '{...other, permissions:'),
         source.replace('write: ["/Users/test/.codex"]','write: files'),
         source.replace('reason:', '/* comment */ reason:'),
@@ -72,12 +72,12 @@ with tempfile.TemporaryDirectory() as temp:
     write('response_item',{'type':'function_call','name':'functions.request_user_input_async','call_id':'question','arguments':json.dumps({'questions':[{'title':'Choose a theme?'}]})})
     bridge=dog.DogBridge(project,root=hub);bridge.activity=activity;bridge.checklists.infer=None
     class Metadata:
-        def call(self,*_):return {'data':[{'id':'chat','cwd':str(project),'path':str(log),'name':'Mochi project','updatedAt':1}]}
+        def call(self,*_):return {'data':[{'id':'chat','cwd':str(project),'path':str(log),'name':'Motchi project','updatedAt':1}]}
         def close(self):pass
     bridge.server=Metadata()
     s=bridge.snapshot();current=s['items'][0]
     check(current['status']=='waitingOnApproval' and current['questions'] and current['approvals'],'Permissions coexist with questions and get approval priority')
-    hook={'session_id':'chat','cwd':str(project),'turn_id':'turn','hook_event_name':'PermissionRequest','tool_name':'request_permissions','call_id':'quoted','tool_input':{'reason':'Register Mochi safely'}}
+    hook={'session_id':'chat','cwd':str(project),'turn_id':'turn','hook_event_name':'PermissionRequest','tool_name':'request_permissions','call_id':'quoted','tool_input':{'reason':'Register Motchi safely'}}
     dog.hook_event(hook,hub)
     check(len(bridge.snapshot()['items'][0]['approvals'])==1,'Hook and rollout mirrors deduplicate the same permission call')
     dog.hook_event({**hook,'hook_event_name':'PostToolUse'},hub)

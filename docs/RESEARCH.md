@@ -6,4 +6,4 @@ Reviewed for the product analysis preceding roadmap agreement on 2026-10-25.
 - [Linear: Project graph](https://linear.app/docs/project-graph) — distinguish scope, started and completed work, show scope changes, and base forecasting on sufficient historical velocity. Supports milestone-aware progress and optional evidence-based forecasting.
 - [Apple Human Interface Guidelines: Notifications](https://developer.apple.com/design/human-interface-guidelines/notifications) — concise, timely, high-value information; avoid duplicate notifications and unnecessary foreground interruption; offer meaningful actions. Supports selective interruptions and a recoverable attention inbox.
 
-The detailed roadmap is a product recommendation and user-approved plan, not a claim that these sources validate Mochi's implementation or guarantee particular outcomes.
+The detailed roadmap is a product recommendation and user-approved plan, not a claim that these sources validate Motchi's implementation or guarantee particular outcomes.
