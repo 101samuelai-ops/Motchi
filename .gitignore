@@ -1,0 +1,19 @@
+# Generated and private runtime data
+.DS_Store
+__pycache__/
+*.py[cod]
+.venv/
+node_modules/
+.env
+.env.*
+!.env.example
+*.app/
+*.zip
+build/
+dist/
+outputs/
+work/
+*.log
+.progress-pet.lock
+.progress-pet-completion.json
+.progress-pet-*.tmp

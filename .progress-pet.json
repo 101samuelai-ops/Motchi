@@ -1,0 +1,412 @@
+{
+  "name": "Mochi personalization roadmap",
+  "tasks": [
+    {
+      "id": "MEM-01",
+      "title": "Remember user preferences",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Persist language, explanation length, notification preferences and desired initiative; explicit settings take precedence over inferred preferences.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "MEM-02",
+      "title": "Remember project goals and completion criteria",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Persist audience, goal, milestone, priorities, constraints and an agreed definition of done separately for each project.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "MEM-03",
+      "title": "Remember project decisions and their reasons",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Record accepted, rejected, deferred and superseded decisions with sources; retrieve the current decision without resurrecting an abandoned approach.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "MEM-04",
+      "title": "Let users inspect and correct memory",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Provide conversational and visible controls to review, edit, forget and scope memories; changes survive restart and remain isolated by project.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHK-01",
+      "title": "Classify instructions, ideas and open decisions",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Explicit work becomes committed tasks; maybe-statements become ideas; questions become decisions; quoted and rejected suggestions do not become commitments.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHK-02",
+      "title": "Reconcile replacements, deferrals, bugs and reopened work",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Handle changed requirements and regressions without losing task identity or history; deferred and superseded work is outside the active milestone denominator.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHK-03",
+      "title": "Resolve semantic overlap with expand, replace or separate",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Clear duplicates reuse task IDs; ambiguous overlap asks whether to expand, replace, keep separate or skip; the decision persists.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHK-04",
+      "title": "Explain automatic checklist changes and support Undo",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Show the source conversation and reason for every automatic task change; preserve manual corrections and allow reversible changes.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "SYNC-01",
+      "title": "Process conversation changes incrementally",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Persist event cursors and compact task/decision history; handle restart, repeated events and partial history without duplicates; show freshness, coverage and sync failures.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PRG-01",
+      "title": "Track milestone scope and explain progress changes",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Show completed and total agreed tasks for a named milestone, preserve scope-change history, explain denominator changes and distinguish unknown from zero progress.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "QA-01",
+      "title": "Evaluate checklist accuracy and evidence quality",
+      "done": false,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Create representative conversation cases and track false additions, missed commitments, duplicates, correction frequency and unsupported completion claims.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHAT-01",
+      "title": "Route natural discussion to the right intent",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Distinguish status questions, brainstorming, new commitments, changed priorities and deferrals without requiring a mode picker; clarify ambiguous execution intent.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHAT-02",
+      "title": "Discuss the impact of proposed work",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Explain which milestone, dependencies and scope a proposed change affects before commitment; avoid inventing deadlines or effort estimates.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHAT-03",
+      "title": "Show checklist and instruction delivery outcomes",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Distinguish saved-only, sending, accepted, queued, failed and uncertain instructions; route to the exact connected chat/turn and never retry uncertain deliveries blindly.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHAT-04",
+      "title": "Keep project identity and connection capability visible",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Show the selected project beside the composer and its available actions; preserve topic during a discussion and ask when project references are ambiguous.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PRG-02",
+      "title": "Separate implemented, verified and accepted completion",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Apply project-specific completion criteria, attach suitable evidence, reopen contradicted work and avoid equating a finished turn with a finished project.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "CHAT-05",
+      "title": "Give source-backed progress and blocker answers",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Answer what changed, what remains and what needs the user using recorded facts, source links, current milestone and last-update time; identify unavailable information.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "QA-02",
+      "title": "Verify project routing and instruction delivery",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Test multiple projects, active-turn races, disconnects, stale requests and failed/uncertain sends; measure wrong-project and lost-instruction incidents.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "RETURN-01",
+      "title": "Provide a where-we-left-off summary",
+      "done": false,
+      "phase": "P3",
+      "milestone": "Returning to work and managing multiple projects",
+      "acceptance": "On request, summarize completed work, current work, postponed scope and the next unresolved decision since the user last checked the project.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PROJECT-01",
+      "title": "Group related chats under projects and releases",
+      "done": false,
+      "phase": "P3",
+      "milestone": "Returning to work and managing multiple projects",
+      "acceptance": "Allow several chats per project with separate milestones/releases and user-correctable membership; retain source chat identities and avoid merging unrelated work.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "ATTN-01",
+      "title": "Create a cross-project attention inbox",
+      "done": false,
+      "phase": "P3",
+      "milestone": "Returning to work and managing multiple projects",
+      "acceptance": "Collect unresolved questions, supported approvals, blockers and work ready for review; show what needs the user and keep dismissed items discoverable.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "ATTN-02",
+      "title": "Prioritize actionable blockers and dependencies",
+      "done": false,
+      "phase": "P3",
+      "milestone": "Returning to work and managing multiple projects",
+      "acceptance": "Distinguish running, waiting for the user, blocked and ready for review from actual evidence; suggest the next useful action without treating inactivity as failure.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "ATTN-03",
+      "title": "Add quiet hours and selective notifications",
+      "done": false,
+      "phase": "P3",
+      "milestone": "Returning to work and managing multiple projects",
+      "acceptance": "Support only-interrupt-when-I-need-to-act, project muting, batching and quiet hours; deduplicate notices, retain a history, and keep actionable requests available.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "QA-03",
+      "title": "Measure usefulness and interruption cost",
+      "done": false,
+      "phase": "P3",
+      "milestone": "Returning to work and managing multiple projects",
+      "acceptance": "Measure time to understand project state, actionable decisions resolved, notification dismiss/mute rates and whether short notices remain recoverable.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PERS-01",
+      "title": "Learn preferences cautiously with user control",
+      "done": false,
+      "phase": "P4",
+      "milestone": "Deeper personalization and optional enhancements",
+      "acceptance": "Suggest preferences from repeated corrections; show what was learned, allow rejection and reset, and never override explicit project instructions.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PERS-02",
+      "title": "Customize the dog and conversational style",
+      "done": false,
+      "phase": "P4",
+      "milestone": "Deeper personalization and optional enhancements",
+      "acceptance": "Offer a name, temperament, concise/detailed tone and animation intensity while respecting Reduce Motion and keeping product states understandable.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PERS-03",
+      "title": "Express meaningful states through dog behavior",
+      "done": false,
+      "phase": "P4",
+      "milestone": "Deeper personalization and optional enhancements",
+      "acceptance": "Use consistent listening, working, waiting and celebrating behavior; preserve transparent top-right presentation and avoid decorative interruption loops.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PRG-03",
+      "title": "Offer optional effort-weighted progress",
+      "done": false,
+      "phase": "P4",
+      "milestone": "Deeper personalization and optional enhancements",
+      "acceptance": "Keep equal task counts as a clear default; allow reviewed weights, avoid double-counting parent/subtasks and explain weighted progress separately.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "PRG-04",
+      "title": "Offer completion forecasts only with sufficient history",
+      "done": false,
+      "phase": "P4",
+      "milestone": "Deeper personalization and optional enhancements",
+      "acceptance": "Treat forecasting as optional, show its assumptions and uncertainty, account for scope changes and withhold dates when historical evidence is insufficient.",
+      "evidence": {
+        "kind": "Agreed roadmap",
+        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
+        "at": "2026-10-25"
+      },
+      "manualOverride": true
+    }
+  ],
+  "revision": 0
+}
