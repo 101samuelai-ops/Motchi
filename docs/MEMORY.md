@@ -39,4 +39,4 @@ The existing source already has local project discovery, recent-history checklis
 
 ## Repository and maintenance
 
-Requested GitHub account: the authenticated `101samuelai-ops` account. Repository name: `mochi`, private by default. Preserve project scope and integration limits in future changes. Follow `../AGENTS.md`; update memory only with actual user decisions and verified results.
+Requested GitHub account: the authenticated `101samuelai-ops` account. Repository: https://github.com/101samuelai-ops/mochi (created private on 2026-10-25). The initial commit records the roadmap and memory; the next imports the source baseline. Preserve project scope and integration limits in future changes. Follow `../AGENTS.md`; update memory only with actual user decisions and verified results.

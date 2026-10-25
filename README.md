@@ -1,5 +1,7 @@
 # Mochi
 
+Private repository: [101samuelai-ops/mochi](https://github.com/101samuelai-ops/mochi).
+
 A personal dog companion for understanding project progress, discussing work, and maintaining a checklist from project conversations.
 
 ## Start here
