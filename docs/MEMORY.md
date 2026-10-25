@@ -12,7 +12,7 @@ The user approved converting the preceding product analysis into the progress ch
 
 ## Existing user preferences
 
-- Dog-only anime companion; transparent space around the dog.
+- Interchangeable characters, requested on 2026-10-25, supersede the earlier dog-only preference. Keep the current anime dog as the default and preserve transparent space around the selected character. The initial additional character roster is still to be decided.
 - Popups at the primary screen's top right; ground line, leap, landing, then chat; animated return on dismissal.
 - Double right-click opens the companion; click outside dismisses it.
 - Routine tracking/completion announcements last 1.5 seconds. Questions, approvals and returned answers remain available for reading and action.
@@ -42,3 +42,7 @@ The existing source already has local project discovery, recent-history checklis
 Requested GitHub account: the authenticated `101samuelai-ops` account. Canonical repository: https://github.com/101samuelai-ops/Motchi (public, created by the user). On 2026-10-25 the user chose the product name Motchi and this repository in place of the earlier private mochi repository. Preserve the user-created initial commit. Future commits go to Motchi. The initial commit records the roadmap and memory; the next imports the source baseline. Preserve project scope and integration limits in future changes. Follow `../AGENTS.md`; update memory only with actual user decisions and verified results.
 
 The local canonical repository folder is `Motchi/` in the parent workspace. Legacy protocol/storage identifiers are retained for compatibility; product/display branding is Motchi. The 29 roadmap items are future feature work, not completed by this repository setup.
+
+## Character customization update — 2026-10-25
+
+The user wants changeable Motchi characters and is deciding the next implementation milestone and development model. Character selection should change presentation without losing project memory, checklists, pending questions or approvals. Added CHAR-01 through CHAR-03 as planned work; these bring the roadmap to 32 items. `NEXT_MILESTONE.md` contains a recommended sequence, not a user-approved implementation commitment. Dog/cat/robot are possible starting choices, not an agreed roster. This update does not change the current model settings or implement character switching.

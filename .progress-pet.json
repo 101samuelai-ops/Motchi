@@ -353,11 +353,11 @@
     },
     {
       "id": "PERS-02",
-      "title": "Customize the dog and conversational style",
+      "title": "Customize character identity and conversational style",
       "done": false,
       "phase": "P4",
       "milestone": "Deeper personalization and optional enhancements",
-      "acceptance": "Offer a name, temperament, concise/detailed tone and animation intensity while respecting Reduce Motion and keeping product states understandable.",
+      "acceptance": "Beyond the character picker, offer a name, temperament, concise/detailed tone and animation intensity while respecting Reduce Motion and keeping product states understandable.",
       "evidence": {
         "kind": "Agreed roadmap",
         "quote": "User requested the product analysis be saved as a progress checklist and memory.",
@@ -367,7 +367,7 @@
     },
     {
       "id": "PERS-03",
-      "title": "Express meaningful states through dog behavior",
+      "title": "Express meaningful states through character behavior",
       "done": false,
       "phase": "P4",
       "milestone": "Deeper personalization and optional enhancements",
@@ -406,7 +406,46 @@
         "at": "2026-10-25"
       },
       "manualOverride": true
+    },
+    {
+      "id": "CHAR-01",
+      "title": "Separate character assets from project behavior",
+      "acceptance": "A character registry provides transparent artwork and animation states, retaining the default dog and one shared project/checklist/approval controller.",
+      "done": false,
+      "phase": "Characters",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "User requirement",
+        "quote": "i also want to make the motchi changable characters",
+        "at": "2026-10-25"
+      }
+    },
+    {
+      "id": "CHAR-02",
+      "title": "Add a persistent character picker",
+      "acceptance": "Preview and select bundled characters; persist the selection across restarts without losing project, drafts, checklist or pending requests; safely fall back for invalid IDs.",
+      "done": false,
+      "phase": "Characters",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "User requirement",
+        "quote": "i also want to make the motchi changable characters",
+        "at": "2026-10-25"
+      }
+    },
+    {
+      "id": "CHAR-03",
+      "title": "Verify animation and interaction across characters",
+      "acceptance": "Each bundled character supports entrance, idle, waiting, celebration, dismissal and Reduce Motion, retaining transparency, top-right placement and existing timings.",
+      "done": false,
+      "phase": "Characters",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "User requirement",
+        "quote": "i also want to make the motchi changable characters",
+        "at": "2026-10-25"
+      }
     }
   ],
-  "revision": 0
+  "revision": 1
 }

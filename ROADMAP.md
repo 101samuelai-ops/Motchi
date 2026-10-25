@@ -4,6 +4,14 @@ Agreed on 2026-10-25. This is a future-work checklist, not a claim that these fe
 
 The canonical planning checklist is this file. `.progress-pet.json` contains the same stable task IDs for the Motchi progress panel. Keep their completion states synchronized when work is actually verified. New ideas and optional experiments should be recorded outside the active milestone until agreed.
 
+## Character customization — requested 2026-10-25
+
+This requirement supersedes dog-only presentation. The proposed build sequence is in [next milestone](docs/NEXT_MILESTONE.md); the initial character roster remains to be decided.
+
+- [ ] **CHAR-01: Separate character assets from project behavior** — Done when: A character registry supplies each character's identity, transparent artwork and supported animation states; the existing dog remains the default; project, checklist and approval behavior share one unchanged controller.
+- [ ] **CHAR-02: Add a persistent character picker** — Done when: Users can preview and select bundled characters, the selection survives restart, and switching preserves the selected project, drafts, checklist and pending requests; invalid selections fall back to the default.
+- [ ] **CHAR-03: Verify animation and interaction across characters** — Done when: Every bundled character supports entrance, idle, waiting, celebration and dismissal, follows Reduce Motion, stays transparent and uses the existing top-right placement and announcement timing without disrupting replies.
+
 ## P1 — Trustworthy project understanding
 
 - [ ] **MEM-01: Remember user preferences** — Done when: Persist language, explanation length, notification preferences and desired initiative; explicit settings take precedence over inferred preferences.
@@ -40,8 +48,8 @@ The canonical planning checklist is this file. `.progress-pet.json` contains the
 ## P4 — Deeper personalization and optional enhancements
 
 - [ ] **PERS-01: Learn preferences cautiously with user control** — Done when: Suggest preferences from repeated corrections; show what was learned, allow rejection and reset, and never override explicit project instructions.
-- [ ] **PERS-02: Customize the dog and conversational style** — Done when: Offer a name, temperament, concise/detailed tone and animation intensity while respecting Reduce Motion and keeping product states understandable.
-- [ ] **PERS-03: Express meaningful states through dog behavior** — Done when: Use consistent listening, working, waiting and celebrating behavior; preserve transparent top-right presentation and avoid decorative interruption loops.
+- [ ] **PERS-02: Customize character identity and conversational style** — Done when: Beyond the character picker, offer a name, temperament, concise/detailed tone and animation intensity while respecting Reduce Motion and keeping product states understandable.
+- [ ] **PERS-03: Express meaningful states through character behavior** — Done when: Use consistent listening, working, waiting and celebrating behavior; preserve transparent top-right presentation and avoid decorative interruption loops.
 - [ ] **PRG-03: Offer optional effort-weighted progress** — Done when: Keep equal task counts as a clear default; allow reviewed weights, avoid double-counting parent/subtasks and explain weighted progress separately.
 - [ ] **PRG-04: Offer completion forecasts only with sufficient history** — Done when: Treat forecasting as optional, show its assumptions and uncertainty, account for scope changes and withhold dates when historical evidence is insufficient.
 
