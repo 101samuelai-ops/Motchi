@@ -102,28 +102,30 @@
     {
       "id": "CHK-04",
       "title": "Explain automatic checklist changes and support Undo",
-      "done": false,
+      "done": true,
       "phase": "P1",
       "milestone": "Trustworthy project understanding",
       "acceptance": "Show the source conversation and reason for every automatic task change; preserve manual corrections and allow reversible changes.",
       "evidence": {
-        "kind": "Agreed roadmap",
-        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
-        "at": "2026-10-25"
+        "kind": "Implementation and regression verification",
+        "quote": "Source 0.12: durable history review, source evidence, protected corrections and Undo; 12 Python suites, 19 native checks and isolated browser verification. Live model accuracy remains unmeasured.",
+        "at": "2026-10-27",
+        "document": "docs/CHECKLIST_REVIEW.md"
       },
       "manualOverride": true
     },
     {
       "id": "SYNC-01",
       "title": "Process conversation changes incrementally",
-      "done": false,
+      "done": true,
       "phase": "P1",
       "milestone": "Trustworthy project understanding",
       "acceptance": "Persist event cursors and compact task/decision history; handle restart, repeated events and partial history without duplicates; show freshness, coverage and sync failures.",
       "evidence": {
-        "kind": "Agreed roadmap",
-        "quote": "User requested the product analysis be saved as a progress checklist and memory.",
-        "at": "2026-10-25"
+        "kind": "Implementation and regression verification",
+        "quote": "Source 0.12: durable history review, source evidence, protected corrections and Undo; 12 Python suites, 19 native checks and isolated browser verification. Live model accuracy remains unmeasured.",
+        "at": "2026-10-27",
+        "document": "docs/CHECKLIST_REVIEW.md"
       },
       "manualOverride": true
     },
@@ -447,5 +449,5 @@
       }
     }
   ],
-  "revision": 1
+  "revision": 2
 }

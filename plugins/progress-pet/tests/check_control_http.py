@@ -1,5 +1,6 @@
 """The local approval endpoint rejects cross-origin and form submissions."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -13,7 +14,8 @@ def check(value,label):
  assert value,label
  checks.append(label)
 with tempfile.TemporaryDirectory() as project:
- proc=subprocess.Popen([sys.executable,str(script),'--project',project,'--preview-server'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
+ proc=subprocess.Popen([sys.executable,str(script),'--project',project,'--preview-server'],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,
+                       env={**os.environ,'MOTCHI_HISTORY_DIR':str(Path(project)/'private-history')})
  try:
   base=proc.stdout.readline().strip().split()[-1].rstrip('/')
   def request(path='/control',headers=None,value=None,method='POST'):

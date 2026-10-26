@@ -107,7 +107,7 @@ class ManagedCodex:
                'item/fileChange/requestApproval': 'file',
                'item/tool/requestUserInput': 'question'}
 
-    def __init__(self, codex, root, atomic_json, config_flags=None, connection=None):
+    def __init__(self, codex, root, atomic_json, config_flags=None, connection=None, history=None):
         self.root = Path(root)
         self.atomic_json = atomic_json
         self.registry = self.root / 'managed-codex.json'
@@ -116,6 +116,7 @@ class ManagedCodex:
         self.config_flags = config_flags or (lambda cwd: [])
         self.codex = codex
         self.connection = connection
+        self.history = history
         self.items = {}
         self.requests = {}
         try:
@@ -240,9 +241,11 @@ class ManagedCodex:
             self.remember(item, 'user', text)
         return {'selection': identity, 'text': 'Added your instructions to the ongoing Codex turn.'}
 
-    @staticmethod
-    def remember(item, role, text):
-        entry = {'id': uuid.uuid4().hex, 'role': role, 'text': text[-6000:], 'at': time.time()}
+    def remember(self, item, role, text):
+        entry = {'id': uuid.uuid4().hex, 'role': role, 'text': text, 'at': time.time()}
+        if self.history:
+            self.history.ingest(item['cwd'], item['id'], [entry])
+            entry = {**entry, 'text': text[-6000:], 'queued': True}
         item['chatHistory'] = (item.get('chatHistory', []) + [entry])[-24:]
 
     def disconnected(self):

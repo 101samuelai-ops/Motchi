@@ -1,13 +1,17 @@
-# Recommended next milestone
+# Selected milestone and follow-up
 
-Recommendation prepared on 2026-10-25. Interchangeable characters are a user requirement. The sequence and suggested roster below are proposals awaiting the user's choice; no application changes are implemented by this document.
+User selection: prioritize reliable conversation-to-checklist updates and better progress discussion. This supersedes the earlier character-first recommendation. Interchangeable characters remain a user requirement, deferred until this workflow is dependable.
 
-## Suggested sequence
+## Current implementation
 
-1. **Interchangeable characters:** CHAR-01, CHAR-02 and CHAR-03. Retain the dog as the default, agree one additional character first, and use a reusable character registry rather than separate companion applications. A cat is the suggested first addition; a robot can follow. Start with global character selection. Per-project overrides and custom artwork imports can be considered later.
-2. **Reliable conversation-to-checklist updates:** CHK-01 and CHK-04, with the relevant QA-01 cases. Distinguish explicit tasks from ideas and decisions, show why an item changed, preserve manual corrections and allow Undo.
-3. **A useful project briefing:** MEM-02, PRG-01 and CHAT-05. Show the goal, current milestone, completed tasks, blocker, next decision, evidence and update time.
-4. **Broader project memory:** MEM-01, MEM-03 and MEM-04. Expand after the small end-to-end workflow is dependable.
+Motchi 0.12 implements durable incremental history review and source-backed automatic checklist changes with Undo (SYNC-01, CHK-04). Progress briefings now expose evidence, recorded pending inputs and review freshness/coverage. See [implementation and verification](CHECKLIST_REVIEW.md). The installed app has not been replaced during active work.
+
+## Recommended follow-up
+
+1. Run the supplied synthetic live-model evaluation in a normal terminal; expand it with reviewed real-world examples. Transport checks pass, but live model accuracy is unmeasured in this sandbox.
+2. Finish CHK-01 and CHK-02: separate ideas/decisions and reconcile changed requirements, deferrals and regressions. Keep stable IDs and history; do not count deferred/superseded scope as active work.
+3. Finish MEM-02, PRG-01 and CHAT-05: agreed goals, named milestones and completion criteria for richer source-backed project discussion.
+4. Return to CHAR-01 through CHAR-03 after agreeing the initial roster. Keep the dog as default and share one project/controller implementation.
 
 ## Character design boundaries
 

@@ -396,7 +396,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
             }
         case "follow": autoFollow = value["autoFollow"] as? Bool ?? true; conversationAnchor = ""; refreshReport(force: true)
         case "editing": isEditing = value["editing"] as? Bool ?? false
-        case "ask", "replyQuestion", "askApproval", "decideApproval", "startTask", "sendTurn", "stopTask", "addWork", "addChecklist", "setChecklistDone", "retryWork":
+        case "ask", "replyQuestion", "askApproval", "decideApproval", "startTask", "sendTurn", "stopTask", "addWork", "addChecklist", "setChecklistDone", "undoChecklistChange", "retryWork":
             if let selected = value["selection"] as? String, catalog.contains(where: { $0["id"] as? String == selected }) {
                 if ["ask", "askApproval"].contains(value["action"] as? String ?? ""), let id = value["requestId"] as? String {
                     answerDelivery.begin(id: id, selection: selected)

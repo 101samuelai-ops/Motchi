@@ -17,3 +17,4 @@ work/
 .progress-pet.lock
 .progress-pet-completion.json
 .progress-pet-*.tmp
+visible-history.sqlite3*

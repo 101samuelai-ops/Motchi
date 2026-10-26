@@ -39,7 +39,7 @@ body.checklist-open .metric{display:none}body.checklist-open .chips{display:none
 <section class="speech glass" aria-label="Dog says"><p id="greeting">Hi! I’m finding your projects.</p><div class="metric"><div class="ring" id="ring"><span id="percent">—</span></div><div class="counts"><b id="count">Getting ready</b><span id="remaining">Let’s see what’s next.</span></div></div></section>
 <div class="status"><span class="dot"></span><span id="status">Connecting to Codex…</span></div>
 <aside class="attention glass" id="attention" hidden aria-live="polite"><b id="attentionTitle">Codex needs you</b><p id="attentionText"></p><div class="options" id="options"></div><button id="review">Open Codex to reply ↗</button></aside>
-<details class="checklist-panel glass" id="checklistPanel"><summary>Project checklist <span id="checklistCount">0 tasks</span></summary><div id="checklistList" class="checklist-list"></div><div id="checklistNote" class="checklist-note"></div><div id="savedWork"></div><button id="addChecklist" type="button">＋ Checklist task</button></details>
+<details class="checklist-panel glass" id="checklistPanel"><summary>Project checklist <span id="checklistCount">0 tasks</span></summary><div id="checklistList" class="checklist-list"></div><div id="checklistNote" class="checklist-note" aria-live="polite"></div><details><summary>Recent automatic changes</summary><div id="checklistChanges" class="checklist-list"></div></details><div id="savedWork"></div><button id="addChecklist" type="button">＋ Checklist task</button></details>
 <section class="conversation glass" id="messages" aria-label="Conversation" aria-live="polite"><div class="empty">Ask me about this project. I’m all ears.</div></section>
 <div class="chips"><button data-question="progress">Progress</button><button data-question="what's left?">What’s left?</button><button data-question="What happened recently in this project?">Catch me up</button></div>
 <div class="task-actions"><button id="newTask" type="button">Start Codex task</button><button id="continueTask" type="button" hidden>Add work to Codex</button><button id="askMode" type="button" hidden>Ask Motchi</button><button id="stopTask" type="button" hidden>Stop task</button></div><div id="taskHint" class="task-hint" hidden></div><div id="requestMode" class="request-mode" hidden></div><form class="composer glass" id="composer"><textarea id="question" aria-label="Ask Motchi a question" placeholder="Ask Motchi about this project…" rows="2" maxlength="3000"></textarea><button id="send" type="submit">Ask ↑</button></form>
@@ -109,7 +109,7 @@ function send(action){
  if(native){window.webkit.messageHandlers.dog.postMessage(action);return}
  if(action.action==='snapshot'||action.action==='refresh'){
  fetch('/snapshot').then(r=>r.json()).then(data=>receive({type:'snapshot',...data})).catch(()=>{$('status').textContent='Open Motchi to connect your projects.'});
- }else if(['ask','replyQuestion','askApproval','decideApproval','startTask','sendTurn','stopTask','addWork','addChecklist','setChecklistDone','retryWork'].includes(action.action)){
+ }else if(['ask','replyQuestion','askApproval','decideApproval','startTask','sendTurn','stopTask','addWork','addChecklist','setChecklistDone','undoChecklistChange','retryWork'].includes(action.action)){
  fetch(action.action==='ask'?'/ask':action.action==='replyQuestion'?'/reply':'/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(action)}).then(r=>r.json()).then(data=>receive({type:'answer',...action,...data})).catch(()=>receive({type:'answer',...action,error:'Connection unavailable. Reopen Motchi to reconnect.'}));
  }
 }
@@ -153,12 +153,24 @@ function renderChecklist(item){
  const box=document.createElement('input');box.type='checkbox';box.checked=task.done;box.disabled=controlBusy.has(selected);box.setAttribute('aria-label',task.title);
  box.onchange=()=>control('setChecklistDone',{taskId:task.id,done:box.checked,revision:c.revision});
  const text=document.createElement('span');text.textContent=task.title;if(task.evidence?.quote)text.title=task.evidence.kind+': '+task.evidence.quote;
- label.append(box,text);$('checklistList').append(label)}
+ label.append(box,text);$('checklistList').append(label);
+ if(task.evidence?.quote||task.manualOverride){const source=document.createElement('details');source.className='checklist-note';const summary=document.createElement('summary');summary.textContent=task.manualOverride?'Your checkbox correction · source':'Why this task changed';source.append(summary);
+ const quote=document.createElement('div');quote.textContent=(task.manualOverride?'Manual correction is protected. ':'')+(task.evidence?.reason||task.evidence?.kind||'')+(task.evidence?.quote?' · “'+task.evidence.quote+'”':'');source.append(quote);
+ if(task.evidence?.chat){const b=document.createElement('button');b.textContent='Open source chat';b.disabled=!native||!items.some(i=>i.threadId===task.evidence.chat);if(b.disabled)b.title='Open the desktop companion to view available source chats.';b.onclick=()=>send({action:'openThread',threadId:task.evidence.chat});source.append(b)}$('checklistList').append(source)}}
  if(!tasks.length){const text=document.createElement('div');text.className='empty';text.textContent='I’ll build this from your chat and Codex plans. You can add a task too.';$('checklistList').append(text)}
  }
  const deliveries=(c.deliveries||[]).map(d=>`${d.title}: ${d.status==='notSent'?'saved, prompt not sent':d.status==='uncertain'||d.status==='sending'?'check Codex before resending':'ready to send'}${d.error?' · '+d.error:''}`);
  $('savedWork').replaceChildren();for(const d of c.deliveries||[]){if(d.status==='notSent'){const b=document.createElement('button');b.textContent='Send saved task: '+d.title;b.disabled=controlBusy.has(selected);b.onclick=()=>control('retryWork',{proposalId:d.id});$('savedWork').append(b)}}
- $('checklistNote').textContent=[c.syncing?'Reading chat history…':c.issue||'Syncs from chat and recorded plans. You can edit the boxes.',...deliveries].join('\n');
+ const coverage=c.coverage||{};
+ const review=coverage.total?`History reviewed: ${coverage.reviewed}/${coverage.total} sections · ${coverage.chats} chat(s)${coverage.pending?' · catching up':''}`:'Waiting for available chat history.';
+ const stamp=coverage.lastReviewedAt?'Last reviewed '+new Date(coverage.lastReviewedAt*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
+ $('checklistNote').textContent=[c.syncing?'Reading chat history…':c.issue||'Recorded checklist; your checkbox corrections are preserved.',review,coverage.limitedSources?'Some logs are missing, partial or loading.':'',stamp,...deliveries].filter(Boolean).join('\n');
+ const changesKey=JSON.stringify([item.id,c.revision,c.changes,controlBusy.has(selected)]);
+ if($('checklistChanges').dataset.state!==changesKey){$('checklistChanges').dataset.state=changesKey;$('checklistChanges').replaceChildren();
+ for(const change of c.changes||[]){const row=document.createElement('div');row.className='checklist-note';row.textContent=`${change.kind==='add'?'Added':'Completed'}: ${change.title}${change.undone?' · undone':''}. ${change.reason||''}`;
+ if(change.evidence?.quote){const quote=document.createElement('div');quote.textContent='“'+change.evidence.quote+'”';row.append(quote)}
+ if(change.canUndo){const b=document.createElement('button');b.textContent='Undo';b.disabled=controlBusy.has(selected);b.onclick=()=>control('undoChecklistChange',{changeId:change.id,revision:c.revision});row.append(b)}$('checklistChanges').append(row)}
+ if(!c.changes?.length)$('checklistChanges').textContent='No automatic changes recorded yet.';}
 }
 function render(){
  const item=current();if(!item)return;
@@ -217,7 +229,7 @@ window.receive=function(data){
 
  if(key&&entry?.action!=='setChecklistDone'){const list=conversations.get(key)||[];
  if(entry&&!entry.control&&key!==entry.selection){const old=conversations.get(entry.selection)||[];const idx=old.findLastIndex?old.findLastIndex(x=>x.role==='user'&&x.text===entry.text):-1;if(idx>=0)old.splice(idx,1);list.push({role:'user',text:entry.text})}
- list.push({role:entry?.direct&&!['addChecklist','setChecklistDone','replyQuestion'].includes(entry?.action)?'codex':'mochi',text:data.error||data.text||'I couldn’t get a reply.'});conversations.set(key,list)}
+ list.push({role:entry?.direct&&!['addChecklist','setChecklistDone','undoChecklistChange','replyQuestion'].includes(entry?.action)?'codex':'mochi',text:data.error||data.text||'I couldn’t get a reply.'});conversations.set(key,list)}
  if(key&&data.routedSelection&&selected===entry?.selection&&!$('question').value.trim()){selectProject(key);if(autoFollow&&!entry.direct){focusId=key;focusTaskKey=recommendationKey}send({action:'select',selection:key,autoFollow,keepConversation:!entry.direct});}
  render();syncEditing();
  if(returnWhenReady&&entry&&!entry.direct&&key)revealAnswer(key);

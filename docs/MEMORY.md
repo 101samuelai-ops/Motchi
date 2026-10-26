@@ -1,6 +1,6 @@
 # Persistent Motchi project memory
 
-Updated: 2026-10-25. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-10-27. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 ## Product intent
 
@@ -46,3 +46,10 @@ The local canonical repository folder is `Motchi/` in the parent workspace. Lega
 ## Character customization update — 2026-10-25
 
 The user wants changeable Motchi characters and is deciding the next implementation milestone and development model. Character selection should change presentation without losing project memory, checklists, pending questions or approvals. Added CHAR-01 through CHAR-03 as planned work; these bring the roadmap to 32 items. `NEXT_MILESTONE.md` contains a recommended sequence, not a user-approved implementation commitment. Dog/cat/robot are possible starting choices, not an agreed roster. This update does not change the current model settings or implement character switching.
+
+
+## Selected reliability milestone — 2026-10-27
+
+The user chose reliable checklist updates based on AI chat history and better project-progress discussion as the implementation priority. Character customization stays planned. Source version 0.12 adds a private durable visible-history queue, project review checkpoints, bounded review from the beginning of available local logs, coverage/freshness, exact-quote evidence, and revision-checked Undo for automatic additions/completions. Structured user question answers retain their context. Progress answers expose remaining work, recorded pending inputs, recent evidence and history limitations. Manual corrections remain protected; inference never sends work.
+
+Verified: 12 Python suites, including 25 history-review cases; 19 native interaction checks; isolated browser Undo and coverage checks. The optional live synthetic model evaluation could not initialize Codex's in-process client inside the development sandbox. Do not claim a model accuracy score. See `CHECKLIST_REVIEW.md` for details and limitations. CHK-04 and SYNC-01 are implemented/verified; broader classification, lifecycle, milestone-aware discussion and model-quality evaluation remain incomplete. The installed companion, trusted hook registration and auto-launch target have not been replaced or restarted by this update.

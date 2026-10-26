@@ -1,12 +1,12 @@
 {
   "name": "progress-pet",
-  "version": "0.11.0",
-  "description": "Motchi returns explicit Allow/Deny decisions through trusted synchronous Codex permission hooks, with a separate explanation chat.",
+  "version": "0.12.0",
+  "description": "Motchi reviews available project chat history incrementally, maintains an evidence-backed checklist and explains progress.",
   "skills": "./skills/",
   "interface": {
     "displayName": "Motchi",
     "shortDescription": "Your project buddy, a double right-click away",
-    "longDescription": "Reply to supported Codex permission hooks directly with Allow once or Deny in Motchi. Ask about a request before deciding. Exact hook review is required once; unsupported native cards remain in Codex. Includes chat-derived checklists and 1.5-second top-right announcements.",
+    "longDescription": "Review project checklists with source quotes, history coverage, freshness and Undo for automatic changes. Discuss progress and pending input. Supported approval replies retain the trusted live hook or owned-chat connection; unsupported native cards stay in Codex.",
     "category": "Productivity",
     "capabilities": [
       "Interactive",
