@@ -526,7 +526,20 @@
         "quote": "36 focused Android checks and release lint passed. Browser verified saved design and draft preservation. Signed 0.13.1 update installed; user confirmed all three designs work on the calendar. See docs/ANDROID_VERIFICATION.md.",
         "at": "2026-10-27"
       }
+    },
+    {
+      "id": "AND-09",
+      "title": "Provide easy calendar access over WLAN",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Install the signed update over WLAN without clearing pairing; provide a quiet Open Motchi notification button, Easy access settings and conditional home-screen shortcut support; verify the button opens the dashboard with the Mac connected.",
+      "evidence": {
+        "kind": "Build, system diagnostics and user-confirmed device verification",
+        "quote": "Signed 0.13.2 installed in place through WLAN; 36 Android checks, release build and lint passed. Android confirms the quiet Open Motchi notification/action. User confirmed it opens the dashboard and shows Mac connected. Reboot restoration and actual shortcut pinning remain untested; see docs/ANDROID_VERIFICATION.md.",
+        "at": "2026-10-27"
+      }
     }
   ],
-  "revision": 6
+  "revision": 7
 }

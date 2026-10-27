@@ -16,6 +16,7 @@ The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDR
 - [ ] **AND-06: Package and install the Android release** — Done when: Install the signed release with debugging disabled, preserve the calendar, and verify a real progress question, comment and explicit task.
 - [ ] **AND-07: Complete calendar and Mac field validation** — Done when: Complete normal Mac startup file-access setup and real sleep/wake, Wi-Fi roaming, power-cycle, multilingual and far-field microphone checks; record limits without claiming a speech accuracy score.
 - [x] **AND-08: Offer the three approved Android home designs** — Done when: Settings selects or cycles Companion canvas, Sidekick studio and Bubble lounge; design, colours and primary project choices persist; unknown progress and project drafts remain intact; the signed update installs and layout switching is verified on the calendar.
+- [x] **AND-09: Provide easy calendar access over WLAN** — Done when: Install the signed update over WLAN without clearing pairing; provide a quiet Open Motchi notification button, Easy access settings and conditional home-screen shortcut support; verify the button opens the dashboard with the Mac connected.
 
 AND-06 rollout: the signed release and live flows are installed/verified. The calendar's userdebug firmware forces WebView inspection on despite the app requesting it off, so the debugging criterion remains open. See the rollout record before treating this device as a hardened release target.
 

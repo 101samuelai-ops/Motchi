@@ -22,6 +22,14 @@ Request receipts retain stable operation IDs. A lost response is uncertain until
 
 Home voice questions match an explicitly named project. Multiple matches, duplicate names or an unnamed project open a choice list. Inside a project, follow-up text stays there. To switch projects, use All projects. A transcript opens an editable draft: choose Ask, Save comment or Send to Codex afterward.
 
+## Opening Motchi on the calendar
+
+Version 0.13.2 adds a quiet **Open Motchi** button in Android’s notification panel. Swipe down from the top of the calendar screen, then tap the Motchi notification or its **Open Motchi** action. This works with the calendar’s existing home-screen app. The button contains no project names or conversation text and does not record audio or run a background project service.
+
+**Settings → Easy access** turns this button on or off. Where supported by the home-screen app, **Add Motchi to home screen** requests an Android shortcut; confirm Android’s Add prompt. Unsupported launchers explain the notification alternative. A requested shortcut is not reported as pinned until Android lists it as pinned.
+
+The notification is restored after an app update and registered for normal device startup when enabled. The installed app remains available in Android’s app list. The launcher and calendar are retained. Live projects require the paired Mac to remain awake and on the same Wi-Fi; the button can open cached progress while the Mac is offline.
+
 ## Pairing and revocation
 
 On the Mac, open Motchi’s dog menu and choose **Connect Android calendar…**. This opts into the LAN service and displays a one-time pairing ticket, valid for five minutes. Open Settings in the Android app and paste the complete ticket. Pair only with the ticket shown on your Mac.

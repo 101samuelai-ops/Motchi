@@ -7,6 +7,7 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.security.keystore.KeyGenParameterSpec
@@ -48,6 +49,8 @@ class MainActivity : Activity() {
     private var audio = ByteArrayOutputStream()
     @Volatile private var recorded: ByteArray? = null
     private var pendingPermission: String? = null
+    private var pendingNotifications: String? = null
+    @Volatile private var syncAvailable = false
     private val timeout = Runnable { finishRecording(false); event("recordingStopped", JSONObject().put("automatic", true)) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,6 +69,7 @@ class MainActivity : Activity() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean = true
         }
         setContentView(web)
+        try { QuickAccess.show(this) } catch (_: Exception) { android.util.Log.w("MotchiAccess", "Quick access notification unavailable") }
         // Only bundled assets can call the narrowly scoped native interface.
         web.loadUrl("file:///android_asset/" + if(BuildConfig.COMPATIBILITY) "compatibility.html" else "index.html")
     }
@@ -162,7 +166,28 @@ class MainActivity : Activity() {
                             config.remove("code"); config.put("token",response.getString("token"));config.put("deviceId",response.getString("deviceId"));saveConnection(config)
                             JSONObject().put("paired",true)
                         }
-                        "snapshot" -> network(connection() ?: error("Pair with your Mac first."), "/v1/projects")
+                        "snapshot" -> {
+                            try {
+                                val snapshot = network(connection() ?: error("Pair with your Mac first."), "/v1/projects")
+                                if (!syncAvailable) android.util.Log.i("MotchiConnection", "Project sync ready: ${snapshot.optJSONArray("projects")?.length() ?: 0} projects")
+                                syncAvailable = true
+                                snapshot
+                            } catch (error: Exception) {
+                                if (syncAvailable) android.util.Log.w("MotchiConnection", "Mac project sync disconnected")
+                                syncAvailable = false
+                                throw error
+                            }
+                        }
+                        "quickAccessInfo" -> QuickAccess.info(this@MainActivity)
+                        "pinShortcut" -> QuickAccess.requestShortcut(this@MainActivity)
+                        "quickAccess" -> {
+                            val enabled = value.getBoolean("enabled")
+                            if (enabled && Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                                main.post { pendingNotifications=id;requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS),41) };return@execute
+                            }
+                            QuickAccess.setEnabled(this@MainActivity, enabled)
+                            QuickAccess.info(this@MainActivity)
+                        }
                         "submit" -> network(connection() ?: error("Mac is disconnected."),"/v1/operations","POST",value.getJSONObject("request").toString().toByteArray(Charsets.UTF_8))
                         "job" -> network(connection() ?: error("Mac is disconnected."),"/v1/operations/"+value.getString("id"))
                         "forget" -> {
@@ -189,6 +214,14 @@ class MainActivity : Activity() {
     }
     override fun onRequestPermissionsResult(requestCode:Int,permissions:Array<out String>,grantResults:IntArray) {
         super.onRequestPermissionsResult(requestCode,permissions,grantResults)
+        if (requestCode==41) {
+            val id=pendingNotifications;pendingNotifications=null
+            if (id!=null) {
+                val granted=grantResults.isNotEmpty()&&grantResults[0]==PackageManager.PERMISSION_GRANTED
+                QuickAccess.setEnabled(this,granted)
+                reply(id,JSONObject().put("ok",true).put("data",QuickAccess.info(this)))
+            }
+        }
         if (requestCode==40) {
             val id=pendingPermission;pendingPermission=null
             if (id!=null) workers.execute {

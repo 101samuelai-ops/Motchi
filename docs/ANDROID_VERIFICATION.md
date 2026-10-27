@@ -2,6 +2,16 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Easy-access update — 0.13.2
+
+- Confirmed the authorized wireless ADB connection and WLAN reachability to the Mac (2/2 ping packets). The existing calendar launcher and Motchi launcher activity remain available.
+- Signed 0.13.2, versionCode 3, installed in place through WLAN without clearing app data or pairing. Android package inspection confirms the installed version. The Mac's paired HTTPS service remains available.
+- Android notification diagnostics confirm one quiet ongoing Motchi notification, channel `motchi.quick-access`, importance 2, with an **Open Motchi** action. Both the notification and action target Motchi's main activity. It contains no project names or chat text.
+- Settings → Easy access adds an on/off control and requests a pinned home-screen shortcut only where supported. A requested shortcut is distinguished from a confirmed pinned shortcut. Notification permission handling is included for Android 13 and later; this device is Android 11.
+- User-confirmed device check: after being asked to swipe down and tap **Open Motchi**, the user answered **“Yes—Motchi opens and Mac is connected.”** Calendar Mirror remained unavailable to the desktop-control tool; this launch/connection result is the user's direct verification.
+- The 16 Android core checks, 20 appearance checks, JavaScript syntax check, signed release build, Android lint and whitespace checks passed. No foreground service, overlay, launcher replacement or continuous recording was added.
+- Restoration after app replacement and normal boot is implemented. Physical reboot restoration and actual home-screen shortcut pinning were not tested. The existing firmware, speech and field-validation limits below remain open.
+
 ## Appearance update — 0.13.1
 
 - The user approved all three final front-page designs and switching them in Settings. Source adds the shared layouts, live circular progress, primary/secondary pinning, colour personalisation, greeting rotation and real microphone-level waveform events. No simulated wake-word controls ship in the app.
