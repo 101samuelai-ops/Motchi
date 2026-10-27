@@ -1,13 +1,28 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; frame-src 'none'"><title>Motchi · Your project companion</title><link rel="stylesheet" href="app.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; frame-src 'none'"><title>Motchi · Your project companion</title><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="appearance.css"></head>
 <body>
-<header><button id="home" class="brand" aria-label="All projects"><img src="dog.svg" alt=""><span>motchi<span class="brand-sub">a little clarity, every day</span></span></button><div class="header-actions"><span id="connection" class="pill">Connecting…</span><button id="refresh" class="icon" aria-label="Refresh projects">↻</button><button id="settings" class="icon" aria-label="Connection settings">⚙</button></div></header>
+<header><button id="home" class="brand" aria-label="All projects"><img src="dog.svg" alt=""><span>motchi<span class="brand-sub">a little clarity, every day</span></span></button><div class="header-actions"><span id="connection" class="pill">Connecting…</span><button id="refresh" class="icon" aria-label="Refresh projects">↻</button><button id="settings" class="icon" aria-label="Settings">⚙</button></div></header>
 <div id="notice" class="notice" role="status" hidden></div>
 <main>
  <section id="home-screen">
-  <div class="hero"><div><p class="eyebrow">YOUR PROJECT COMPANION</p><h1>Big ideas.<br>A clearer next step.</h1><p>See where things stand. Talk through what comes next.</p><div class="hero-actions"><button id="home-mic" class="primary">◉ &nbsp; Ask Motchi about a project</button><button id="home-type" class="text-button">Or type a question ↗</button></div></div><div class="pet-scene"><span class="pet-note">One thing at a time.</span><img src="dog.svg" alt="Motchi, your puppy project companion"><div class="ground"></div></div></div>
-  <div class="section-heading"><div><p class="eyebrow">THE BIG PICTURE</p><h2>Your projects <span id="project-count"></span></h2></div><span id="last-sync" class="muted"></span></div>
-  <div id="projects" class="project-grid"></div>
+  <div class="dashboard-layout">
+   <section class="companion" aria-label="Talk with Motchi">
+    <img class="companion-dog" src="dog.svg" alt="Motchi, your puppy project companion">
+    <div class="companion-conversation">
+     <div class="speech-bubble"><h1 id="greeting">Let’s discuss your idea.</h1></div>
+     <div class="greeting-controls"><button id="pause-greetings" class="quiet-button" aria-pressed="false">Pause greetings</button><button id="next-greeting" class="quiet-button" aria-label="Next greeting">›</button></div>
+     <div class="voice-line"><svg class="voice-wave" viewBox="0 0 180 40" preserveAspectRatio="none" role="img" aria-label="Microphone idle"><path d="M0 20 Q22 17 45 20 T90 20 T135 20 T180 20"></path></svg><span id="voice-state">Tap the mic to talk</span></div>
+     <div class="compact-voice-actions"><button id="home-mic" class="quiet-button">◉ Talk</button><span class="hint">Microphone off until you start</span></div>
+     <form id="home-composer" class="home-composer"><input id="home-draft" aria-label="Question about a project" maxlength="3000" placeholder="Or type a little note…" autocomplete="off"><button aria-label="Choose project for this question" type="submit">↑</button></form>
+    </div>
+   </section>
+   <div id="projects" class="project-sections">
+    <div class="dashboard-summary"><h2>Your projects <span id="project-count"></span></h2><span id="last-sync" class="muted"></span></div>
+    <div id="empty-projects" class="empty" hidden></div>
+    <section id="primary-section"><div class="group-heading"><h2>Primary projects</h2><span class="muted">Your focus right now</span></div><div id="primary-projects" class="project-grid"></div></section>
+    <section id="secondary-section"><div class="group-heading"><h2>Secondary projects</h2><span class="muted">Still in view</span></div><div id="secondary-projects" class="project-grid"></div></section>
+   </div>
+  </div>
   <p class="footnote">Progress counts completed checklist tasks, not effort or shipping readiness.</p>
  </section>
  <section id="project-screen" hidden>
@@ -20,5 +35,5 @@
  </section>
 </main>
 <div id="modal" class="modal" hidden><div class="modal-card" role="dialog" aria-modal="true"><button id="close-modal" class="close icon" aria-label="Close">×</button><div id="modal-content"></div></div></div>
-<script src="native.js"></script><script src="core.js"></script><script src="app.js"></script>
+<script src="native.js"></script><script src="core.js"></script><script src="appearance.js"></script><script src="app.js"></script>
 </body></html>

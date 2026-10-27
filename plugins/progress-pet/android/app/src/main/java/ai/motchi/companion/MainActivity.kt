@@ -213,6 +213,15 @@ class MainActivity : Activity() {
                 val count=input.read(buffer,0,minOf(buffer.size,1920000-audio.size()))
                 if(count<=0) break
                 audio.write(buffer,0,count)
+                // Share only a normalized level with the bundled UI, while an
+                // explicitly started recording is active. No extra recording.
+                var squares = 0.0
+                for (i in 0 until count - 1 step 2) {
+                    val sample = ((buffer[i].toInt() and 0xff) or (buffer[i+1].toInt() shl 8)).toShort().toDouble()
+                    squares += sample * sample
+                }
+                val rms = kotlin.math.sqrt(squares / maxOf(1, count / 2)) / 32768.0
+                event("recordingLevel", JSONObject().put("level", minOf(1.0, rms * 12.0)))
             }
             if(recording) main.post { finishRecording(false);event("recordingStopped",JSONObject().put("automatic",true)) }
         }.also { it.start() }

@@ -1,0 +1,18 @@
+/* Appearance must never merge project identities or invent completion. */
+const assert=require('assert');
+const A=require('../android/app/src/main/assets/appearance.js');
+let checks=0;
+function test(name,fn){fn();checks++;}
+test('malformed preferences recover safely',()=>{const p=A.normalize({layout:'bad',mode:'bad',background:'url(secret)',text:'#f00',primaryIds:['a','a',3]});assert.equal(p.layout,'canvas');assert.equal(p.mode,'system');assert.equal(p.background,null);assert.equal(p.text,null);assert.deepEqual(p.primaryIds,['a']);});
+test('all three designs cycle in both directions',()=>{let id='canvas';for(let i=0;i<3;i++)id=A.next(id,1);assert.equal(id,'canvas');assert.equal(A.next('canvas',-1),'lounge');});
+for(const layout of A.layouts)for(const mode of ['light','dark'])test(layout.name+' '+mode+' remains readable',()=>{const c=A.colours({layout:layout.id,mode},false);assert(A.contrast(c.vars['--paper'],c.text)>=4.5);assert(A.contrast(c.vars['--white'],c.text)>=4.5);assert(A.contrast(c.vars['--white'],c.vars['--muted'])>=4.5);});
+test('low contrast colours are corrected without losing background',()=>{const c=A.colours({background:'#ffffff',text:'#ffffff'},false);assert.equal(c.background,'#ffffff');assert(c.adjusted);assert(A.contrast(c.background,c.text)>=4.5);});
+test('custom colours survive design switching and JSON storage',()=>{const p=A.normalize(JSON.parse(JSON.stringify({layout:'studio',background:'#18202f',text:'#f4eedd',primaryIds:['a']})));const c=A.colours(p,false);assert.equal(c.background,'#18202f');assert.equal(c.text,'#f4eedd');p.layout='lounge';assert.equal(A.colours(p,false).text,c.text);assert.deepEqual(p.primaryIds,['a']);});
+test('empty checklist stays unknown',()=>{assert.equal(A.status({progress:{total:0,completed:0,percent:null}}).key,'recent');assert.equal(A.status({progress:{total:0,completed:0,percent:null}}).label,'Progress unknown');});
+test('active and attention outrank checked-off scope',()=>{const p={progress:{total:3,completed:3,percent:100},active:true};assert.equal(A.status(p).key,'active');p.needsInput=true;assert.equal(A.status(p).key,'input');});
+test('only actual failures make the status red',()=>{assert.equal(A.status({chats:[{status:'failed'}]}).key,'error');assert.equal(A.status({chats:[{status:'idle'}]}).key,'recent');assert.equal(A.status({progress:{total:2,completed:2,percent:100}}).label,'Checklist complete');});
+test('grouping preserves identity, source order and unknown pinned projects',()=>{const projects=[{id:'a',name:'Same'},{id:'b',name:'Same'},{id:'c',name:'Third'}],prefs={primaryIds:['b','temporarily-offline']};const g=A.groups(projects,prefs);assert.deepEqual(g.primary.map(p=>p.id),['b']);assert.deepEqual(g.secondary.map(p=>p.id),['a','c']);assert.deepEqual(prefs.primaryIds,['b','temporarily-offline']);});
+test('an explicitly empty primary group does not repin projects',()=>{assert.equal(A.groups([{id:'a'}],{primaryIds:[]}).primary.length,0);assert.equal(A.groups([{id:'a'}],{}).primary.length,1);});
+test('appearance normalization does not mutate project state',()=>{const data={layout:'lounge',drafts:{a:'Keep this'},operations:[{id:'op-1',status:'uncertain'}]};const before=JSON.stringify(data);A.normalize(data);A.colours(data,true);assert.equal(JSON.stringify(data),before);});
+for(const background of ['#888888','#ffffff','#101010','#e9dfed'])test('status labels remain readable on '+background,()=>{const c=A.colours({background},false);for(const key of ['input','active','error','done','recent'])assert(A.contrast(c.vars['--status-'+key],c.vars['--tint-'+key])>=4.5);});
+console.log(checks+' Android appearance, status and project isolation checks passed');

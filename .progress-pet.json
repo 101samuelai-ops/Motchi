@@ -513,7 +513,20 @@
         "quote": "User allowed Mac file-access prompts. Normal unlocked LaunchServices restart loaded projects, reconnected the calendar and returned a current checklist answer. Locked startup/login, sleep/wake, roaming, power-cycle and real multilingual/far-field speech remain unverified.",
         "at": "2026-10-27"
       }
+    },
+    {
+      "id": "AND-08",
+      "title": "Offer the three approved Android home designs",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Settings selects or cycles Companion canvas, Sidekick studio and Bubble lounge; design, colours and primary project choices persist; unknown progress and project drafts remain intact; the signed update installs and layout switching is verified on the calendar.",
+      "evidence": {
+        "kind": "Automated, browser and user-confirmed device verification",
+        "quote": "36 focused Android checks and release lint passed. Browser verified saved design and draft preservation. Signed 0.13.1 update installed; user confirmed all three designs work on the calendar. See docs/ANDROID_VERIFICATION.md.",
+        "at": "2026-10-27"
+      }
     }
   ],
-  "revision": 5
+  "revision": 6
 }

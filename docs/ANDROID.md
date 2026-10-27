@@ -4,7 +4,13 @@ Version 0.13 adds a separate installed Android app for an Android 11 calendar. T
 
 ## Using the app
 
-Home groups discovered chats by their canonical project folder. It reads that folder’s shared checklist once, rather than adding together counts from its chats. Projects needing input appear first. Missing or empty checklists show **Progress unknown**. Task counts describe recorded checklist scope, not effort, acceptance or shipping readiness.
+Version 0.13.1 adds **Settings → Appearance**. Choose **Companion canvas**, **Sidekick studio**, or **Bubble lounge**, or use **Previous design / Next design** to cycle through them. The choice is saved immediately on the calendar. Light/dark/device appearance, custom background and text colours, and rotating greetings are configurable there. Low-contrast text and status colours are adjusted for readability. **Use this design’s colours** restores the selected design’s palette.
+
+The large Motchi and speech bubble sit beside a compact typing field and microphone action. **Primary projects** are your chosen focus; **Secondary projects** remain visible. Use **Pin / Primary** on a card to move it between sections. The first two discovered projects initially become primary; later refreshes preserve your choices. Needs-input items use amber, active projects blue, failures red, and completed checklists green. “Checklist complete” describes recorded scope, not shipping readiness. Project progress remains unknown when there is no checklist.
+
+Changing the design does not reconnect, clear project conversations or drafts, or send instructions. Appearance preferences are stored separately from connection and project state. The voice waveform reflects microphone amplitude during an explicitly started recording. Wake-word listening remains a requested future addition; it is not active in this release.
+
+Home groups discovered chats by their canonical project folder. It reads that folder’s shared checklist once, rather than adding together counts from its chats. Projects needing input appear first within their primary or secondary section. Missing or empty checklists show **Progress unknown**. Task counts describe recorded checklist scope, not effort, acceptance or shipping readiness.
 
 Tap a project to discuss it. The selected project and exact chat stay visible. Checklists include source quotes, chat identities, history coverage, freshness and available Undo actions. The attention list holds similarity questions and Mac-only input alerts. A checkmark edit uses the current checklist revision; stale edits fail and require refresh.
 

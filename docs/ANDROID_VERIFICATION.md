@@ -2,6 +2,15 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Appearance update — 0.13.1
+
+- The user approved all three final front-page designs and switching them in Settings. Source adds the shared layouts, live circular progress, primary/secondary pinning, colour personalisation, greeting rotation and real microphone-level waveform events. No simulated wake-word controls ship in the app.
+- The 16 existing Android routing/offline checks and 20 new appearance/status/isolation checks pass. Coverage includes invalid settings, layout wraparound, saved colours, contrast on custom backgrounds, empty checklists, active/input precedence over checked-off scope, exact project identity and an intentionally empty primary section.
+- Browser verification against isolated project fixtures confirmed all three settings choices, selection after reload, project discussion after switching, and an unsent draft surviving design/colour changes. The preview produced no console errors. It did not send live project instructions.
+- Signed release build and Android lint passed. An in-place ADB update succeeded; package inspection confirms version 0.13.1, versionCode 2, the existing application identity and a non-debuggable APK. App data was not cleared.
+- Direct Calendar Mirror access remained unavailable to the desktop-control tool. The user opened the updated app on the actual calendar and explicitly confirmed: **“Yes—all three designs work”** in response to checking Settings → Appearance → Next design. This is user-confirmed on-device visual verification, not an agent-observed device screenshot.
+- The new native waveform-level path compiled successfully; actual speech responsiveness and far-field accuracy were not newly verified in this appearance update. Existing field and firmware limitations below still apply.
+
 ## Verified
 
 - A minimal locally signed compatibility APK installed successfully through the existing authorized wireless ADB connection. Rendering, touch input, microphone start/stop, pinned HTTPS pairing and network requests worked before dashboard development. Installation required no restriction changes. The existing calendar was retained.

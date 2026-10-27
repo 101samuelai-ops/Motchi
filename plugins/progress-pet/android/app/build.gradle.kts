@@ -7,8 +7,8 @@ android {
         applicationId = "ai.motchi.companion"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.13.0"
+        versionCode = 2
+        versionName = "0.13.1"
         buildConfigField("boolean", "COMPATIBILITY", (project.findProperty("motchiCompatibility") == "true").toString())
     }
     val signingPath = System.getenv("MOTCHI_SIGNING_FILE")
