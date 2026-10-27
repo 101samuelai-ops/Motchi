@@ -523,6 +523,8 @@ class DogBridge:
         self.history = {}
         self.seen_approvals = set()
         self.ask_locks = {}
+        self.snapshot_lock = threading.RLock()
+        self.android_portal = None
         self.hook_approvals = HookApprovals(self.root)
         history_folder = root if root else Path(os.environ.get('MOTCHI_HISTORY_DIR', Path.home() / 'Library/Application Support/Mochi'))
         history_folder.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -555,6 +557,10 @@ class DogBridge:
             self.catalog_time = time.monotonic()
 
     def snapshot(self):
+        with self.snapshot_lock:
+            return self._snapshot()
+
+    def _snapshot(self):
         self.hook_approvals.heartbeat()
         self.refresh_catalog()
         items = {k: dict(v) for k, v in self.items.items()}
@@ -947,10 +953,10 @@ class DogBridge:
             result = self.checklists.propose(item['cwd'], selection, text.strip()[:300], 'user:' + token,
                                             text=text if send else None, semantic=True)
             if result.get('pending'):
-                return {'text': 'This looks similar to an existing task. Choose Same task or Different task before I add or send it.', 'routedSelection': selection}
+                return {'text': 'This looks similar to an existing task. Choose Same task or Different task before I add or send it.', 'routedSelection': selection, 'deliveryStatus':'needsClarification', 'proposalId':result['proposalId']}
             if send:
                 delivered = self.checklists.delivery(item['cwd'], selection, result['proposalId'], self.control.add_work)
-                return {'text': delivered['text'], 'routedSelection': selection}
+                return {'text': delivered['text'], 'routedSelection': selection, 'deliveryStatus':'accepted', 'proposalId':result['proposalId']}
             return {'text': 'Added to the project checklist.', 'routedSelection': selection}
         if action == 'retryWork':
             item = self.resolve(selection)
@@ -993,6 +999,8 @@ class DogBridge:
         return self.ask_result(request)
 
     def close(self):
+        if self.android_portal:
+            self.android_portal.close()
         self.hook_approvals.close()
         self.checklists.close()
         self.server.close()
@@ -1023,6 +1031,13 @@ def serve_stdio(bridge):
                     if request.get("action") == "refresh":
                         bridge.catalog_time = 0
                     emit({"type": "snapshot", **bridge.snapshot()})
+                elif request.get('action') == 'androidPairing':
+                    if not bridge.android_portal:
+                        from android_host import AndroidPortal
+                        bridge.android_portal = AndroidPortal(bridge).start()
+                        from android_host import SUPPORT
+                        (SUPPORT / 'config.json').write_text(json.dumps({'enabled': True, 'port': 47831}))
+                    emit({'type':'androidPairing', **bridge.android_portal.pairing()})
             except Exception as exc:
                 emit({"type": "error", "error": str(exc)[:300]})
     finally:
@@ -1057,6 +1072,14 @@ def main():
         print("{}")  # Observer events never decide approvals.
         return
     bridge = DogBridge(args.project)
+    # Remote access is opt-in and shares this exact desktop bridge/controller.
+    # Preview/snapshot tools never open a LAN service as a side effect.
+    if not (args.preview_server or args.snapshot or args.ask):
+        try:
+            from android_host import from_config
+            bridge.android_portal = from_config(bridge)
+        except (OSError, ValueError, ImportError):
+            pass  # Desktop interaction remains available if LAN startup fails.
     if args.preview_server:
         from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
         from urllib.parse import urlsplit

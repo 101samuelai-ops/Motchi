@@ -1,0 +1,21 @@
+/* Pure routing/offline regressions shared with the bundled, older-WebView UI. */
+const assert=require('assert');
+const C=require('../android/app/src/main/assets/core.js');
+const a={id:'a',name:'Motchi',progress:{percent:50,completed:1,total:2}},b={id:'b',name:'Calendar'};
+assert.equal(C.projectRoute('Open Motchi’s progress',[a,b]).project.id,'a');
+assert.equal(C.projectRoute('How is Calendar doing?',[a,b]).project.id,'b');
+assert.equal(C.projectRoute('Compare Motchi and Calendar',[a,b]).project,null);
+assert.equal(C.projectRoute('How is my project?',[a,b]).choices.length,2);
+assert.equal(C.projectRoute('How is Motchi?',[a,{id:'c',name:'Motchi'}]).project,null);
+assert.equal(C.projectRoute('Open Motchiness',[a]).project,null);
+assert.equal(C.progress({progress:{percent:null,total:0,completed:0}}),'Progress unknown');
+assert.equal(C.progress(a),'1 of 2 tasks · 50%');
+assert(C.stale({updatedAt:100},true,300000));
+assert(C.stale({updatedAt:299},false,300000));
+assert(!C.stale({updatedAt:299},true,300000));
+assert(C.stale({},true));
+assert.notEqual(C.identity(),C.identity());
+assert.equal(C.projectRoute('Open Motchi’s progress',[{id:'m',name:'Motchi — development',aliases:['Motchi']}]).project.id,'m');
+assert.equal(C.projectRoute('看看日历项目的进度',[{id:'c',name:'日历项目'}]).project.id,'c');
+assert.equal(C.projectRoute('看看Motchi进度',[a]).project.id,'a');
+console.log('16 Android routing, unknown progress and offline checks passed');

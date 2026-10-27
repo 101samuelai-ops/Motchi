@@ -1,5 +1,7 @@
 # Progress Dog · Motchi 0.11.0
 
+Motchi 0.13 includes an optional, paired Android dashboard for a calendar or tablet. See [Android setup, privacy and build instructions](../../docs/ANDROID.md). The Mac remains responsible for project analysis and execution; Android approval controls are outside this release.
+
 Motchi is a dog-only Mac companion and Codex plugin. Double right-click to open Motchi at the primary screen’s top-right corner, independently of your mouse position. A ground line appears first; the dog leaps out, lands, and sits before translucent chat cards unfold, with no solid enclosing background. Click outside to dismiss: the chat fades, Motchi crouches and hops back into its ground line, then the ground line retracts before the window closes. Close, Escape and the menu use the same 780 ms dismissal. Reopening cancels any old close timer. The native desktop has transparent space around the dog; the development preview uses a checkerboard to show that space.
 
 ## Install and start

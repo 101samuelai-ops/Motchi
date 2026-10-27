@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'self' data:; object-src 'none'; frame-src 'none'"><title>Motchi · Your project companion</title><link rel="stylesheet" href="app.css"></head>
+<body>
+<header><button id="home" class="brand" aria-label="All projects"><img src="dog.svg" alt=""><span>motchi<span class="brand-sub">a little clarity, every day</span></span></button><div class="header-actions"><span id="connection" class="pill">Connecting…</span><button id="refresh" class="icon" aria-label="Refresh projects">↻</button><button id="settings" class="icon" aria-label="Connection settings">⚙</button></div></header>
+<div id="notice" class="notice" role="status" hidden></div>
+<main>
+ <section id="home-screen">
+  <div class="hero"><div><p class="eyebrow">YOUR PROJECT COMPANION</p><h1>Big ideas.<br>A clearer next step.</h1><p>See where things stand. Talk through what comes next.</p><div class="hero-actions"><button id="home-mic" class="primary">◉ &nbsp; Ask Motchi about a project</button><button id="home-type" class="text-button">Or type a question ↗</button></div></div><div class="pet-scene"><span class="pet-note">One thing at a time.</span><img src="dog.svg" alt="Motchi, your puppy project companion"><div class="ground"></div></div></div>
+  <div class="section-heading"><div><p class="eyebrow">THE BIG PICTURE</p><h2>Your projects <span id="project-count"></span></h2></div><span id="last-sync" class="muted"></span></div>
+  <div id="projects" class="project-grid"></div>
+  <p class="footnote">Progress counts completed checklist tasks, not effort or shipping readiness.</p>
+ </section>
+ <section id="project-screen" hidden>
+  <button id="back" class="text-button">← All projects</button>
+  <div class="project-heading"><div><p class="eyebrow">LET’S LOOK AT</p><h1 id="project-name"></h1><p id="project-summary"></p></div><button id="project-mic" class="primary">◉ &nbsp; Talk to Motchi</button></div>
+  <div class="workspace">
+   <aside><section class="panel"><h2>The checklist <span id="task-count"></span></h2><div id="checklist"></div></section><section class="panel"><h2>History &amp; evidence</h2><div id="coverage"></div><div id="changes"></div></section></aside>
+   <div class="discussion-column"><section class="panel discussion"><div class="discussion-title"><img src="dog.svg" alt=""><div><h2>A little project clarity</h2><p class="muted">Ask, leave a note, or explicitly send work.</p></div></div><label class="chat-label" for="chat-choice">Discussing this project’s chat</label><select id="chat-choice"></select><p id="capability" class="muted"></p><details id="attention-details" class="attention-summary" hidden><summary id="attention-count"></summary><div id="attention"></div></details><div id="messages" class="messages" aria-live="polite"></div><div class="composer"><label for="draft">Your question, comment or next task</label><textarea id="draft" rows="3" maxlength="3000" placeholder="What’s finished? What still needs my attention?"></textarea><div class="composer-actions"><button id="ask" class="primary">Ask Motchi</button><button id="comment">Save comment</button><button id="send">Send to Codex ↗</button></div><p class="hint">Questions and comments never start implementation work.</p></div></section><section class="panel"><h2>Project notebook</h2><div id="comments"></div></section><section id="operations-panel" class="panel" hidden><h2>Request receipts</h2><div id="operations"></div></section></div>
+  </div>
+ </section>
+</main>
+<div id="modal" class="modal" hidden><div class="modal-card" role="dialog" aria-modal="true"><button id="close-modal" class="close icon" aria-label="Close">×</button><div id="modal-content"></div></div></div>
+<script src="native.js"></script><script src="core.js"></script><script src="app.js"></script>
+</body></html>

@@ -1,6 +1,6 @@
 {
   "name": "progress-pet",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "description": "Motchi reviews available project chat history incrementally, maintains an evidence-backed checklist and explains progress.",
   "skills": "./skills/",
   "interface": {

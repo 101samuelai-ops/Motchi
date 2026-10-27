@@ -247,6 +247,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         statusItem?.button?.title = "🐶"; statusItem?.button?.toolTip = "Motchi · Project companion"
         let menu = NSMenu()
         let report = menu.addItem(withTitle: "Chat with Motchi / show projects", action: #selector(toggleReport), keyEquivalent: ""); report.target = self
+        let android = menu.addItem(withTitle: "Connect Android calendar…", action: #selector(pairAndroid), keyEquivalent: ""); android.target = self
         shortcutEnabled = UserDefaults.standard.object(forKey: shortcutPreference) as? Bool ?? true
         shortcutItem = menu.addItem(withTitle: "Double right-click for Motchi", action: #selector(toggleShortcut), keyEquivalent: "")
         shortcutItem?.target = self; shortcutItem?.state = shortcutEnabled ? .on : .off
@@ -254,7 +255,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         menu.addItem(.separator())
         let quit = menu.addItem(withTitle: "Quit Progress Dog", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"); quit.target = NSApp
         statusItem?.menu = menu
-        output("Motchi 0.10.0 active: primary screen top-right; announcements \(duration)s total.")
+        output("Motchi 0.13.0 active: primary screen top-right; announcements \(duration)s total.")
         output("Progress Dog hub watching: \(initialProjectURL.path)")
         configureShortcut(); configureDismissal(); startBridge()
         if preview { showPreview() }
@@ -266,6 +267,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
             RunLoop.main.add(timer!, forMode: .common)
         }
     }
+    @objc func pairAndroid() { requestBridge(["action": "androidPairing"]) }
     func startBridge() {
         guard bridge?.isRunning != true else { return }
         let script = Bundle.main.path(forResource: "dog_bridge", ofType: "py") ?? option("--bridge")
@@ -291,6 +293,17 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         while let end = bridgeBuffer.firstIndex(of: 10) {
             let line = bridgeBuffer[..<end]; bridgeBuffer.removeSubrange(...end)
             guard var value = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any] else { continue }
+            if value["type"] as? String == "androidPairing", let ticket = value["ticket"] as? String {
+                let alert = NSAlert(); alert.messageText = "Connect Motchi on Android"
+                alert.informativeText = "On the calendar, open Motchi and paste this pairing code. It expires in five minutes. Both devices must be on the same Wi-Fi.\n\nMac: \(value["address"] as? String ?? "")"
+                let text = NSTextView(frame: NSRect(x: 0, y: 0, width: 480, height: 110))
+                text.string = ticket; text.isEditable = false; text.isSelectable = true
+                text.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+                alert.accessoryView = text; alert.addButton(withTitle: "Copy pairing code"); alert.addButton(withTitle: "Close")
+                NSApp.activate(ignoringOtherApps: true)
+                if alert.runModal() == .alertFirstButtonReturn { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(ticket, forType: .string) }
+                continue
+            }
             if value["type"] as? String == "snapshot" {
                 catalog = value["items"] as? [[String: Any]] ?? []
                 if !catalog.contains(where: { $0["id"] as? String == selectedID }) {
@@ -574,7 +587,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         window.setFrame(NSRect(origin: NSPoint(x: x, y: y), size: size), display: false)
         presentEntrance()
         window.orderFrontRegardless(); refreshReport(force: true)
-        output("Motchi 0.10.0 opened at primary screen top right: \(trackingTitle != nil ? "1.5-second tracking announcement" : "Codex dialog").")
+        output("Motchi 0.13.0 opened at primary screen top right: \(trackingTitle != nil ? "1.5-second tracking announcement" : "Codex dialog").")
     }
     func refreshReport(force: Bool = false) {
         let now = ProcessInfo.processInfo.systemUptime

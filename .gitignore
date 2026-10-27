@@ -18,3 +18,10 @@ work/
 .progress-pet-completion.json
 .progress-pet-*.tmp
 visible-history.sqlite3*
+
+# Android local tooling and release credentials
+.gradle/
+.kotlin/
+local.properties
+*.jks
+*.keystore

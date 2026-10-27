@@ -447,7 +447,68 @@
         "quote": "i also want to make the motchi changable characters",
         "at": "2026-10-25"
       }
+    },
+    {
+      "id": "AND-01",
+      "title": "Verify the signed Android compatibility app",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Installation, rendering, touch, microphone and pinned local networking pass on the calendar before dashboard development."
+    },
+    {
+      "id": "AND-02",
+      "title": "Add the paired HTTPS Mac project service",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Share the desktop bridge, group projects once per canonical folder, authenticate/pin devices, revoke credentials and preserve stable asynchronous operation receipts."
+    },
+    {
+      "id": "AND-03",
+      "title": "Build the Android project dashboard and discussion",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Show unknown/count progress, activity, source coverage and freshness; retain project context, drafts, explicit actions and cached offline progress on the older WebView."
+    },
+    {
+      "id": "AND-04",
+      "title": "Add local push-to-talk transcription",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Record only after Start with Stop/Cancel and a 60-second cap; use a separately installed small multilingual whisper.cpp model, clean temporary audio and require editable transcript review."
+    },
+    {
+      "id": "AND-05",
+      "title": "Verify private comments and explicit Codex work",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Save comments without execution; confirm connected/new-chat work, preserve duplicate clarification, exact identities and failed/uncertain delivery without automatic replay."
+    },
+    {
+      "id": "AND-06",
+      "title": "Package and install the Android release",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Install the signed release with debugging disabled, preserve the calendar, and verify a real progress question, comment and explicit task.",
+      "evidence": {
+        "kind": "Device verification",
+        "quote": "Signed 0.13.0 release installed without debugging; calendar retained. Live question, private comment and explicit connected-task delivery verified; release reconnect retained seven project cards and existing receipts. See docs/ANDROID_VERIFICATION.md.",
+        "at": "2026-10-27"
+      }
+    },
+    {
+      "id": "AND-07",
+      "title": "Complete calendar and Mac field validation",
+      "done": false,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Complete normal Mac startup file-access setup and real sleep/wake, Wi-Fi roaming, power-cycle, multilingual and far-field microphone checks; record limits without claiming a speech accuracy score."
     }
   ],
-  "revision": 2
+  "revision": 3
 }

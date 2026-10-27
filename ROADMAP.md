@@ -4,6 +4,18 @@ Agreed on 2026-10-25. This is a future-work checklist, not a claim that these fe
 
 The canonical planning checklist is this file. `.progress-pet.json` contains the same stable task IDs for the Motchi progress panel. Keep their completion states synchronized when work is actually verified. New ideas and optional experiments should be recorded outside the active milestone until agreed.
 
+## Android calendar companion — approved 2026-10-27
+
+The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals, wake word or launcher replacement in this release.
+
+- [x] **AND-01: Verify the signed Android compatibility app** — Done when: Installation, rendering, touch, microphone and pinned local networking pass on the calendar before dashboard development.
+- [x] **AND-02: Add the paired HTTPS Mac project service** — Done when: Share the desktop bridge, group projects once per canonical folder, authenticate/pin devices, revoke credentials and preserve stable asynchronous operation receipts.
+- [x] **AND-03: Build the Android project dashboard and discussion** — Done when: Show unknown/count progress, activity, source coverage and freshness; retain project context, drafts, explicit actions and cached offline progress on the older WebView.
+- [x] **AND-04: Add local push-to-talk transcription** — Done when: Record only after Start with Stop/Cancel and a 60-second cap; use a separately installed small multilingual whisper.cpp model, clean temporary audio and require editable transcript review.
+- [x] **AND-05: Verify private comments and explicit Codex work** — Done when: Save comments without execution; confirm connected/new-chat work, preserve duplicate clarification, exact identities and failed/uncertain delivery without automatic replay.
+- [x] **AND-06: Package and install the Android release** — Done when: Install the signed release with debugging disabled, preserve the calendar, and verify a real progress question, comment and explicit task.
+- [ ] **AND-07: Complete calendar and Mac field validation** — Done when: Complete normal Mac startup file-access setup and real sleep/wake, Wi-Fi roaming, power-cycle, multilingual and far-field microphone checks; record limits without claiming a speech accuracy score.
+
 ## Character customization — requested 2026-10-25
 
 This requirement supersedes dog-only presentation. The proposed build sequence is in [next milestone](docs/NEXT_MILESTONE.md); the initial character roster remains to be decided.
