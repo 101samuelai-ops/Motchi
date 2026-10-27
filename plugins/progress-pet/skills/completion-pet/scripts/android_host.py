@@ -255,7 +255,7 @@ class AndroidPortal:
 
     def snapshot(self, force=False):
         with self.refresh_lock:
-            if not force and time.monotonic()-self.cache_at<5:
+            if not force and time.monotonic()-self.cache_at<2:
                 return self.cache
             raw = self.bridge.snapshot()
             groups = {}
@@ -300,7 +300,7 @@ class AndroidPortal:
     def read_snapshot(self):
         # Catalog discovery can take a while on the first run. Serve the last
         # observation immediately; never hold a device connection open for it.
-        if not self.closed and time.monotonic()-self.cache_at>5 and not self.refreshing.is_set():
+        if not self.closed and time.monotonic()-self.cache_at>2 and not self.refreshing.is_set():
             self.refreshing.set()
             self.refresh_started=time.monotonic()
             def refresh():

@@ -164,10 +164,10 @@ function renderChecklist(item){
  const coverage=c.coverage||{};
  const review=coverage.total?`History reviewed: ${coverage.reviewed}/${coverage.total} sections · ${coverage.chats} chat(s)${coverage.pending?' · catching up':''}`:'Waiting for available chat history.';
  const stamp=coverage.lastReviewedAt?'Last reviewed '+new Date(coverage.lastReviewedAt*1000).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):'';
- $('checklistNote').textContent=[c.syncing?'Reading chat history…':c.issue||'Recorded checklist; your checkbox corrections are preserved.',review,coverage.limitedSources?'Some logs are missing, partial or loading.':'',stamp,...deliveries].filter(Boolean).join('\n');
+ $('checklistNote').textContent=[c.syncing?'Reading chat history…':c.issue||(c.mode==='automatic'?'Automatic task matching and completion review; your corrections are preserved.':'Recorded checklist; your checkbox corrections are preserved.'),review,coverage.limitedSources?'Some logs are missing, partial or loading.':'',stamp,...deliveries].filter(Boolean).join('\n');
  const changesKey=JSON.stringify([item.id,c.revision,c.changes,controlBusy.has(selected)]);
  if($('checklistChanges').dataset.state!==changesKey){$('checklistChanges').dataset.state=changesKey;$('checklistChanges').replaceChildren();
- for(const change of c.changes||[]){const row=document.createElement('div');row.className='checklist-note';row.textContent=`${change.kind==='add'?'Added':'Completed'}: ${change.title}${change.undone?' · undone':''}. ${change.reason||''}`;
+ for(const change of c.changes||[]){const row=document.createElement('div');row.className='checklist-note';row.textContent=`${change.kind==='add'?'Added':change.kind==='reopen'?'Reopened':'Completed'}: ${change.title}${change.undone?' · undone':''}. ${change.reason||''}`;
  if(change.evidence?.quote){const quote=document.createElement('div');quote.textContent='“'+change.evidence.quote+'”';row.append(quote)}
  if(change.canUndo){const b=document.createElement('button');b.textContent='Undo';b.disabled=controlBusy.has(selected);b.onclick=()=>control('undoChecklistChange',{changeId:change.id,revision:c.revision});row.append(b)}$('checklistChanges').append(row)}
  if(!c.changes?.length)$('checklistChanges').textContent='No automatic changes recorded yet.';}

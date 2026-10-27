@@ -91,13 +91,28 @@
       "done": false,
       "phase": "P1",
       "milestone": "Trustworthy project understanding",
-      "acceptance": "Clear duplicates reuse task IDs; ambiguous overlap asks whether to expand, replace, keep separate or skip; the decision persists.",
+      "acceptance": "Clear duplicates reuse task IDs; overlap is classified automatically as expand, replace, keep separate or skip, with reviewable reasons and persistent corrections.",
       "evidence": {
         "kind": "Agreed roadmap",
         "quote": "User requested the product analysis be saved as a progress checklist and memory.",
         "at": "2026-10-25"
       },
       "manualOverride": true
+    },
+    {
+      "id": "CHK-05",
+      "title": "Match tasks and check off completion automatically",
+      "done": true,
+      "phase": "P1",
+      "milestone": "Trustworthy project understanding",
+      "acceptance": "Compare conversation outcomes to existing tasks without same/different questions, retain distinct scope and match reasons, prioritize recent completion evidence without skipping older history, protect manual corrections, and deliver a signed Android update with review status and Undo.",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "Implementation, regression and live synthetic-model checks",
+        "quote": "0.14: 14 Python suites, 42 Android UI cases, signed APK build/lint/signature checks and two live synthetic model samples passed. Sample preview verified automatic completion and Undo. Mac scripts updated; calendar 0.14 installation awaits WLAN connection.",
+        "document": "docs/AUTOMATIC_CHECKLISTS.md",
+        "at": "2026-10-28"
+      }
     },
     {
       "id": "CHK-04",
@@ -541,5 +556,5 @@
       }
     }
   ],
-  "revision": 7
+  "revision": 8
 }

@@ -1,0 +1,23 @@
+{
+  "description": "Synthetic automatic same/different and completion smoke sample; no user history.",
+  "tasks": [
+    {"id":"csv","title":"Export invoices as CSV","done":false,"acceptance":"Download invoice data in comma-separated format and pass export tests."},
+    {"id":"dashboard","title":"Build the tablet dashboard and offline cache","done":false,"acceptance":"Tablet dashboard renders and offline cached progress works."},
+    {"id":"protected","title":"Implement Android settings","done":false,"manualOverride":true}
+  ],
+  "history": [
+    {"id":"same","role":"user","text":"Add comma-separated invoice downloads. This is the same CSV export outcome, just describing it another way."},
+    {"id":"different","role":"user","text":"Also add invoice PDF downloads as a separate feature; CSV export does not cover PDF documents."},
+    {"id":"completed","role":"assistant","text":"Invoice CSV download is implemented and all export tests passed."},
+    {"id":"partial","role":"assistant","text":"The tablet dashboard renders now, but offline cache is not implemented, so that task is still incomplete."},
+    {"id":"future","role":"assistant","text":"I will implement the PDF exporter next. It has not been started."},
+    {"id":"protected-completion","role":"assistant","text":"Android settings are implemented and tested."},
+    {"id":"idea","role":"user","text":"Maybe add automatic invoicing later. This is only an idea; do not add it to this checklist."},
+    {"id":"turn","role":"assistant","text":"This turn is finished. PDF export and offline caching remain to do."}
+  ],
+  "expected": [
+    {"name":"Automatic equivalent match","kind":"add","evidenceIds":["same"],"taskId":"csv","relation":"same"},
+    {"name":"Separate PDF feature","kind":"add","evidenceIds":["different"],"titleIncludes":"pdf"},
+    {"name":"Evidence-based CSV completion","kind":"complete","evidenceIds":["completed"],"taskId":"csv","relation":"same"}
+  ]
+}

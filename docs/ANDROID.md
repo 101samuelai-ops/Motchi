@@ -12,11 +12,11 @@ Changing the design does not reconnect, clear project conversations or drafts, o
 
 Home groups discovered chats by their canonical project folder. It reads that folder’s shared checklist once, rather than adding together counts from its chats. Projects needing input appear first within their primary or secondary section. Missing or empty checklists show **Progress unknown**. Task counts describe recorded checklist scope, not effort, acceptance or shipping readiness.
 
-Tap a project to discuss it. The selected project and exact chat stay visible. Checklists include source quotes, chat identities, history coverage, freshness and available Undo actions. The attention list holds similarity questions and Mac-only input alerts. A checkmark edit uses the current checklist revision; stale edits fail and require refresh.
+Tap a project to discuss it. The selected project and exact chat stay visible. Checklists include source quotes, chat identities, history coverage, freshness and available Undo actions. The attention list holds Mac-only input alerts. A checkmark edit uses the current checklist revision; stale edits fail and require refresh.
 
 - **Ask Motchi** discusses the selected project through the existing read-only answer provider. It does not start implementation.
 - **Save comment** saves a timestamped private note for that project on the Mac. It sends no instruction to Codex.
-- **Send to Codex** requires an explicit confirmation. Connected chats support the existing instruction and duplicate-clarification path. Tracked-only chats offer to start a new connected chat in the same folder after confirmation. They never claim an instruction reached the original tracked chat.
+- **Send to Codex** requires an explicit confirmation. Connected chats support instruction delivery with automatic task matching. Tracked-only chats offer to start a new connected chat in the same folder after confirmation. They never claim an instruction reached the original tracked chat.
 
 Request receipts retain stable operation IDs. A lost response is uncertain until its receipt is checked. Reconnection and app restart check receipts; they never automatically replay a work instruction. An accepted request is not a claim that the project or task is finished.
 
@@ -29,6 +29,16 @@ Version 0.13.2 adds a quiet **Open Motchi** button in Android’s notification p
 **Settings → Easy access** turns this button on or off. Where supported by the home-screen app, **Add Motchi to home screen** requests an Android shortcut; confirm Android’s Add prompt. Unsupported launchers explain the notification alternative. A requested shortcut is not reported as pinned until Android lists it as pinned.
 
 The notification is restored after an app update and registered for normal device startup when enabled. The installed app remains available in Android’s app list. The launcher and calendar are retained. Live projects require the paired Mac to remain awake and on the same Wi-Fi; the button can open cached progress while the Mac is offline.
+
+## Automatic checklist updates — 0.14
+
+Update both the Android APK and the Mac companion scripts. The Mac decides whether conversation requirements describe an existing task or a separate outcome. Equivalent work reuses the existing ID; different outcomes stay separate. Uncertain overlap is kept separate to preserve scope. Old similarity questions are reviewed automatically without sending any saved instructions.
+
+Completed recorded plan steps check off their bound task on the next Mac observation. Assistant completion messages require model review and source evidence for the full task. Recent messages are reviewed ahead of older backlog when a project already has tasks; the older history still catches up independently. Android refreshes about every three seconds. This is automatic after review, not a zero-latency or guaranteed-perfect interpretation of every message. Manually corrected checkmarks remain protected.
+
+Project details show automatic-review status, recent live review time, match decisions, evidence and Undo for applicable changes. An older Mac companion prompts for an update. Offline mode displays saved checkmarks. Same-Wi-Fi access, discovery limits and explicit work confirmation still apply.
+
+For a local sample preview, run `python3 plugins/progress-pet/android/preview.py --apk /path/to/Motchi.apk` and open its printed loopback URL. **Try automatic completion** uses illustrative data only. This preview cannot inspect projects, send work or replace the paired app.
 
 ## Pairing and revocation
 

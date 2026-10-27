@@ -38,7 +38,8 @@ This requirement supersedes dog-only presentation. The proposed build sequence i
 - [ ] **MEM-04: Let users inspect and correct memory** — Done when: Provide conversational and visible controls to review, edit, forget and scope memories; changes survive restart and remain isolated by project.
 - [ ] **CHK-01: Classify instructions, ideas and open decisions** — Done when: Explicit work becomes committed tasks; maybe-statements become ideas; questions become decisions; quoted and rejected suggestions do not become commitments.
 - [ ] **CHK-02: Reconcile replacements, deferrals, bugs and reopened work** — Done when: Handle changed requirements and regressions without losing task identity or history; deferred and superseded work is outside the active milestone denominator.
-- [ ] **CHK-03: Resolve semantic overlap with expand, replace or separate** — Done when: Clear duplicates reuse task IDs; ambiguous overlap asks whether to expand, replace, keep separate or skip; the decision persists.
+- [ ] **CHK-03: Resolve semantic overlap with expand, replace or separate** — Done when: Clear duplicates reuse task IDs; overlap is classified automatically as expand, replace, keep separate or skip, with reviewable reasons and persistent corrections.
+- [x] **CHK-05: Match tasks and check off completion automatically** — Done when: Compare conversation outcomes to existing tasks without same/different questions, retain distinct scope and match reasons, prioritize recent completion evidence without skipping older history, protect manual corrections, and deliver a signed Android update with review status and Undo.
 - [x] **CHK-04: Explain automatic checklist changes and support Undo** — Done when: Show the source conversation and reason for every automatic task change; preserve manual corrections and allow reversible changes.
 - [x] **SYNC-01: Process conversation changes incrementally** — Done when: Persist event cursors and compact task/decision history; handle restart, repeated events and partial history without duplicates; show freshness, coverage and sync failures.
 - [ ] **PRG-01: Track milestone scope and explain progress changes** — Done when: Show completed and total agreed tasks for a named milestone, preserve scope-change history, explain denominator changes and distinguish unknown from zero progress.
@@ -85,3 +86,7 @@ See [research sources](docs/RESEARCH.md). Research informs the design; the user-
 ## Reliability milestone evidence — 2026-10-27
 
 CHK-04 and SYNC-01 are implemented in source 0.12 and verified by the history-review regressions and isolated browser controls. See [review implementation and checks](docs/CHECKLIST_REVIEW.md). The installed app was not restarted. CHK-01, CHAT-05 and QA-01 have supporting improvements but remain unchecked: separate idea/decision storage, named milestone context and live model accuracy evaluation still need completion.
+
+## Automatic checklist evidence — 2026-10-28
+
+The user now prefers Motchi to decide same/different itself, superseding that question requirement in CHK-03. CHK-05 implements automatic same/different matching and evidence-backed completion. Broader expand/replace lifecycle handling in CHK-03 remains planned. See [0.14 checks and release limits](docs/AUTOMATIC_CHECKLISTS.md). The signed Android APK is built; installation of 0.14 on the calendar awaits its current WLAN debugging connection.

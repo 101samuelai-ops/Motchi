@@ -2,6 +2,13 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Automatic checklist update — 0.14.0, 2026-10-28
+
+- Signed versionCode 4 APK built with the existing signing key; release lint and signature verification passed. See AUTOMATIC_CHECKLISTS.md for 14 Python suites, 42 Android UI cases, focused automatic matching/live completion checks and two live synthetic model smoke samples.
+- The sample preview verified 50% → 75% after completion, source evidence, match reasons and protected Undo. These projects are illustrative.
+- Installed Mac scripts were updated and restarted with device credentials retained. The Mac is now on a different Wi-Fi network from the previous calendar pairing; its stale private host setting was removed so the authenticated HTTPS service uses the detected LAN address. The exact existing certificate and rejection of unauthenticated access were verified.
+- No calendar appears in the current wireless ADB inventory. The new APK is available, but 0.14 is **not installed or visually verified on the calendar**. The last device-verified app remains 0.13.2. Both devices need the same Wi-Fi and may need a fresh app pairing ticket if the Mac address changes. Existing firmware and field limitations below remain open.
+
 ## Easy-access update — 0.13.2
 
 - Confirmed the authorized wireless ADB connection and WLAN reachability to the Mac (2/2 ping packets). The existing calendar launcher and Motchi launcher activity remain available.

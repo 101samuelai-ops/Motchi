@@ -25,26 +25,22 @@ with tempfile.TemporaryDirectory() as temp:
     check(not Store(project).read()['tasks'][0]['done'],'Adding work never marks it complete')
     c.propose(project,'chat-a','Build the login page','first')
     check(len(Store(project).read()['tasks'])==1,'Repeated history sources are idempotent')
-    similar=c.propose(project,'chat-a','Build the login screen','second',text='Build the login screen')
+    c.infer=lambda cwd,h,tasks:{'actions':[{'kind':'add','title':'Build the login screen','taskId':first['taskId'],'relation':'same','evidenceId':h[0]['id'],'quote':h[0]['text'] }]}
+    similar=c.propose(project,'chat-a','Build the login screen','second',text='Build the login screen',semantic=True)
     pid=similar['proposalId']
-    check(similar['pending'] and len(Store(project).read()['tasks'])==1,'A similar task waits for a real user decision')
-    check(len(c.view(project,'chat-a')['questions'])==1 and not c.view(project,'chat-b')['questions'],'Duplicate questions remain in their originating chat')
-    check(rejects(lambda:c.resolve(project,'chat-b',pid,'Same task')),'Another chat cannot resolve a duplicate')
-    check(rejects(lambda:c.resolve(project,'chat-a',pid,'yes')),'An ambiguous reply does not silently merge tasks')
-    result=c.resolve(project,'chat-a',pid,'Same task')
-    check(result['taskId']==first['taskId'] and len(Store(project).read()['tasks'])==1,'Same task preserves the original checklist identity')
+    check(not similar['pending'] and len(Store(project).read()['tasks'])==1,'Semantic equivalence automatically reuses the original task')
+    check(not c.view(project,'chat-a')['questions'],'Matching never asks the user same or different')
+    result=similar
+    check(result['taskId']==first['taskId'],'Automatic matching preserves the original checklist identity')
     sent=[]
     def sender(selection,text):sent.append((selection,text));return {'text':'sent'}
     c.delivery(project,'chat-a',pid,sender)
     check(sent==[('chat-a','Build the login screen')],'Resolved explicit work sends its original prompt once')
     check(rejects(lambda:c.delivery(project,'chat-a',pid,sender)) and len(sent)==1,'Double submission cannot duplicate a delivered prompt')
-    similar=c.propose(project,'chat-a','Build the login screen','third')
-    c.resolve(project,'chat-a',similar['proposalId'],'Different task')
-    check(len(Store(project).read()['tasks'])==2,'Different task creates a separate unchecked item')
+    c.propose(project,'chat-a','Build the tablet login screen','third',related=first['taskId'],relation='different')
+    check(len(Store(project).read()['tasks'])==2,'Distinct platform scope creates a separate unchecked item automatically')
     check(len(sent)==1,'Automatic reconciliation never sends work to Codex')
-    skipped=c.propose(project,'chat-a','Build the login screen','fourth')
-    c.resolve(project,'chat-a',skipped['proposalId'],'Skip')
-    check(len(Store(project).read()['tasks'])==2 and not c.view(project,'chat-a')['questions'],'Skip dismisses only the proposed addition')
+    c.infer=None
     state=Store(project).read();rev=state['revision'];tid=first['taskId']
     c.toggle(project,tid,False,rev)
     check(rejects(lambda:c.toggle(project,tid,True,rev)),'Stale UI revisions cannot overwrite concurrent checklist edits')
@@ -85,8 +81,7 @@ with tempfile.TemporaryDirectory() as temp:
     # Semantically related titles need a question even with no lexical overlap.
     c.infer=lambda cwd,h,tasks:{'actions':[{'kind':'add','title':'Implement authentication','taskId':tid,'evidenceId':h[0]['id'],'quote':h[0]['text']}]}
     semantic=c.propose(project,'chat-a','Implement authentication','semantic',semantic=True)
-    check(semantic['pending'],'Semantic matching can ask about related tasks with different wording')
-    c.resolve(project,'chat-a',semantic['proposalId'],'Skip')
+    check(not semantic['pending'] and semantic['taskId']==tid,'Semantic matching resolves related tasks with different wording without a question')
     historic=[{'id':'old','role':'assistant','chat':'chat-a','text':'The privacy policy is published and verified.','at':time.time()-100}]
     c.apply_inference(project,historic,{'actions':[{'kind':'addComplete','title':'Publish privacy policy','evidenceId':'old','quote':historic[0]['text']}]})
     check(next(t for t in Store(project).read()['tasks'] if t['title']=='Publish privacy policy')['done'],'Already finished work can be reconstructed from historical completion evidence')

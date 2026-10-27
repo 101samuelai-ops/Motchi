@@ -1,7 +1,7 @@
 {
   "name": "progress-pet",
-  "version": "0.13.0",
-  "description": "Motchi reviews available project chat history incrementally, maintains an evidence-backed checklist and explains progress.",
+  "version": "0.14.0",
+  "description": "Motchi automatically matches chat-derived checklist tasks, prioritizes completion evidence and provides a paired Android project dashboard.",
   "skills": "./skills/",
   "interface": {
     "displayName": "Motchi",

@@ -952,12 +952,10 @@ class DogBridge:
                 raise ValueError('This desktop chat is tracked only. Open it in Codex and paste the additional task. You can still add it to the checklist here.')
             result = self.checklists.propose(item['cwd'], selection, text.strip()[:300], 'user:' + token,
                                             text=text if send else None, semantic=True)
-            if result.get('pending'):
-                return {'text': 'This looks similar to an existing task. Choose Same task or Different task before I add or send it.', 'routedSelection': selection, 'deliveryStatus':'needsClarification', 'proposalId':result['proposalId']}
             if send:
                 delivered = self.checklists.delivery(item['cwd'], selection, result['proposalId'], self.control.add_work)
                 return {'text': delivered['text'], 'routedSelection': selection, 'deliveryStatus':'accepted', 'proposalId':result['proposalId']}
-            return {'text': 'Added to the project checklist.', 'routedSelection': selection}
+            return {'text': 'Matched the existing checklist task.' if result.get('decision') == 'same' else 'Added a separate task to the project checklist.', 'routedSelection': selection}
         if action == 'retryWork':
             item = self.resolve(selection)
             result = self.checklists.retry_delivery(item['cwd'], selection, request.get('proposalId'), self.control.add_work)
