@@ -18,6 +18,8 @@ The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDR
 
 AND-06 rollout: the signed release and live flows are installed/verified. The calendar's userdebug firmware forces WebView inspection on despite the app requesting it off, so the debugging criterion remains open. See the rollout record before treating this device as a hardened release target.
 
+AND-07 partial verification: after user-approved file access, a normal unlocked Mac restart reconnected the calendar and answered a live progress question. Locked startup/login, sleep/wake, roaming, power cycling and real multilingual/far-field speech remain unverified.
+
 ## Character customization — requested 2026-10-25
 
 This requirement supersedes dog-only presentation. The proposed build sequence is in [next milestone](docs/NEXT_MILESTONE.md); the initial character roster remains to be decided.
