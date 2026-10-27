@@ -67,7 +67,7 @@ adb install -r /tmp/Motchi.apk
 
 `--create-key` creates private signing material only if missing. **Back up this key securely**: future APK updates must use it. `--signing-config` selects an external JSON containing `file` and `password`; Gradle receives these via environment variables. APKs, private keys, local SDK paths and caches are ignored. `--gradle` may select an existing verified Gradle installation if distribution downloads are unavailable.
 
-The app has bundled assets, no remotely loaded web content, no cleartext networking and no arbitrary navigation. Release builds disable WebView debugging. The Android shell handles Keystore storage, certificate pinning, microphone permission/recording and networking. The UI supports this device’s Chrome 83 WebView; notably, dialogs use explicit edges instead of unsupported CSS `inset`. Larger screen layouts place checklist and discussion alongside each other; portrait places discussion first.
+The app has bundled assets, no remotely loaded web content, no cleartext networking and no arbitrary navigation. Release builds are non-debuggable and explicitly request WebView debugging off. This calendar's userdebug firmware overrides that WebView request, so inspection remains available through authorized ADB; see the rollout record. The Android shell handles Keystore storage, certificate pinning, microphone permission/recording and networking. The UI supports this device’s Chrome 83 WebView; notably, dialogs use explicit edges instead of unsupported CSS `inset`. Larger screen layouts place checklist and discussion alongside each other; portrait places discussion first.
 
 ## Offline behavior and boundaries
 

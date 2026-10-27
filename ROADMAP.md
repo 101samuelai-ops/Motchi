@@ -13,8 +13,10 @@ The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDR
 - [x] **AND-03: Build the Android project dashboard and discussion** — Done when: Show unknown/count progress, activity, source coverage and freshness; retain project context, drafts, explicit actions and cached offline progress on the older WebView.
 - [x] **AND-04: Add local push-to-talk transcription** — Done when: Record only after Start with Stop/Cancel and a 60-second cap; use a separately installed small multilingual whisper.cpp model, clean temporary audio and require editable transcript review.
 - [x] **AND-05: Verify private comments and explicit Codex work** — Done when: Save comments without execution; confirm connected/new-chat work, preserve duplicate clarification, exact identities and failed/uncertain delivery without automatic replay.
-- [x] **AND-06: Package and install the Android release** — Done when: Install the signed release with debugging disabled, preserve the calendar, and verify a real progress question, comment and explicit task.
+- [ ] **AND-06: Package and install the Android release** — Done when: Install the signed release with debugging disabled, preserve the calendar, and verify a real progress question, comment and explicit task.
 - [ ] **AND-07: Complete calendar and Mac field validation** — Done when: Complete normal Mac startup file-access setup and real sleep/wake, Wi-Fi roaming, power-cycle, multilingual and far-field microphone checks; record limits without claiming a speech accuracy score.
+
+AND-06 rollout: the signed release and live flows are installed/verified. The calendar's userdebug firmware forces WebView inspection on despite the app requesting it off, so the debugging criterion remains open. See the rollout record before treating this device as a hardened release target.
 
 ## Character customization — requested 2026-10-25
 

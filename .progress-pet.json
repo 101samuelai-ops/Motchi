@@ -491,13 +491,13 @@
     {
       "id": "AND-06",
       "title": "Package and install the Android release",
-      "done": true,
+      "done": false,
       "phase": "Android",
       "milestone": "Android calendar companion",
       "acceptance": "Install the signed release with debugging disabled, preserve the calendar, and verify a real progress question, comment and explicit task.",
       "evidence": {
-        "kind": "Device verification",
-        "quote": "Signed 0.13.0 release installed without debugging; calendar retained. Live question, private comment and explicit connected-task delivery verified; release reconnect retained seven project cards and existing receipts. See docs/ANDROID_VERIFICATION.md.",
+        "kind": "Partial device verification",
+        "quote": "Signed non-debuggable 0.13.0 release installed; calendar and live question/comment/explicit work verified. Delayed check found userdebug firmware forces WebView inspection on despite the public disable API. This hardening criterion remains open; see docs/ANDROID_VERIFICATION.md.",
         "at": "2026-10-27"
       }
     },
@@ -510,5 +510,5 @@
       "acceptance": "Complete normal Mac startup file-access setup and real sleep/wake, Wi-Fi roaming, power-cycle, multilingual and far-field microphone checks; record limits without claiming a speech accuracy score."
     }
   ],
-  "revision": 3
+  "revision": 4
 }
