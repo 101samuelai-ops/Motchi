@@ -32,6 +32,8 @@ The notification is restored after an app update and registered for normal devic
 
 ## Automatic checklist updates — 0.14
 
+Android 0.14.1 aligns the calendar with the pictured dark Companion canvas. It retains the previous look for restoration, all three layouts and personal colours. See [appearance details](ANDROID_APPEARANCE.md) and [the full checklist audit](CHECKLIST_AUDIT.md).
+
 Update both the Android APK and the Mac companion scripts. The Mac decides whether conversation requirements describe an existing task or a separate outcome. Equivalent work reuses the existing ID; different outcomes stay separate. Uncertain overlap is kept separate to preserve scope. Old similarity questions are reviewed automatically without sending any saved instructions.
 
 Completed recorded plan steps check off their bound task on the next Mac observation. Assistant completion messages require model review and source evidence for the full task. Recent messages are reviewed ahead of older backlog when a project already has tasks; the older history still catches up independently. Android refreshes about every three seconds. This is automatic after review, not a zero-latency or guaranteed-perfect interpretation of every message. Manually corrected checkmarks remain protected.

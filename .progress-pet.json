@@ -554,7 +554,35 @@
         "quote": "Signed 0.13.2 installed in place through WLAN; 36 Android checks, release build and lint passed. Android confirms the quiet Open Motchi notification/action. User confirmed it opens the dashboard and shows Mac connected. Reboot restoration and actual shortcut pinning remain untested; see docs/ANDROID_VERIFICATION.md.",
         "at": "2026-10-27"
       }
+    },
+    {
+      "id": "AND-10",
+      "title": "Add optional local wake-name listening",
+      "done": false,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "An explicit opt-in listens locally for Motchi, shows microphone state and provides pause/disable controls; false activations, project routing, privacy, battery and real calendar microphone behaviour are verified. Push-to-talk remains available.",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "Agreed future work",
+        "quote": "The user requested seamless activation when Motchi is called. Current voice is push-to-talk.",
+        "at": "2026-10-28"
+      }
+    },
+    {
+      "id": "AND-11",
+      "title": "Match the pictured dark calendar design",
+      "done": true,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "The installed app uses the dark Companion canvas, serif speech bubble, compact composer, larger progress circles and stacked Primary/Secondary sections; previous appearance is restorable, all three designs remain selectable, and project pins, pairing and discussions survive the update.",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "On-device verification",
+        "quote": "Signed 0.14.1 installed in place over WLAN. Calendar Mirror shows dark canvas, stacked project sections, Mac connected and seven retained projects. Appearance migration and restoration regressions pass.",
+        "at": "2026-10-28"
+      }
     }
   ],
-  "revision": 9
+  "revision": 10
 }

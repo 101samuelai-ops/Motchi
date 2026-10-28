@@ -2,6 +2,10 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Reference appearance update — 0.14.1, 2026-10-28
+
+Signed versionCode 5 installed in place over WLAN with existing pairing/data retained. Calendar Mirror confirms the requested dark Companion canvas, serif speech bubble, larger rings, stacked Primary/Secondary sections, seven live projects and Mac connected. The old appearance remains restorable in Settings; all three designs are available. The 24 appearance and 22 core Android checks, browser persistence/restoration/draft checks, release build and lint passed. See [appearance verification](ANDROID_APPEARANCE.md) and [full checklist audit](CHECKLIST_AUDIT.md). Existing field and firmware limits remain open.
+
 ## Automatic checklist update — 0.14.0, 2026-10-28
 
 - Signed versionCode 4 APK built with the existing signing key; release lint and signature verification passed. See AUTOMATIC_CHECKLISTS.md for 14 Python suites, 42 Android UI cases, focused automatic matching/live completion checks and two live synthetic model smoke samples.

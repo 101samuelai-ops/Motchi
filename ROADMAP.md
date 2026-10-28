@@ -6,7 +6,7 @@ The canonical planning checklist is this file. `.progress-pet.json` contains the
 
 ## Android calendar companion — approved 2026-10-27
 
-The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals, wake word or launcher replacement in this release.
+The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals or launcher replacement in this release. Wake-name listening is requested future work (AND-10); current voice remains push-to-talk.
 
 - [x] **AND-01: Verify the signed Android compatibility app** — Done when: Installation, rendering, touch, microphone and pinned local networking pass on the calendar before dashboard development.
 - [x] **AND-02: Add the paired HTTPS Mac project service** — Done when: Share the desktop bridge, group projects once per canonical folder, authenticate/pin devices, revoke credentials and preserve stable asynchronous operation receipts.
@@ -17,6 +17,9 @@ The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDR
 - [ ] **AND-07: Complete calendar and Mac field validation** — Done when: Complete normal Mac startup file-access setup and real sleep/wake, Wi-Fi roaming, power-cycle, multilingual and far-field microphone checks; record limits without claiming a speech accuracy score.
 - [x] **AND-08: Offer the three approved Android home designs** — Done when: Settings selects or cycles Companion canvas, Sidekick studio and Bubble lounge; design, colours and primary project choices persist; unknown progress and project drafts remain intact; the signed update installs and layout switching is verified on the calendar.
 - [x] **AND-09: Provide easy calendar access over WLAN** — Done when: Install the signed update over WLAN without clearing pairing; provide a quiet Open Motchi notification button, Easy access settings and conditional home-screen shortcut support; verify the button opens the dashboard with the Mac connected.
+
+- [ ] **AND-10: Add optional local wake-name listening** — Done when: An explicit opt-in listens locally for Motchi, shows microphone state and provides pause/disable controls; false activations, project routing, privacy, battery and real calendar microphone behaviour are verified. Push-to-talk remains available.
+- [x] **AND-11: Match the pictured dark calendar design** — Done when: The installed app uses the dark Companion canvas, serif speech bubble, compact composer, larger progress circles and stacked Primary/Secondary sections; previous appearance is restorable, all three designs remain selectable, and project pins, pairing and discussions survive the update.
 
 AND-06 rollout: the signed release and live flows are installed/verified. The calendar's userdebug firmware forces WebView inspection on despite the app requesting it off, so the debugging criterion remains open. See the rollout record before treating this device as a hardened release target.
 
@@ -76,7 +79,7 @@ This requirement supersedes dog-only presentation. The proposed build sequence i
 
 > “How is the website doing? Also add tablet support.”
 
-Motchi explains the current milestone and blocker, checks whether tablet support expands an existing layout task, updates that task after clarification, and reports whether the instruction reached the connected chat. Its answer exposes its sources and any uncertainty.
+Motchi explains the current milestone and blocker, checks whether tablet support expands an existing layout task, updates the checklist using its automatic scope match, and reports whether the instruction reached the connected chat. Its answer exposes its sources and any uncertainty.
 
 ## Research
 
