@@ -19,7 +19,7 @@ Two optional live model smoke samples passed using the configured signed-in prov
 
 The loopback-only sample preview demonstrated an automatic completion moving 2/4 tasks (50%) to 3/4 (75%), retaining its evidence and Undo. Undo returned the task to unchecked with a protected manual correction. The preview's projects are illustrative; no live execution instructions were submitted through it.
 
-The installed Mac companion scripts were updated in place and restarted, retaining the Android pairing data. The signed Android APK is prepared for download. The calendar is absent from the current wireless ADB inventory; **0.14 has not yet been installed or checked on that device**. The last device-verified version remains 0.13.2. Device field and firmware limits in ANDROID_VERIFICATION.md remain open.
+The installed Mac companion scripts were updated in place and restarted, retaining Android pairing data. After the calendar reconnected over WLAN, the signed 0.14.0 APK installed in place successfully. Package inspection confirms versionCode 4 and the Open Motchi notification action remains registered. Calendar Mirror visibly shows Mac connected and seven live project cards. The existing certificate was verified on the Mac service and unauthenticated access was rejected. An actual new completion arriving on the calendar was not exercised in this installation check; automatic completion has the regression, live synthetic-model and sample-preview verification above. Device field and firmware limits in ANDROID_VERIFICATION.md remain open.
 
 ## Boundaries
 

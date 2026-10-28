@@ -109,7 +109,7 @@
       "manualOverride": true,
       "evidence": {
         "kind": "Implementation, regression and live synthetic-model checks",
-        "quote": "0.14: 14 Python suites, 42 Android UI cases, signed APK build/lint/signature checks and two live synthetic model samples passed. Sample preview verified automatic completion and Undo. Mac scripts updated; calendar 0.14 installation awaits WLAN connection.",
+        "quote": "0.14: 14 Python suites, 42 Android UI cases, signed APK build/lint/signature checks and two live synthetic model samples passed. Preview verified completion and Undo. Signed APK installed over WLAN; Calendar Mirror confirms Mac connected and seven live projects. New completion on-device unexercised.",
         "document": "docs/AUTOMATIC_CHECKLISTS.md",
         "at": "2026-10-28"
       }
@@ -556,5 +556,5 @@
       }
     }
   ],
-  "revision": 8
+  "revision": 9
 }

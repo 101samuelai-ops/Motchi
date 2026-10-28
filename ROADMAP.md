@@ -89,4 +89,4 @@ CHK-04 and SYNC-01 are implemented in source 0.12 and verified by the history-re
 
 ## Automatic checklist evidence — 2026-10-28
 
-The user now prefers Motchi to decide same/different itself, superseding that question requirement in CHK-03. CHK-05 implements automatic same/different matching and evidence-backed completion. Broader expand/replace lifecycle handling in CHK-03 remains planned. See [0.14 checks and release limits](docs/AUTOMATIC_CHECKLISTS.md). The signed Android APK is built; installation of 0.14 on the calendar awaits its current WLAN debugging connection.
+The user now prefers Motchi to decide same/different itself, superseding that question requirement in CHK-03. CHK-05 implements automatic same/different matching and evidence-backed completion. Broader expand/replace lifecycle handling in CHK-03 remains planned. See [0.14 checks and release limits](docs/AUTOMATIC_CHECKLISTS.md). The signed 0.14 APK is installed on the calendar over WLAN; Calendar Mirror confirms the connected dashboard with seven projects. A new task completion on-device remains unexercised.
