@@ -170,13 +170,18 @@ def recognize(root, audio, permitted=lambda:None, on_text=None, connector=None, 
 def selected(root):
     try:value=json.loads((Path(root)/'speech-provider.json').read_text()).get('provider','local')
     except (OSError,ValueError):return 'local'
-    return value if value in ('local','doubao') else 'local'
+    return value if value in ('local','doubao','qwen') else 'local'
 
 
 def info(root):
     provider=selected(root);issue=None;ready=True
+    if provider=='qwen':
+        try:
+            from qwen_speech import config
+            config(root)
+        except ValueError as error:ready=False;issue=str(error)
     if provider=='doubao':
         try:read_config(root);dependency(root)
         except ValueError as error:ready=False;issue=str(error)
-    return {'provider':provider,'providerLabel':'Doubao Speech · cloud' if provider=='doubao' else 'Whisper · local Mac',
-            'providerReady':ready,'providerIssue':issue,'cloudSpeech':provider=='doubao'}
+    return {'provider':provider,'providerLabel':{'doubao':'Doubao Speech · cloud','qwen':'Qwen3-ASR · free local Mac','local':'Whisper · local Mac'}[provider],
+            'providerReady':ready,'providerIssue':issue,'cloudSpeech':provider=='doubao','providerAutoLanguage':provider in ('qwen','doubao')}

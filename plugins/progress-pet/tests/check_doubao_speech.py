@@ -88,9 +88,14 @@ check(voice.run('calendar',request,b'audio')=={'wake':False} and not cloud,'Unad
 transcript[0]='Hey Motchi, how is Alpha?'
 result=voice.run('calendar',request,b'audio')
 check(cloud==['refine'] and len(asks)==1,'A locally recognized wake name authorizes cloud refinement and one read-only answer')
+transcript[0]='Hey Motchi'
+result=voice.run('calendar',request,b'audio')
 transcript[0]='What remains?'
 voice.run('calendar',{**request,'session':result['session'],'projectId':'alpha','selection':'chat'},b'audio')
-check(cloud[-1]=='active' and len(asks)==2,'Only a validated follow-up lease can continue cloud transcription')
+check(cloud[-1]=='active' and len(asks)==2,'A bare wake authorizes exactly one question through its validated lease')
+count=len(cloud)
+voice.run('calendar',{**request,'session':result['session'],'projectId':'alpha','selection':'chat'},b'audio')
+check(len(cloud)==count and len(asks)==2,'A completed reply closes cloud follow-up authorization')
 before=len(cloud)
 check(voice.run('other',{**request,'session':result['session']},b'audio')=={'wake':False} and len(cloud)==before,'Another device cannot reuse the follow-up lease to upload ambient speech')
 voice.run('explicit',{**request,'activated':True,'preview':True},b'audio')

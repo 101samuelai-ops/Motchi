@@ -36,6 +36,7 @@ TRANSPORT = r'''
   if(action==='voiceInfo')return Promise.resolve({enabled:false,running:false,status:'Open the installed app for microphone access'});
   if(action==='voiceEvents')return Promise.resolve({events:[]});
   if(action==='voiceContext')return Promise.resolve({saved:true});
+  if(action==='submit'&&extra.request.action==='discuss'){var q=extra.request,greetingOnly=/^(?:hello|hi|hey)[, ]*(?:motchi|mochi)?[.! ]*$/i.test(q.text),route=MotchiCore.projectRoute(q.text,projects),p=greetingOnly?null:route.project||projects.find(function(x){return x.id===q.projectId;}),macro=/all projects|overall|everything|所有项目|整体|总览/i.test(q.text),scope=macro?'overview':p?'project':'general';return Promise.resolve(jobs[q.operationId]={status:'done',result:{scope:scope,text:scope==='project'?'Sample history-based answer: '+p.progress.completed+' of '+p.progress.total+' checklist tasks are complete. The latest sample work covers the dashboard and automatic task matching. This preview uses illustrative history.':scope==='overview'?'Here is the sample big picture: Motchi is in progress, Portfolio needs your input, Notes is complete, and Reading room has unknown progress. All data here is illustrative.':'We can discuss your ideas here with Motchi. Name a project when you want its progress, or ask about all projects.',projectId:scope==='project'?p.id:null,projectName:p?p.name:null,routedSelection:p?p.selection:null,sources:p?[{name:p.name,availableSections:24,selectedSections:12,reviewPending:false}]:[]}});}
   if(action==='submit'){var r=extra.request,p=projects.find(function(x){return x.id===r.projectId;});if(!p)return Promise.reject(new Error('Choose a sample project.'));
    var text='Sample answer: '+p.progress.completed+' of '+p.progress.total+' checklist tasks are complete. ';
    if(r.action==='comment'){p.comments.unshift({text:r.text,at:Date.now()/1000});text='Sample comment saved in this preview.';}
@@ -65,8 +66,8 @@ def main():
                     self.send_error(404);return
                 content=TRANSPORT.encode() if name=='native.js' else (ASSETS/name).read_bytes()
                 if name=='index.html':
-                    banner='<div class="preview-banner">Android 0.16 preview · Sample data · Voice requires installed app &nbsp; <button id="preview-completion">Try automatic completion</button>'
-                    if args.apk:banner+=' &nbsp; <a href="/Motchi.apk" download="Motchi-0.16.0.apk">Download Android APK</a>'
+                    banner='<div class="preview-banner">Android 0.17 preview · Sample data · Voice requires installed app &nbsp; <button id="preview-completion">Try automatic completion</button>'
+                    if args.apk:banner+=' &nbsp; <a href="/Motchi.apk" download="Motchi-0.17.0.apk">Download Android APK</a>'
                     content=content.replace(b'<body>',('<body>'+banner+'</div>').encode())
                 if name=='app.css':content+=b'\n.preview-banner{padding:12px 24px;background:#203b39;color:white;font:14px system-ui;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.preview-banner a{color:white}.preview-banner button{padding:8px 12px}\n'
                 mime='text/html' if name.endswith('.html') else 'text/css' if name.endswith('.css') else 'image/svg+xml' if name.endswith('.svg') else 'application/javascript'

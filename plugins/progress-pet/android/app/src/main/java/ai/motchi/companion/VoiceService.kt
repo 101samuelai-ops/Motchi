@@ -173,7 +173,8 @@ class VoiceService : Service() {
     private fun deliver(result: JSONObject, epoch: String) {
         if (!alive || epoch != generation || !result.optBoolean("wake")) return
         val firstWake = System.currentTimeMillis() - lastWake > 30000
-        lastWake = System.currentTimeMillis(); session = result.optString("session").takeIf { it.isNotEmpty() }
+        lastWake = System.currentTimeMillis(); session = result.optString("session").takeIf { it.isNotEmpty() && (result.optBoolean("partial") || result.optInt("sessionSeconds") > 0) }
+        if (!result.optBoolean("partial") && result.optString("heard").isNotEmpty()) activatedUntil = 0
         result.optString("projectId").takeIf { it.isNotEmpty() && it != "null" }?.let { projectId = it; selection = result.optString("selection") }
         synchronized(events) { events.addLast(result); while(events.size > 8) events.removeFirst() }
         if (result.optBoolean("partial")) { updateStatus("I'm listening · live transcript"); if (firstWake) beep() }
@@ -210,12 +211,12 @@ class VoiceService : Service() {
         } catch (error: Exception) {
             if (alive && epoch == generation) issue = error.message ?: "Reconnect to your Mac for voice."
         } finally {
-            if (preview) previewPending = false else finalBusy = false
+            if (preview) previewPending = false else { finalBusy = false; activatedUntil = 0 }
             busy = previewPending || finalBusy
             if (alive && !speaking && !manual) updateStatus(when {
                 issue != null -> "Voice needs attention · open Motchi"
                 finalBusy -> "Preparing your answer…"
-                System.currentTimeMillis() - lastWake < 30000 || System.currentTimeMillis() < activatedUntil -> "I'm listening · speak your question"
+                session != null || System.currentTimeMillis() < activatedUntil -> "I'm listening · speak your question"
                 else -> "Listening for Hey Motchi"
             })
         }
@@ -313,7 +314,7 @@ class VoiceService : Service() {
                 .put("busy", service?.busy == true).put("speaking", service?.speaking == true).put("lastWakeAt", service?.lastWake ?: 0)
                 .put("microphoneGranted", context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
             if (source(context) == "mac" && service != null) {
-                for (key in listOf("rms", "recentRms", "busy", "status", "issue", "lastWakeAt", "utteranceSeconds", "detector", "provider", "providerLabel", "providerReady", "providerIssue", "cloudSpeech")) {
+                for (key in listOf("rms", "recentRms", "busy", "status", "issue", "lastWakeAt", "utteranceSeconds", "detector", "provider", "providerLabel", "providerReady", "providerIssue", "cloudSpeech", "providerAutoLanguage")) {
                     if (service.macState.has(key)) result.put(key, service.macState.opt(key))
                 }
                 result.put("running", service.capturing && service.macState.optBoolean("running"))

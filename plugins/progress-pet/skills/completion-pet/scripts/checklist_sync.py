@@ -538,6 +538,26 @@ class Checklists:
             self.closed = True
         self.executor.shutdown(wait=False, cancel_futures=True)
 
+    def review_now(self, cwd, items, timeout=4):
+        """Request a recent evidence review before discussion; bound the wait.
+
+        An existing worker retains ownership. A timeout reports catching up;
+        it never manufactures completion or advances an unreviewed cursor.
+        """
+        state = Store(cwd).read()
+        if self.infer and self.history.latest(cwd):
+            with self.lock:
+                launch = not self.closed and cwd not in self.running
+                if launch: self.running.add(cwd)
+            if launch:
+                self.executor.submit(self.reconcile, cwd, items, digest(self.history.coverage(cwd,self.metadata(state))), True)
+            deadline=time.monotonic()+max(0,timeout)
+            while time.monotonic()<deadline:
+                with self.lock:
+                    if cwd not in self.running:break
+                time.sleep(.05)
+        return self.view(cwd,items[0]['id'])
+
 
 def model_infer(codex, cwd, history, tasks, flags):
     """Bounded, schema-constrained read-only extraction using the user's Codex sign-in."""

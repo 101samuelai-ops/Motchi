@@ -596,7 +596,64 @@
         "quote": "0.16 implementation, protocol/privacy checks and signed WLAN installation pass. User has only consumer Doubao app; Volcengine Speech API credentials and human accuracy/answer tests remain required.",
         "at": "2026-10-29"
       }
+    },
+    {
+      "id": "AND-13",
+      "title": "Add free local bilingual speech recognition",
+      "phase": "Android",
+      "milestone": "Calendar companion",
+      "acceptance": "Install selectable Qwen3-ASR on the Mac without speech API credentials, validate English/Chinese synthetic transcription, and use a local streaming keyword detector to activate questions; record real speech acceptance separately under AND-10.",
+      "done": true,
+      "manualOverride": true,
+      "verification": {
+        "kind": "Verified release 0.17",
+        "quote": "Actual local English/Chinese transcription and streaming keyword synthetic tests pass; user confirmed “It wakes and answers” after the keyword detector update. Broader accuracy/field acceptance remains AND-10.",
+        "at": 1793253009.142474
+      },
+      "evidence": {
+        "kind": "User requested scope",
+        "quote": "Free bilingual ASR; respond when called; automatic project/general/macro discussion from AI history; main-section replies; evidence-backed check-offs.",
+        "at": "2026-10-29"
+      }
+    },
+    {
+      "id": "CHAT-06",
+      "title": "Analyze AI history for project and overview discussion",
+      "phase": "P2",
+      "milestone": "Natural project discussion",
+      "acceptance": "Route named/topic questions, clarify ambiguity, support general and cross-project discussion, retrieve exact-project AI history and requirements before answers, expose bounded coverage, and verify a real read-only provider and calendar overview without silent work.",
+      "done": true,
+      "manualOverride": true,
+      "verification": {
+        "kind": "Verified release 0.17",
+        "quote": "23 routing/history cases and 42 portal cases pass. Real provider schema answer analyzed 15/191 available history sections; an actual calendar all-project question returned a history-backed overview in its main stage.",
+        "at": 1793253009.142477
+      },
+      "evidence": {
+        "kind": "User requested scope",
+        "quote": "Free bilingual ASR; respond when called; automatic project/general/macro discussion from AI history; main-section replies; evidence-backed check-offs.",
+        "at": "2026-10-29"
+      }
+    },
+    {
+      "id": "UI-01",
+      "title": "Show discussion in the main animated character section",
+      "phase": "Android",
+      "milestone": "Calendar companion",
+      "acceptance": "Render typed and voiced replies with question, scope and source coverage beside the character across the three retained layouts, keep that section on project pages, and verify the installed calendar reply without an automatic communication popup.",
+      "done": true,
+      "manualOverride": true,
+      "verification": {
+        "kind": "Verified release 0.17",
+        "quote": "All three preview layouts were visually checked; the actual calendar displayed the real all-project answer and coverage in the main dog section.",
+        "at": 1793253009.142478
+      },
+      "evidence": {
+        "kind": "User requested scope",
+        "quote": "Free bilingual ASR; respond when called; automatic project/general/macro discussion from AI history; main-section replies; evidence-backed check-offs.",
+        "at": "2026-10-29"
+      }
     }
   ],
-  "revision": 11
+  "revision": 12
 }

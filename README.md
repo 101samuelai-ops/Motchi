@@ -10,6 +10,8 @@ A personal dog companion for understanding project progress, discussing work, an
 - [Persistent project memory and decisions](docs/MEMORY.md)
 - [Existing implementation and integration limits](docs/BASELINE.md)
 - [Research sources](docs/RESEARCH.md)
+- [Free bilingual speech and wake setup](docs/QWEN_SPEECH.md)
+- [History-backed project and overview discussion](docs/PROJECT_DISCUSSION.md)
 
 Formerly called Mochi. The repository is public, as created by the user.
 

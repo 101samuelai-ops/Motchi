@@ -15,7 +15,7 @@ from pathlib import Path
 def addressed(text):
     # Require the name at the start, optionally preceded by a greeting. Do not
     # wake on someone mentioning Motchi in an unrelated conversation.
-    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|[嘿嗨喂][，,\s]*)?(?:motchi|mochi|莫奇|莫琪|摩奇|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
+    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|(?:你好|您好|嘿|嗨|喂)[，,\s]*)?(?:motchi|mochi|莫奇|莫琪|摩奇|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
     return text[match.end():].lstrip(' ,.!?，。！？:：') if match else None
 
 
@@ -37,11 +37,12 @@ def project_matches(text, projects):
 
 
 class VoiceCompanion:
-    def __init__(self, transcribe, projects, ask, permitted, speak=None, clock=time.monotonic, transcribe_request=None, refine_addressed=None):
+    def __init__(self, transcribe, projects, ask, permitted, speak=None, clock=time.monotonic, transcribe_request=None, refine_addressed=None, discuss=None):
         self.transcribe, self.projects, self.ask = transcribe, projects, ask
         self.permitted, self.speak, self.clock = permitted, speak, clock
         self.transcribe_request = transcribe_request
         self.refine_addressed = refine_addressed
+        self.discuss = discuss
         self.lock = threading.RLock()
         self.sessions = {}
         self.cancelled = {}
@@ -65,8 +66,11 @@ class VoiceCompanion:
         with self.lock:
             old = self.sessions.get(device, {})
             continuing = bool(request.get('session') and request['session'] == old.get('id') and
-                              generation == old.get('generation') and old.get('until', 0) > self.clock())
-            session = dict(old) if continuing else {'id': secrets.token_urlsafe(24), 'generation': generation}
+                              generation == old.get('generation') and old.get('awaiting') is True and old.get('until', 0) > self.clock())
+            same_session=bool(request.get('session') and request['session']==old.get('id') and generation==old.get('generation'))
+            session = dict(old) if same_session else {'id': secrets.token_urlsafe(24), 'generation': generation}
+            if generation==old.get('generation') and old.get('question') and old.get('choiceUntil',0)>self.clock():
+                session['question']=old['question'];session['choices']=old.get('choices',[])
         # Provider choice cannot turn ambient listening into cloud capture.
         # Only the server-validated follow-up lease, explicit Listen now, or a
         # locally recognized wake name authorizes cloud refinement.
@@ -89,10 +93,19 @@ class VoiceCompanion:
             result.update(partial=True, text=command or "I'm listening. Go ahead.")
             self.allowed(device, generation)
             with self.lock:
-                session['until'] = self.clock() + 30
+                session['until'] = self.clock() + 20
+                session['awaiting'] = True
                 self.sessions[device] = session
             return result
-        if not command:
+        if command and self.discuss:
+            pending=session.pop('question',None)
+            query=(pending+' Project: '+command) if pending else command
+            answer=self.discuss({'text':query,
+                                 'projectId':request.get('projectId'),'selection':request.get('selection')})
+            self.allowed(device,generation)
+            result.update(answer,question=command)
+            if answer.get('scope')=='choice':session.update(question=pending or command,choiceUntil=self.clock()+60)
+        elif not command:
             result['text'] = "I'm here. What would you like to ask about your projects?"
         else:
             choices = session.get('choices', [])
@@ -122,13 +135,15 @@ class VoiceCompanion:
                               projectId=selected['id'], selection=selection, projectName=selected['name'], question=question)
             else:
                 candidates = named or projects
-                session.update(question=session.get('question') or command, choices=[p['id'] for p in candidates])
+                session.update(question=session.get('question') or command, choices=[p['id'] for p in candidates],choiceUntil=self.clock()+60)
                 result.update(choices=[{'id': p['id'], 'name': p['name'], 'folderLabel': p.get('folderLabel', '')} for p in candidates],
                               text='Which project do you mean? ' + ', '.join(p['name'] for p in candidates[:4]) +
                               ('. Say its name or choose it on the screen.' if candidates else 'Open a project in Codex on your Mac first.'))
         self.allowed(device, generation)
         with self.lock:
-            session['until'] = self.clock() + 30
+            session['awaiting'] = not bool(command)
+            session['until'] = self.clock() + (20 if session['awaiting'] else 0)
+            result['sessionSeconds'] = 20 if session['awaiting'] else 0
             self.sessions[device] = session
         return result
 

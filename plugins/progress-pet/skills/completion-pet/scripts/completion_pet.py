@@ -52,7 +52,7 @@ def main():
     if not compiler:
         parser.error("Swift is unavailable. Apple's command line tools are required.")
     source = Path(__file__).with_name("CompletionPet.swift")
-    digest = hashlib.sha256(b"".join(source.with_name(n).read_bytes() for n in ("CompletionPet.swift", "dog_bridge.py", "dialog.html", "codex_control.py", "checklist_sync.py", "hook_approvals.py", "android_host.py", "voice_companion.py", "mac_voice.py", "doubao_speech.py", "configure_doubao.py", "MacMicrophone.swift")) + (source.parent.parent.parent / "progress-pet/scripts/progress_pet.py").read_bytes()).hexdigest()[:16]
+    digest = hashlib.sha256(b"".join(source.with_name(n).read_bytes() for n in ("CompletionPet.swift", "dog_bridge.py", "dialog.html", "codex_control.py", "checklist_sync.py", "hook_approvals.py", "android_host.py", "voice_companion.py", "mac_voice.py", "doubao_speech.py", "configure_doubao.py", "qwen_speech.py", "qwen_worker.py", "configure_qwen.py", "project_discussion.py", "wake_detector.py", "wake_worker.py", "configure_wake.py", "MacMicrophone.swift")) + (source.parent.parent.parent / "progress-pet/scripts/progress_pet.py").read_bytes()).hexdigest()[:16]
     build = cache / digest
     bundle = build / "Motchi.app"
     binary = bundle / "Contents" / "MacOS" / "CompletionPet"
@@ -88,7 +88,7 @@ def main():
         info["CFBundleIdentifier"] = "local.progress-pet.hub.v" + digest[:8]
         (app / "Contents" / "Info.plist").write_bytes(plistlib.dumps(info))
         subprocess.run([compiler, str(source.with_name("MacMicrophone.swift")), "-o", str(resources / "MacMicrophone")], check=True)
-        for asset in ("dog_bridge.py", "dialog.html", "codex_control.py", "checklist_sync.py", "hook_approvals.py", "android_host.py", "voice_companion.py", "mac_voice.py", "doubao_speech.py", "configure_doubao.py"):
+        for asset in ("dog_bridge.py", "dialog.html", "codex_control.py", "checklist_sync.py", "hook_approvals.py", "android_host.py", "voice_companion.py", "mac_voice.py", "doubao_speech.py", "configure_doubao.py", "qwen_speech.py", "qwen_worker.py", "configure_qwen.py", "project_discussion.py", "wake_detector.py", "wake_worker.py", "configure_wake.py"):
             shutil.copy2(source.with_name(asset), resources / asset)
         shutil.copy2(source.parent.parent.parent / "progress-pet/scripts/progress_pet.py", resources / "progress_pet.py")
         configuration = {"--project": str(project), "--pet": args.pet, "--duration": str(args.duration),

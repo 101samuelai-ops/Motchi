@@ -6,7 +6,7 @@ The canonical planning checklist is this file. `.progress-pet.json` contains the
 
 ## Android calendar companion — approved 2026-10-27
 
-The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals or launcher replacement in this release. Optional wake-name listening and Mac microphone fallback are implemented in 0.16; optional Doubao Speech needs separate API setup. AND-10 remains open for human speech and field validation. See [voice controls and verification limits](docs/ANDROID_VOICE.md).
+The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals or launcher replacement in this release. Optional wake-name listening and Mac microphone fallback are implemented in 0.17 with free local Qwen3-ASR and streaming keyword detection; optional Doubao Speech needs separate API setup. AND-10 remains open for human speech and field validation. See [voice controls and verification limits](docs/ANDROID_VOICE.md).
 
 - [x] **AND-01: Verify the signed Android compatibility app** — Done when: Installation, rendering, touch, microphone and pinned local networking pass on the calendar before dashboard development.
 - [x] **AND-02: Add the paired HTTPS Mac project service** — Done when: Share the desktop bridge, group projects once per canonical folder, authenticate/pin devices, revoke credentials and preserve stable asynchronous operation receipts.
@@ -23,6 +23,9 @@ The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDR
 
 
 - [ ] **AND-12: Add and validate Doubao speech recognition** — Done when: Official two-pass Doubao ASR is selectable with private Mac API setup, ambient wake detection stays local, corrected transcripts reach the right project, and real English/Chinese speech, pause timing and answer delivery are verified on the calendar.
+
+- [x] **AND-13: Add free local bilingual speech recognition** — Done when: Install selectable Qwen3-ASR on the Mac without speech API credentials, validate English/Chinese synthetic transcription, and use a local streaming keyword detector to activate questions; record real speech acceptance separately under AND-10.
+- [x] **UI-01: Show discussion in the main animated character section** — Done when: Render typed and voiced replies with question, scope and source coverage beside the character across the three retained layouts, keep that section on project pages, and verify the installed calendar reply without an automatic communication popup.
 
 AND-12 partial verification: source/protocol/privacy tests, signed 0.16 APK installation and the updated Mac companion pass. The user has the consumer Doubao app only; a Volcengine Speech API key and real speech test remain required. See [setup and limits](docs/DOUBAO_SPEECH.md).
 
@@ -63,6 +66,8 @@ This requirement supersedes dog-only presentation. The proposed build sequence i
 - [ ] **CHAT-05: Give source-backed progress and blocker answers** — Done when: Answer what changed, what remains and what needs the user using recorded facts, source links, current milestone and last-update time; identify unavailable information.
 - [ ] **QA-02: Verify project routing and instruction delivery** — Done when: Test multiple projects, active-turn races, disconnects, stale requests and failed/uncertain sends; measure wrong-project and lost-instruction incidents.
 
+- [x] **CHAT-06: Analyze AI history for project and overview discussion** — Done when: Route named/topic questions, clarify ambiguity, support general and cross-project discussion, retrieve exact-project AI history and requirements before answers, expose bounded coverage, and verify a real read-only provider and calendar overview without silent work.
+
 ## P3 — Returning to work and managing multiple projects
 
 - [ ] **RETURN-01: Provide a where-we-left-off summary** — Done when: On request, summarize completed work, current work, postponed scope and the next unresolved decision since the user last checked the project.
@@ -98,3 +103,8 @@ CHK-04 and SYNC-01 are implemented in source 0.12 and verified by the history-re
 ## Automatic checklist evidence — 2026-10-28
 
 The user now prefers Motchi to decide same/different itself, superseding that question requirement in CHK-03. CHK-05 implements automatic same/different matching and evidence-backed completion. Broader expand/replace lifecycle handling in CHK-03 remains planned. See [0.14 checks and release limits](docs/AUTOMATIC_CHECKLISTS.md). The signed 0.14 APK is installed on the calendar over WLAN; Calendar Mirror confirms the connected dashboard with seven projects. A new task completion on-device remains unexercised.
+
+
+## Bilingual voice and history discussion evidence — 2026-10-29
+
+AND-13, CHAT-06 and UI-01 are verified in 0.17. The signed calendar and Mac updates are installed, a real all-project question displayed its source-backed answer in the main stage, and the user confirmed “It wakes and answers” after the streaming keyword detector replaced ambient full-ASR wake matching. Twenty Python suites, Android routing/appearance checks, Kotlin tests, lint and signing pass. Broader real bilingual accuracy, false activations, battery and field checks remain AND-10/AND-07; this is not proof of Doubao parity. Milestone/lifecycle/memory criteria in CHAT-05 and other broader tasks remain open. See [speech setup and verification](docs/QWEN_SPEECH.md), [discussion limits](docs/PROJECT_DISCUSSION.md) and [rollout](docs/ANDROID_VERIFICATION.md).

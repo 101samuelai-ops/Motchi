@@ -113,6 +113,19 @@ with tempfile.TemporaryDirectory(prefix='motchi-android-test-') as directory:
  check(rejects(lambda:portal.transcribe(wav(rate=8000))),'Unexpected sample rates are rejected')
  check(rejects(lambda:portal.transcribe(wav(seconds=61))),'Recordings over 60 seconds are rejected')
 
+ discussions=[]
+ def discuss_result(request):
+  discussions.append(request)
+  return {'scope':'general','text':'General conversation without executing work.'}
+ bridge.discuss_result=discuss_result
+ general={'action':'discuss','operationId':'general-discuss-123','text':'Hello Motchi'}
+ before_work=len(bridge.calls)
+ check(rejects(lambda:http('/v1/operations','POST',general)),'General discussion still requires device authentication')
+ http('/v1/operations','POST',general,token);general_result=wait(general['operationId'])
+ check(general_result['status']=='done' and general_result['result']['scope']=='general' and len(bridge.calls)==before_work,'General discussion needs no project and cannot silently submit work')
+ http('/v1/operations','POST',general,token);wait(general['operationId'])
+ check(len(discussions)==1 and discussions[0]['projectId'] is None,'Retrying general discussion preserves its single durable operation')
+
  # Revoke while identity resolution is blocked: the final delivery boundary
  # must check authorization again, rather than trusting the queued request.
  resolving=threading.Event();resume=threading.Event();original_resolve=bridge.resolve

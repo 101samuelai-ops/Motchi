@@ -2,6 +2,17 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Local bilingual speech and history discussion — 0.17.0, 2026-10-29
+
+- Signed versionCode 10 / 0.17.0 installed in place over authorized WLAN. APK v2 signature, Kotlin tests and release lint pass. Calendar Mirror shows **Mac connected**, six discovered projects, retained appearance and the main character stage. The installed Mac bridge modules were updated, signed, verified and normally relaunched after unlocking; private pairing and trust were retained.
+- Qwen3-ASR-0.6B 8-bit and MLX-Audio are privately installed and selected. The live local worker starts with the Mac microphone fallback. Real synthesized English and Chinese files passed; this is not human speech acceptance or a Doubao-equivalence benchmark. The calendar's own microphone remains near-silent/unconfirmed.
+- All 20 Python regression suites pass. New/expanded checks include 23 discussion cases, eight local Qwen process/privacy cases and 42 authenticated portal cases. The Android routing/review/microphone and appearance suites pass 26 and 24 checks respectively. Wake tests require a new activation after each final answer; a bare wake permits one next question.
+- A real configured-provider schema check analyzed 15 selected sections from 191 available history sections and returned source references, implemented work and unverified acceptance limits. This validates the actual provider output path, not just a fixture. No work instruction or approval was submitted.
+- The browser preview verified named-project routing, overview, greeting/general discussion and main-stage replies in all three retained layouts. A stacked-bubble overlap found during inspection was corrected. Calendar input was exercised using keyboard navigation through Calendar Mirror.
+- See QWEN_SPEECH.md and PROJECT_DISCUSSION.md for dependencies, measured synthetic timing, local/cloud boundaries and bounded retrieval. AND-10, AND-12, field validation and broader milestone/lifecycle memory remain open.
+
+The actual calendar all-project question completed with a multi-project AI-history assessment and per-project retrieved/available section counts in the main animated dog section. The initial human wake test then failed despite input sound. A separately installed sherpa-onnx bilingual streaming keyword detector corrected that path; English/Chinese synthetic keyword positives and non-wake negatives pass, Mac ownership/wake tests now total 20, and the user confirmed **“It wakes and answers.”** The calendar reconnected after the signed Mac restart and displays the local keyword-detector status. Broader speech accuracy and field acceptance remain pending.
+
 ## Voice and Doubao update — 0.16.0, 2026-10-29
 
 - Signed versionCode 9 installed in place over authorized WLAN; Android package inspection confirms 0.16.0. Calendar Mirror shows **Mac connected**, retained projects, the reference appearance and Mac microphone enabled. The updated Mac voice modules and raw-input helper were copied into the existing app, signed and restarted without changing pairing or trust.

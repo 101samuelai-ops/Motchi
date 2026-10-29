@@ -16,6 +16,7 @@ import time
 import uuid
 import wave
 import doubao_speech
+from wake_detector import WakeDetector, configuration as wake_configuration
 
 
 class Segmenter:
@@ -78,7 +79,13 @@ class MacVoice:
         self.lock = threading.RLock()
         self.owner = None; self.lease = 0; self.epoch = ''
         self.process = None; self.context = {}; self.session = None
-        self.active_until = self.muted_until = 0
+        self.active_until = self.muted_until = self.session_until = 0
+        self.wake_detector = None
+        if hasattr(portal,'root'):
+            try:
+                wake_configuration(portal.root)
+                self.wake_detector=WakeDetector(portal.root)
+            except ValueError:pass
         self.vad = None
         dependencies=Path(portal.root)/'speech-python' if hasattr(portal,'root') else None
         if dependencies and dependencies.is_dir():
@@ -113,6 +120,7 @@ class MacVoice:
                 self.status = 'Starting Mac microphone · allow the macOS prompt if shown'
                 self.issue = None; self.events.clear(); self.segmenter = Segmenter(self.vad)
                 try:
+                    if self.wake_detector:self.wake_detector.start()
                     self.process = subprocess.Popen([str(self.binary)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except OSError:
                     self.owner = None; raise ValueError('The Mac microphone helper could not start.')
@@ -124,6 +132,7 @@ class MacVoice:
                 self.portal.voice.cancel(device, self.epoch)
                 self.epoch = str(uuid.uuid4()); self.session = None; self.context = context
                 self.segmenter.reset()
+                if self.wake_detector:self.wake_detector.clear()
             self.language = language
             if body.get('activate') is True:
                 self.active_until = self.clock()+30
@@ -152,7 +161,9 @@ class MacVoice:
                 'detector':'WebRTC speech detector' if self.vad else 'Sound-level fallback',
                 'utteranceSeconds':round(len(self.segmenter.speech or b'')/32000,1),
                 'language':self.language,
-                'status':self.status, 'issue':self.issue, 'lastWakeAt':self.last_wake,
+                'wakeDetector':'Local bilingual keyword detector' if self.wake_detector else 'Local transcription wake matching',
+                'wakeReady':self.wake_detector.ready if self.wake_detector else True,
+                'status':self.status, 'issue':self.issue or (self.wake_detector.issue if self.wake_detector else None), 'lastWakeAt':self.last_wake,
                 **(doubao_speech.info(self.portal.root) if hasattr(self.portal,'root') else {})}
 
     def publish_transcript(self, device, epoch, text):
@@ -177,8 +188,23 @@ class MacVoice:
                 with self.lock:
                     if self.process is not process or self.owner != device: return
                     if self.clock() > self.lease or not self.portal.device_permitted(device): self.stop(); return
+                    if self.session and self.clock()>=self.session_until:self.session=None
                     if self.busy or self.clock() < self.muted_until:
                         self.segmenter.reset(); continue
+                    if self.wake_detector:
+                        keyword=self.wake_detector.feed(data)
+                        if keyword and self.clock()>=self.active_until and not self.session:
+                            self.active_until=self.clock()+20
+                            self.segmenter.reset();self.last_wake=int(time.time()*1000)
+                            self.events.append({'wake':True,'partial':True,'heard':'Hey Motchi','text':"I'm here. Ask your question."})
+                        # Keep measuring audio for the waveform while idle. The
+                        # small keyword model is independent of full ASR and
+                        # cannot submit background speech to the answer provider.
+                        if self.clock()>=self.active_until and not self.session:
+                            self.segmenter.push(data);self.segmenter.reset()
+                            self.recent=max(self.segmenter.rms,self.recent*.996)
+                            self.status='Listening for Hey Motchi · local keyword detector' if self.wake_detector.ready else 'Starting local wake detector…'
+                            continue
                     pcm = self.segmenter.push(data)
                     self.recent = max(self.segmenter.rms, self.recent*.996)
                     if self.status.startswith('Starting'): self.status = 'Listening for Hey Motchi · Mac microphone'
@@ -220,7 +246,10 @@ class MacVoice:
                 result = job['result']
                 self.issue = None
                 if result.get('wake'):
-                    self.session = result.get('session'); self.last_wake = int(time.time()*1000)
+                    self.session = result.get('session') if result.get('sessionSeconds',0)>0 or result.get('partial') else None
+                    self.session_until=self.clock()+result.get('sessionSeconds',20) if self.session else 0
+                    if not result.get('partial') and result.get('heard'):self.active_until=0
+                    self.last_wake = int(time.time()*1000)
                     result['operationId'] = request['operationId']; self.events.append(result)
                     if result.get('projectId'): self.context = {k:result.get(k) for k in ('projectId','selection')}
                     # Give the calendar time to fetch/play the answer. Heartbeat
@@ -232,7 +261,7 @@ class MacVoice:
         finally:
             with self.lock:
                 if preview: self.preview = False
-                else: self.busy = False
+                else: self.busy = False; self.active_until = 0
                 if self.owner == device:
                     self.status = 'Preparing your answer…' if self.busy else 'Listening for Hey Motchi · Mac microphone'
 
@@ -241,6 +270,7 @@ class MacVoice:
             if self.owner: self.portal.voice.cancel(self.owner,self.epoch)
             self.owner = None; self.session = None; self.context = {}; self.active_until = 0
             self.busy = self.preview = False; self.events.clear()
+            if self.wake_detector:self.wake_detector.close()
             process,self.process = self.process,None
             self.status = 'Mac microphone paused'
             if process:

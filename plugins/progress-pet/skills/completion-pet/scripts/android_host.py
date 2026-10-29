@@ -31,6 +31,7 @@ import wave
 from voice_companion import VoiceCompanion, spoken_wav
 from mac_voice import MacVoice
 import doubao_speech
+from qwen_speech import Recognizer
 from configure_doubao import save_private
 
 SUPPORT = Path.home() / 'Library/Application Support/Mochi/android'
@@ -159,9 +160,11 @@ class AndroidPortal:
         self.cache, self.cache_at = {}, 0
         self.transcriber = transcriber or self.transcribe
         self.speech_lock = threading.Lock()
+        self.qwen = Recognizer(self.root)
         self.voice = VoiceCompanion(self.local_transcribe, lambda: self.read_snapshot().get('projects', []),
                                     self.voice_ask, self.device_permitted, transcribe_request=self.voice_transcribe,
-                                    refine_addressed=self.refine_addressed)
+                                    refine_addressed=self.refine_addressed,
+                                    discuss=(self.discuss if hasattr(bridge,'discuss_result') else None))
         self.voice_audio = {}
         self.speaker = speaker
         self.mac_voice = MacVoice(self)
@@ -206,7 +209,7 @@ class AndroidPortal:
                     if self.path == '/v1/speech-provider':
                         if self.command == 'POST':
                             provider=self.body(1024).get('provider')
-                            if provider not in ('local','doubao'): raise ValueError('Choose Local or Doubao speech.')
+                            if provider not in ('local','doubao','qwen'): raise ValueError('Choose Qwen, Whisper or Doubao speech.')
                             save_private(portal.root/'speech-provider.json',{'provider':provider})
                         elif self.command != 'GET': raise ValueError('Use the speech provider controls.')
                         self.response(200,doubao_speech.info(portal.root)); return
@@ -371,9 +374,9 @@ class AndroidPortal:
         if not isinstance(operation,str) or not re.fullmatch(r'[a-zA-Z0-9-]{8,100}',operation):
             raise ValueError('A stable operation ID is required.')
         action=request.get('action')
-        if action not in ('ask','comment','send','start','toggle','undo','resolveDuplicate','transcribe','listen'):
+        if action not in ('ask','discuss','comment','send','start','toggle','undo','resolveDuplicate','transcribe','listen'):
             raise ValueError('Action unavailable. Approval decisions stay on the Mac.')
-        if action not in ('transcribe','listen'): self.target(request, fresh=False)
+        if action not in ('transcribe','listen','discuss'): self.target(request, fresh=False)
         if action == 'listen':
             if not isinstance(audio, bytes) or not 44 < len(audio) <= 640044:
                 raise ValueError('Wake speech must be a bounded WAV recording.')
@@ -382,7 +385,7 @@ class AndroidPortal:
                     raise ValueError('Wake speech must be mono 16kHz PCM, up to 20 seconds.')
         if action=='toggle' and type(request.get('done')) is not bool:
             raise ValueError('Choose a checked or unchecked task state.')
-        if action in ('ask','comment','send','start'):
+        if action in ('ask','discuss','comment','send','start'):
             text=request.get('text')
             if not isinstance(text,str) or not 1<=len(text.strip())<=3000:
                 raise ValueError('Enter 1–3,000 characters.')
@@ -440,6 +443,8 @@ class AndroidPortal:
                         self.store.db.execute("DELETE FROM jobs WHERE device=? AND action='listen' AND status='done' AND at<?", (device,time.time()-120))
             elif action=='transcribe':
                 result={'text':self.local_transcribe(audio)}
+            elif action=='discuss':
+                result=self.discuss(request)
             else:
                 with self.lock:
                     project_lock=self.project_locks.setdefault(request['projectId'],threading.RLock())
@@ -514,6 +519,8 @@ class AndroidPortal:
 
     def local_transcribe(self, audio):
         with self.speech_lock:
+            if self.transcriber==self.transcribe and doubao_speech.selected(self.root)=='qwen':
+                return self.qwen.recognize(audio)
             if self.transcriber==self.transcribe and doubao_speech.selected(self.root)=='doubao':
                 return doubao_speech.recognize(self.root,audio)
             return self.transcriber(audio)
@@ -522,6 +529,8 @@ class AndroidPortal:
         language=request.get('language') or 'en'
         if language not in ('auto','en','zh'): raise ValueError('Choose English, Chinese or automatic speech language.')
         with self.speech_lock:
+            if self.transcriber==self.transcribe and doubao_speech.selected(self.root)=='qwen':
+                return self.qwen.recognize(audio,permitted=lambda:self.voice.allowed(request['_device'],request['generation']))
             if self.transcriber==self.transcribe and request.get('_addressed') is True and doubao_speech.selected(self.root)=='doubao':
                 device,generation=request['_device'],request['generation']
                 return doubao_speech.recognize(self.root,audio,
@@ -533,6 +542,12 @@ class AndroidPortal:
     def refine_addressed(self, audio, request, local_text):
         return self.voice_transcribe(audio,request) if doubao_speech.selected(self.root)=='doubao' else local_text
 
+    def discuss(self, request):
+        if not hasattr(self.bridge,'discuss_result'):raise ValueError('Update the Mac companion for general and project discussion.')
+        result=self.bridge.discuss_result({k:request.get(k) for k in ('text','projectId','selection')})
+        self.cache_at=0
+        return result
+
     def voice_ask(self, project, selection, text):
         self.target({'projectId': project['id'], 'selection': selection})
         return self.bridge.ask_result({'selection': selection, 'text': text, 'autoFollow': False})
@@ -541,6 +556,7 @@ class AndroidPortal:
         if self.closed:return
         self.closed=True
         self.mac_voice.close()
+        self.qwen.close()
         if self.thread.is_alive(): self.server.shutdown()
         self.server.server_close()
         self.executor.shutdown(wait=True,cancel_futures=True)

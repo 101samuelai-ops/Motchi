@@ -1,6 +1,6 @@
 # Motchi Android companion
 
-Version 0.16.0 builds on the separate installed Android app for an Android 11 calendar. The existing calendar and launcher remain installed. The Mac performs project analysis, discussion and Codex execution; both devices must be on the same Wi-Fi. This is not an independent cloud execution client.
+Version 0.17.0 builds on the separate installed Android app for an Android 11 calendar. The existing calendar and launcher remain installed. The Mac performs project analysis, discussion and Codex execution; both devices must be on the same Wi-Fi. This is not an independent cloud execution client.
 
 ## Using the app
 
@@ -8,7 +8,7 @@ Version 0.13.1 adds **Settings → Appearance**. Choose **Companion canvas**, **
 
 The large Motchi and speech bubble sit beside a compact typing field and microphone action. **Primary projects** are your chosen focus; **Secondary projects** remain visible. Use **Pin / Primary** on a card to move it between sections. The first two discovered projects initially become primary; later refreshes preserve your choices. Needs-input items use amber, active projects blue, failures red, and completed checklists green. “Checklist complete” describes recorded scope, not shipping readiness. Project progress remains unknown when there is no checklist.
 
-Changing the design does not reconnect, clear project conversations or drafts, or send instructions. Appearance preferences are stored separately from connection and project state. The voice waveform reflects the selected microphone. Version 0.16.0 includes optional wake-name listening, a live transcript panel, a Mac microphone fallback and optional official Doubao Speech transcription; see [voice setup and current verification limits](ANDROID_VOICE.md).
+Changing the design does not reconnect, clear project conversations or drafts, or send instructions. Appearance preferences are stored separately from connection and project state. The voice waveform reflects the selected microphone. Version 0.17.0 includes optional wake-name listening, a live transcript panel, a Mac microphone fallback and optional official Doubao Speech transcription; see [voice setup and current verification limits](ANDROID_VOICE.md).
 
 Home groups discovered chats by their canonical project folder. It reads that folder’s shared checklist once, rather than adding together counts from its chats. Projects needing input appear first within their primary or secondary section. Missing or empty checklists show **Progress unknown**. Task counts describe recorded checklist scope, not effort, acceptance or shipping readiness.
 
@@ -20,7 +20,7 @@ Tap a project to discuss it. The selected project and exact chat stay visible. C
 
 Request receipts retain stable operation IDs. A lost response is uncertain until its receipt is checked. Reconnection and app restart check receipts; they never automatically replay a work instruction. An accepted request is not a claim that the project or task is finished.
 
-Home voice questions match an explicitly named project. Multiple matches, duplicate names or an unnamed project open a choice list. Inside a project, follow-up text stays there. To switch projects, use All projects. A push-to-talk transcript opens an editable draft: choose Ask, Save comment or Send to Codex afterward. Wake/listen-now discussion asks read-only questions automatically after a pause or Finish question; it cannot send work or approve permissions.
+The main composer and addressed voice automatically select named or distinctive project topics, ask on ambiguity, and support general conversation or an all-project overview. Project follow-ups retain context. Answers analyze retrieved AI history and appear beside the character in the main section. See [discussion behaviour and retrieval limits](PROJECT_DISCUSSION.md). A push-to-talk transcript opens an editable draft: choose Ask, Save comment or Send to Codex afterward. Wake/listen-now discussion asks read-only questions automatically after a pause or Finish question; it cannot send work or approve permissions.
 
 ## Opening Motchi on the calendar
 
@@ -65,7 +65,7 @@ The CLI `--enable` opts in for the next desktop launch; `--pair` generates a new
 
 Calendar push-to-talk remains available, with a separate Start button, an indicator, Stop & transcribe, and Cancel. Each recording is limited to 60 seconds. Leaving the app cancels an active recording. Microphone denial leaves typing available.
 
-Android records mono 16 kHz PCM audio and sends it to the paired Mac over pinned HTTPS. The default local engine uses `whisper.cpp` with the **small multilingual** model. The requested optional **Doubao Speech · cloud** provider instead sends activated speech from the Mac to its official API for bilingual two-pass recognition; it needs separate Volcengine Speech API access. A consumer Doubao app login does not enable this. Ambient wake detection stays local. Temporary local files are cleaned, including failures. Cancelling a transcript dialog does not submit a question, but cannot recall audio already sent for recognition. Submitted text uses Motchi’s existing answer provider. Optional wake listening can use the calendar or Mac microphone; the Mac supplies local spoken replies. See [voice controls](ANDROID_VOICE.md) and [Doubao setup/privacy](DOUBAO_SPEECH.md).
+Android records mono 16 kHz PCM audio and sends it to the paired Mac over pinned HTTPS. The selected free local engine on this Mac is **Qwen3-ASR via MLX-Audio** for automatic English/Chinese recognition; see [setup and limits](QWEN_SPEECH.md). `whisper.cpp` with the small multilingual model remains a fallback. The requested optional **Doubao Speech · cloud** provider instead sends activated speech from the Mac to its official API for bilingual two-pass recognition; it needs separate Volcengine Speech API access. A consumer Doubao app login does not enable this. Ambient wake detection stays local. Temporary local files are cleaned, including failures. Cancelling a transcript dialog does not submit a question, but cannot recall audio already sent for recognition. Submitted text uses Motchi’s existing answer provider. Optional wake listening can use the calendar or Mac microphone; the Mac supplies local spoken replies. See [voice controls](ANDROID_VOICE.md) and [Doubao setup/privacy](DOUBAO_SPEECH.md).
 
 The speech executable and model are installed separately from source control. To configure an existing trusted `whisper-cli` build and multilingual GGML model, save a private `speech.json` beside the Android service state, containing absolute `binary` and `model` paths. A missing engine leaves typing available. Prefer building with an install RPATH of `@executable_path/../lib` on macOS so the installed CLI can locate its libraries.
 

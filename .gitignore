@@ -30,3 +30,6 @@ local.properties
 doubao.json
 speech.json
 speech-provider.json
+
+qwen.json
+wake.json

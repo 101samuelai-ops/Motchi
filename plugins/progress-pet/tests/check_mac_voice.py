@@ -92,4 +92,29 @@ with tempfile.TemporaryDirectory() as root:
             time.sleep(.05)
         check(child.dead and not voice.owner,'A missing calendar heartbeat stops capture even when the input pipe stalls')
         voice.close()
+    class Keywords:
+        ready=True;issue=None
+        def __init__(self,at=None):self.count=0;self.at=at
+        def feed(self,data):
+            self.count+=1
+            return 'HEY_MOTCHI' if self.count==self.at else None
+        def close(self):pass
+    def capture_with_keywords(at,expired=False):
+        voice=MacVoice(portal,binary,clock=lambda:100.0);child=Child()
+        child.stdout=io.BytesIO(frame(300)*100+frame(0)*50)
+        voice.owner='calendar';voice.lease=200;voice.process=child;voice.epoch='test-epoch'
+        voice.wake_detector=Keywords(at)
+        if expired:voice.session='stale-session';voice.session_until=99
+        calls=[]
+        with patch.object(voice.worker,'submit',side_effect=lambda *args:calls.append(args)):
+            voice.capture('calendar',voice.epoch,child)
+        events=list(voice.events);session=voice.session;voice.close()
+        return calls,events,session
+    calls,events,_=capture_with_keywords(None)
+    check(not calls and not events,'Idle keyword listening does not run full ASR on background speech')
+    calls,events,_=capture_with_keywords(10)
+    check(events and events[0]['wake'] and events[0]['partial'],'A keyword acknowledges immediately without waiting for transcription')
+    check(calls and all(call[-1] is True for call in calls),'Only keyword-activated audio reaches the full question recognizer')
+    calls,events,session=capture_with_keywords(None,expired=True)
+    check(not calls and session is None,'An expired pending question returns to keyword-only listening')
 print(f'{checks} Mac microphone ownership, live text, segmentation and disconnect checks passed')
