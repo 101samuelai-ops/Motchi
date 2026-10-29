@@ -18,6 +18,9 @@
   return 'Automatic updates on · same tasks matched, completed work checked';
  }
  function identity(){var a=new Uint32Array(4);if(root.crypto&&root.crypto.getRandomValues){root.crypto.getRandomValues(a);return 'op-'+Array.prototype.map.call(a,function(n){return n.toString(16);}).join('-');}return 'op-'+Date.now()+'-'+Math.random().toString(36).slice(2);}
- var api={normalize:normalize,projectRoute:projectRoute,progress:progress,stale:stale,identity:identity,reviewStatus:reviewStatus};
+ // Noise is visible but small; quiet speech remains visible on the calendar's
+ // low-gain microphone. This is a measured level, never a simulated signal.
+ function microphoneLevel(rms){return Math.max(0,Math.min(1,Math.log(1+Math.max(0,Number(rms)||0)/10)/Math.log(201)));}
+ var api={normalize:normalize,projectRoute:projectRoute,progress:progress,stale:stale,identity:identity,reviewStatus:reviewStatus,microphoneLevel:microphoneLevel};
  if(typeof module==='object'&&module.exports)module.exports=api;else root.MotchiCore=api;
 })(typeof window!=='undefined'?window:globalThis);

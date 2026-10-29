@@ -6,7 +6,7 @@ The canonical planning checklist is this file. `.progress-pet.json` contains the
 
 ## Android calendar companion — approved 2026-10-27
 
-The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals or launcher replacement in this release. Wake-name listening is requested future work (AND-10); current voice remains push-to-talk.
+The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDROID.md) and [verified rollout and remaining checks](docs/ANDROID_VERIFICATION.md). No remote approvals or launcher replacement in this release. Optional wake-name listening and Mac microphone fallback are implemented in 0.16; optional Doubao Speech needs separate API setup. AND-10 remains open for human speech and field validation. See [voice controls and verification limits](docs/ANDROID_VOICE.md).
 
 - [x] **AND-01: Verify the signed Android compatibility app** — Done when: Installation, rendering, touch, microphone and pinned local networking pass on the calendar before dashboard development.
 - [x] **AND-02: Add the paired HTTPS Mac project service** — Done when: Share the desktop bridge, group projects once per canonical folder, authenticate/pin devices, revoke credentials and preserve stable asynchronous operation receipts.
@@ -20,6 +20,11 @@ The separate Android app uses the Mac over the same Wi-Fi. See [setup](docs/ANDR
 
 - [ ] **AND-10: Add optional local wake-name listening** — Done when: An explicit opt-in listens locally for Motchi, shows microphone state and provides pause/disable controls; false activations, project routing, privacy, battery and real calendar microphone behaviour are verified. Push-to-talk remains available.
 - [x] **AND-11: Match the pictured dark calendar design** — Done when: The installed app uses the dark Companion canvas, serif speech bubble, compact composer, larger progress circles and stacked Primary/Secondary sections; previous appearance is restorable, all three designs remain selectable, and project pins, pairing and discussions survive the update.
+
+
+- [ ] **AND-12: Add and validate Doubao speech recognition** — Done when: Official two-pass Doubao ASR is selectable with private Mac API setup, ambient wake detection stays local, corrected transcripts reach the right project, and real English/Chinese speech, pause timing and answer delivery are verified on the calendar.
+
+AND-12 partial verification: source/protocol/privacy tests, signed 0.16 APK installation and the updated Mac companion pass. The user has the consumer Doubao app only; a Volcengine Speech API key and real speech test remain required. See [setup and limits](docs/DOUBAO_SPEECH.md).
 
 AND-06 rollout: the signed release and live flows are installed/verified. The calendar's userdebug firmware forces WebView inspection on despite the app requesting it off, so the debugging criterion remains open. See the rollout record before treating this device as a hardened release target.
 

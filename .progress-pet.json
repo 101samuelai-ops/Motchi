@@ -564,9 +564,9 @@
       "acceptance": "An explicit opt-in listens locally for Motchi, shows microphone state and provides pause/disable controls; false activations, project routing, privacy, battery and real calendar microphone behaviour are verified. Push-to-talk remains available.",
       "manualOverride": true,
       "evidence": {
-        "kind": "Agreed future work",
-        "quote": "The user requested seamless activation when Motchi is called. Current voice is push-to-talk.",
-        "at": "2026-10-28"
+        "kind": "Human acceptance still pending",
+        "quote": "Voice UI, Mac microphone input, local wake detection and read-only routing are implemented. User reported poor accuracy, pause detection and no answer. API setup/live speech and field validation remain open.",
+        "at": "2026-10-29"
       }
     },
     {
@@ -582,7 +582,21 @@
         "quote": "Signed 0.14.1 installed in place over WLAN. Calendar Mirror shows dark canvas, stacked project sections, Mac connected and seven retained projects. Appearance migration and restoration regressions pass.",
         "at": "2026-10-28"
       }
+    },
+    {
+      "id": "AND-12",
+      "title": "Add and validate Doubao speech recognition",
+      "done": false,
+      "phase": "Android",
+      "milestone": "Android calendar companion",
+      "acceptance": "Official two-pass Doubao ASR is selectable with private Mac API setup, ambient wake detection stays local, corrected transcripts reach the right project, and real English/Chinese speech, pause timing and answer delivery are verified on the calendar.",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "Verification and external blocker",
+        "quote": "0.16 implementation, protocol/privacy checks and signed WLAN installation pass. User has only consumer Doubao app; Volcengine Speech API credentials and human accuracy/answer tests remain required.",
+        "at": "2026-10-29"
+      }
     }
   ],
-  "revision": 10
+  "revision": 11
 }

@@ -24,4 +24,8 @@ assert(C.reviewStatus({mode:'automatic',coverage:{pending:5}},true).includes('5 
 assert(C.reviewStatus({mode:'automatic',issue:'failure'},true).includes('paused'));
 assert(C.reviewStatus({},true).includes('Update Motchi on the Mac'));
 assert(C.reviewStatus({mode:'automatic',syncing:true},false).startsWith('Offline'));
-console.log('22 Android routing, review state and offline checks passed');
+assert.equal(C.microphoneLevel(0),0);
+assert(C.microphoneLevel(30)>C.microphoneLevel(4)*3);
+assert(C.microphoneLevel(30)>.2);
+assert.equal(C.microphoneLevel(50000),1);
+console.log('26 Android routing, review state, microphone meter and offline checks passed');

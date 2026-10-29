@@ -33,6 +33,9 @@ TRANSPORT = r'''
   if(action==='snapshot')return Promise.resolve(JSON.parse(JSON.stringify({projects:projects,updatedAt:Date.now()/1000,speechAvailable:false})));
   if(action==='job')return Promise.resolve(jobs[extra.id]||{status:'failed',result:{error:'No sample receipt.'}});
   if(action==='quickAccessInfo')return Promise.resolve({enabled:false,visible:false,canPinShortcut:false});
+  if(action==='voiceInfo')return Promise.resolve({enabled:false,running:false,status:'Open the installed app for microphone access'});
+  if(action==='voiceEvents')return Promise.resolve({events:[]});
+  if(action==='voiceContext')return Promise.resolve({saved:true});
   if(action==='submit'){var r=extra.request,p=projects.find(function(x){return x.id===r.projectId;});if(!p)return Promise.reject(new Error('Choose a sample project.'));
    var text='Sample answer: '+p.progress.completed+' of '+p.progress.total+' checklist tasks are complete. ';
    if(r.action==='comment'){p.comments.unshift({text:r.text,at:Date.now()/1000});text='Sample comment saved in this preview.';}
@@ -62,8 +65,8 @@ def main():
                     self.send_error(404);return
                 content=TRANSPORT.encode() if name=='native.js' else (ASSETS/name).read_bytes()
                 if name=='index.html':
-                    banner='<div class="preview-banner">Android 0.14.1 preview · Sample data &nbsp; <button id="preview-completion">Try automatic completion</button>'
-                    if args.apk:banner+=' &nbsp; <a href="/Motchi.apk" download="Motchi-0.14.1.apk">Download Android APK</a>'
+                    banner='<div class="preview-banner">Android 0.16 preview · Sample data · Voice requires installed app &nbsp; <button id="preview-completion">Try automatic completion</button>'
+                    if args.apk:banner+=' &nbsp; <a href="/Motchi.apk" download="Motchi-0.16.0.apk">Download Android APK</a>'
                     content=content.replace(b'<body>',('<body>'+banner+'</div>').encode())
                 if name=='app.css':content+=b'\n.preview-banner{padding:12px 24px;background:#203b39;color:white;font:14px system-ui;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.preview-banner a{color:white}.preview-banner button{padding:8px 12px}\n'
                 mime='text/html' if name.endswith('.html') else 'text/css' if name.endswith('.css') else 'image/svg+xml' if name.endswith('.svg') else 'application/javascript'

@@ -1,6 +1,6 @@
 # Persistent Motchi project memory
 
-Updated: 2026-10-28. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-10-29. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 ## Product intent
 
@@ -74,3 +74,21 @@ The signed 0.13.0 release is installed and is non-debuggable; the calendar remai
 After the user allowed the Mac file-access prompts, a normal unlocked LaunchServices restart loaded projects and reconnected the calendar. An explicitly submitted live progress question completed with a current checklist answer; the stale-data guard blocked an initial attempt during reconnection. No implementation instruction was sent or replayed. The one-time consent and unlocked normal-launch check now passes; this does not verify future locked startup or login.
 
 Keep these limits explicit: a clean synthetic question transcribed accurately, but weak actual calendar microphone audio produced an unreliable transcript; quiet-input rejection and mandatory review do not establish far-field or multilingual accuracy. Physical Mac sleep/router roaming/power cycling and later locked startup/login were not forced in this session. No remote approval controls, wake word, public endpoint, calendar removal or launcher replacement were added. Character customization and broader checklist classification/memory remain separate roadmap work.
+
+
+## Live voice and Mac microphone fallback — 2026-10-28
+
+The user requests a visible wake-response UI and live speech-to-text. The calendar enumerates a built-in microphone but produces almost no usable input; the user reported a stationary recording meter and selected the Mac microphone instead. Do not describe the calendar's physical microphone as working, or definitely absent. Android 0.15.2 adds source/language choices, a live transcript and measured waveform, Listen now, Finish question and Pause. Mac capture uses a bundled AVAudioEngine helper with native voice processing, private local Whisper and a separately installed WebRTC speech detector. Only addressed final questions reach the read-only answer provider. Partial transcripts never submit questions or add chat history. No voice work submissions or approvals.
+
+Verified so far: signed build/lint/unit checks, actual Mac input and moving calendar meter, and automated routing/privacy/ownership/disconnect tests. The user's first Mac test still reported very inaccurate recognition, poor pause detection and no answer. Version 0.15.2 addresses this with fixed English/Chinese selection, native voice processing, WebRTC segmentation and explicit Finish question; human acceptance remains required. Keep AND-10 pending; a running microphone or a moving meter is not evidence of successful conversation. See ANDROID_VOICE.md.
+
+
+## Doubao recognition request — 2026-10-29
+
+The user requests Doubao-level voice recognition and confirms they only use the consumer Doubao app. That login is not Speech API access. Version 0.16 adds the official Volcengine Doubao streaming ASR adapter, private local key setup, provider selection, bilingual two-pass final correction and sanitized setup/quota errors. The selected provider on this Mac is Doubao; no API credentials are configured, so real cloud recognition is unavailable. Never claim verified accuracy, live API success or successful voice answers from protocol fixtures. AND-12 records the outstanding API setup and human acceptance.
+
+This request permits cloud recognition for addressed speech, superseding the earlier local-only transcription boundary for the selected provider. Ambient wake detection stays local; only locally detected activation, explicit Listen now/recording or a server-validated follow-up permits cloud audio. Pause cancels capture and queued questions. Questions remain read-only; voice never sends work or approvals. Project history is not sent as a speech vocabulary.
+
+Signed Android 0.16.0/versionCode 9 installed in place over authorized WLAN, preserving pairing and the connected dashboard. The installed Mac modules/helper were updated, signed and restarted; the private speech dependencies include WebRTC VAD and websockets. The helper now uses raw physical microphone input after the earlier native voice-processing path suppressed it. Human microphone quality, wake recognition, endpoint timing and answer delivery remain pending. The calendar's physical microphone remains unconfirmed/near-silent; Mac input is the fallback.
+
+Verification: all 18 Python regression suites passed, including 24 Doubao protocol/auth/privacy checks; Android routing/appearance checks, Kotlin speech-segmentation unit tests, release lint, APK signature and Mac app/helper signing passed. These establish implementation behaviour, not a speech accuracy score. See DOUBAO_SPEECH.md and ANDROID_VOICE.md.

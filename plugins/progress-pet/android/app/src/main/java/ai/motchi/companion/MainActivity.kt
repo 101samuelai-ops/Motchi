@@ -10,8 +10,6 @@ import android.os.Bundle
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.security.keystore.KeyGenParameterSpec
-import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
@@ -20,23 +18,9 @@ import android.webkit.WebViewClient
 import android.view.WindowManager
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
-import java.net.InetAddress
-import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.security.KeyStore
-import java.security.MessageDigest
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import java.util.concurrent.Executors
-import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
-import javax.crypto.SecretKey
-import javax.crypto.spec.GCMParameterSpec
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 class MainActivity : Activity() {
     private lateinit var web: WebView
@@ -50,6 +34,7 @@ class MainActivity : Activity() {
     @Volatile private var recorded: ByteArray? = null
     private var pendingPermission: String? = null
     private var pendingNotifications: String? = null
+    private var pendingWake: String? = null
     @Volatile private var syncAvailable = false
     private val timeout = Runnable { finishRecording(false); event("recordingStopped", JSONObject().put("automatic", true)) }
 
@@ -72,6 +57,7 @@ class MainActivity : Activity() {
         try { QuickAccess.show(this) } catch (_: Exception) { android.util.Log.w("MotchiAccess", "Quick access notification unavailable") }
         // Only bundled assets can call the narrowly scoped native interface.
         web.loadUrl("file:///android_asset/" + if(BuildConfig.COMPATIBILITY) "compatibility.html" else "index.html")
+        if (!BuildConfig.COMPATIBILITY && VoiceService.enabled(this)) try { VoiceService.setEnabled(this, true) } catch (_: Exception) {}
     }
 
     private fun reply(id: String, value: JSONObject) {
@@ -80,75 +66,10 @@ class MainActivity : Activity() {
     private fun event(name: String, value: JSONObject) {
         main.post { if (!isFinishing) web.evaluateJavascript("window.nativeEvent(${JSONObject.quote(name)},${JSONObject.quote(value.toString())})", null) }
     }
-    private fun key(): SecretKey {
-        val store = KeyStore.getInstance("AndroidKeyStore"); store.load(null)
-        (store.getKey("motchi.connection", null) as? SecretKey)?.let { return it }
-        val gen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-        gen.init(KeyGenParameterSpec.Builder("motchi.connection", KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-            .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
-        return gen.generateKey()
-    }
-    @Synchronized private fun saveConnection(value: JSONObject?) {
-        if (value == null) { prefs.edit().clear().apply(); return }
-        val cipher = Cipher.getInstance("AES/GCM/NoPadding"); cipher.init(Cipher.ENCRYPT_MODE, key())
-        val encrypted = cipher.iv + cipher.doFinal(value.toString().toByteArray(Charsets.UTF_8))
-        prefs.edit().putString("connection", Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
-    }
-    @Synchronized private fun connection(): JSONObject? {
-        val value = prefs.getString("connection", null) ?: return null
-        return try {
-            val data = Base64.decode(value, Base64.NO_WRAP)
-            val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-            cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, data.copyOfRange(0,12)))
-            JSONObject(String(cipher.doFinal(data.copyOfRange(12,data.size)), Charsets.UTF_8))
-        } catch (e: Exception) { null }
-    }
-    private fun validateEndpoint(endpoint: String): URL {
-        val url = URL(endpoint)
-        require(url.protocol == "https" && url.userInfo == null && url.query == null && url.ref == null && url.path in listOf("", "/")) { "Use a valid local Mac pairing code." }
-        require(url.host.matches(Regex("[0-9.]+")) && InetAddress.getByName(url.host).isSiteLocalAddress) { "Pair with a Mac on your local Wi-Fi." }
-        return url
-    }
-    private fun network(config: JSONObject, path: String, method: String = "GET", payload: ByteArray? = null, voice: Boolean = false, operation: String = ""): JSONObject {
-        val base = validateEndpoint(config.getString("url"))
-        require(path.matches(Regex("/v1/(projects|pair|operations|device|speech|operations/[a-zA-Z0-9-]{8,100})")))
-        val pin = config.getString("pin").lowercase()
-        require(pin.matches(Regex("[a-f0-9]{64}")))
-        val trust = object : X509TrustManager {
-            override fun getAcceptedIssuers(): Array<X509Certificate> = emptyArray()
-            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) { throw java.security.cert.CertificateException("Client certificates unsupported") }
-            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-                require(chain.isNotEmpty())
-                val found = MessageDigest.getInstance("SHA-256").digest(chain[0].encoded).joinToString("") { "%02x".format(it.toInt() and 255) }
-                if (!MessageDigest.isEqual(found.toByteArray(), pin.toByteArray())) throw java.security.cert.CertificateException("Mac certificate changed. Pair again on the Mac.")
-                chain[0].checkValidity()
-            }
-        }
-        val ssl = SSLContext.getInstance("TLS"); ssl.init(null,arrayOf<TrustManager>(trust),SecureRandom())
-        val conn = URL(base.toString().trimEnd('/') + path).openConnection() as HttpsURLConnection
-        conn.sslSocketFactory = ssl.socketFactory
-        // Exact paired host plus SHA-256 leaf pin replaces public-CA DNS validation.
-        conn.hostnameVerifier = javax.net.ssl.HostnameVerifier { hostname, _ -> hostname == base.host }
-        conn.instanceFollowRedirects = false
-        conn.connectTimeout = 10000; conn.readTimeout = 35000; conn.requestMethod = method
-        conn.setRequestProperty("Accept", "application/json")
-        if (config.has("token")) conn.setRequestProperty("Authorization", "Bearer " + config.getString("token"))
-        if (payload != null) {
-            conn.doOutput = true; conn.setRequestProperty("Content-Type", if (voice) "audio/wav" else "application/json")
-            if (voice) conn.setRequestProperty("X-Operation-ID", operation)
-            conn.setFixedLengthStreamingMode(payload.size)
-        }
-        try {
-            if (payload != null) conn.outputStream.use { it.write(payload) }
-            val code = conn.responseCode
-            val stream = if (code in 200..299) conn.inputStream else conn.errorStream
-            val data = stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: "{}"
-            val result = JSONObject(data)
-            if (code == 401) throw IllegalStateException("Pairing expired or revoked. Reconnect from Settings.")
-            if (code !in 200..299) throw IllegalStateException(result.optString("error", "Mac request failed ($code)"))
-            return result
-        } finally { conn.disconnect() }
-    }
+    private val mac by lazy { MacConnection(this) }
+    private fun connection() = mac.load()
+    private fun saveConnection(value: JSONObject?) = mac.save(value)
+    private fun network(config: JSONObject, path: String, method: String = "GET", payload: ByteArray? = null, voice: Boolean = false, operation: String = "") = mac.request(config,path,method,payload,voice,operation)
 
     inner class NativeBridge {
         @JavascriptInterface fun request(id: String, raw: String) {
@@ -161,7 +82,7 @@ class MainActivity : Activity() {
                         "pair" -> {
                             val ticket=value.getString("ticket").trim(); require(ticket.startsWith("MOTCHI1.")) { "Paste the pairing code shown on your Mac." }
                             val config=JSONObject(String(Base64.decode(ticket.substring(8), Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING), Charsets.UTF_8))
-                            validateEndpoint(config.getString("url"))
+                            mac.validateEndpoint(config.getString("url"))
                             val response=network(config,"/v1/pair","POST",JSONObject().put("code",config.getString("code")).put("name","Motchi calendar · " + android.os.Build.MODEL).toString().toByteArray())
                             config.remove("code"); config.put("token",response.getString("token"));config.put("deviceId",response.getString("deviceId"));saveConnection(config)
                             JSONObject().put("paired",true)
@@ -179,6 +100,32 @@ class MainActivity : Activity() {
                             }
                         }
                         "quickAccessInfo" -> QuickAccess.info(this@MainActivity)
+                        "voiceInfo" -> VoiceService.info(this@MainActivity)
+                        "speechProvider" -> {
+                            val config=connection() ?: error("Connect to your Mac first.")
+                            if(value.has("provider")) network(config,"/v1/speech-provider","POST",JSONObject().put("provider",value.getString("provider")).toString().toByteArray())
+                            else network(config,"/v1/speech-provider")
+                        }
+                        "voiceSource" -> { VoiceService.setSource(this@MainActivity, value.getString("source")); VoiceService.info(this@MainActivity) }
+                        "voiceLanguage" -> { VoiceService.setLanguage(this@MainActivity, value.getString("language")); VoiceService.info(this@MainActivity) }
+                        "finishVoice" -> { VoiceService.finishQuestion(); VoiceService.info(this@MainActivity) }
+                        "listenNow" -> { VoiceService.listenNow(); VoiceService.info(this@MainActivity) }
+                        "voiceEvents" -> JSONObject().put("events", VoiceService.drain())
+                        "voiceContext" -> { VoiceService.context(value.optString("projectId").takeIf { it.isNotEmpty() }, value.optString("selection").takeIf { it.isNotEmpty() }); JSONObject().put("saved", true) }
+                        "wakeListening" -> {
+                            val enabled = value.getBoolean("enabled")
+                            if (enabled) {
+                                val ready = network(connection() ?: error("Connect to your Mac first."), "/v1/projects")
+                                check(ready.optBoolean("wakeVoiceAvailable")) { "Wake voice is not ready on your Mac. Update or reconnect Motchi on the Mac first." }
+                                if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                                    main.post { pendingWake = id; requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), 42) }; return@execute
+                                }
+                            }
+                            main.post {
+                                try { VoiceService.setEnabled(this@MainActivity, enabled); reply(id, JSONObject().put("ok", true).put("data", VoiceService.info(this@MainActivity))) }
+                                catch(error: Exception) { reply(id, JSONObject().put("ok", false).put("error", error.message)) }
+                            }; return@execute
+                        }
                         "pinShortcut" -> QuickAccess.requestShortcut(this@MainActivity)
                         "quickAccess" -> {
                             val enabled = value.getBoolean("enabled")
@@ -191,6 +138,7 @@ class MainActivity : Activity() {
                         "submit" -> network(connection() ?: error("Mac is disconnected."),"/v1/operations","POST",value.getJSONObject("request").toString().toByteArray(Charsets.UTF_8))
                         "job" -> network(connection() ?: error("Mac is disconnected."),"/v1/operations/"+value.getString("id"))
                         "forget" -> {
+                            VoiceService.setEnabled(this@MainActivity, false)
                             connection()?.let { network(it,"/v1/device","DELETE") }; saveConnection(null);JSONObject().put("forgotten",true)
                         }
                         "startRecording" -> {
@@ -231,15 +179,29 @@ class MainActivity : Activity() {
                 } catch(e:Exception) { reply(id,JSONObject().put("ok",false).put("error",e.message)) }
             }
         }
+        if (requestCode == 42) {
+            val id = pendingWake; pendingWake = null
+            if (id != null) {
+                val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                if (granted) try { VoiceService.setEnabled(this, true); reply(id, JSONObject().put("ok", true).put("data", VoiceService.info(this))) }
+                catch (error: Exception) { reply(id, JSONObject().put("ok", false).put("error", error.message)) }
+                else reply(id, JSONObject().put("ok", false).put("error", "Microphone permission denied. You can still type."))
+            }
+        }
     }
     @Synchronized private fun beginRecording() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED) throw SecurityException("Microphone access denied. You can still type.")
         check(!recording) { "Already recording." }; recorded=null;audio=ByteArrayOutputStream()
         val minimum=AudioRecord.getMinBufferSize(16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)
         require(minimum>0) { "16kHz microphone recording is unavailable." }
-        val input=AudioRecord(MediaRecorder.AudioSource.MIC,16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,maxOf(8192,minimum*2))
-        check(input.state==AudioRecord.STATE_INITIALIZED) { "Microphone unavailable. You can still type." }
-        recorder=input;input.startRecording();recording=true
+        VoiceService.holdManual(true)
+        val input: AudioRecord
+        try {
+            input=AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT,maxOf(8192,minimum*2))
+            recorder=input
+            check(input.state==AudioRecord.STATE_INITIALIZED) { "Microphone unavailable. You can still type." }
+            input.startRecording();check(input.recordingState==AudioRecord.RECORDSTATE_RECORDING);recording=true
+        } catch (error: Exception) { recorder?.release(); recorder=null; VoiceService.holdManual(false); throw error }
         audioThread=Thread {
             val buffer=ByteArray(4096)
             while(recording && audio.size()<1920000) {
@@ -267,12 +229,13 @@ class MainActivity : Activity() {
         try { audioThread?.join(1200) } catch (_:Exception) {}
         recorder?.release();recorder=null;audioThread=null
         val pcm=audio.toByteArray();audio.reset()
-        if(cancel || pcm.isEmpty()) { recorded=null; return }
+        if(cancel || pcm.isEmpty()) { recorded=null; VoiceService.holdManual(false); return }
         val header=ByteBuffer.allocate(44).order(ByteOrder.LITTLE_ENDIAN)
         header.put("RIFF".toByteArray());header.putInt(pcm.size+36);header.put("WAVEfmt ".toByteArray());header.putInt(16)
         header.putShort(1);header.putShort(1);header.putInt(16000);header.putInt(32000);header.putShort(2);header.putShort(16)
         header.put("data".toByteArray());header.putInt(pcm.size)
         recorded=header.array()+pcm
+        VoiceService.holdManual(false)
     }
     override fun onStop() { val wasRecording=recording; finishRecording(true); if(wasRecording) event("recordingCancelled",JSONObject()); super.onStop() }
     override fun onDestroy() { finishRecording(true);workers.shutdownNow();web.removeJavascriptInterface("MotchiNative");web.destroy();super.onDestroy() }

@@ -18,7 +18,7 @@ if a.create_key and not a.signing_config.exists():
  key.chmod(0o600);a.signing_config.write_text(json.dumps({'file':str(key),'password':password}));a.signing_config.chmod(0o600)
 if not a.signing_config.exists():p.error('Signing configuration missing. Use --create-key for your first local build; back up the private key securely.')
 c=json.loads(a.signing_config.read_text());env={**os.environ,'MOTCHI_SIGNING_FILE':c['file'],'MOTCHI_SIGNING_PASSWORD':c['password']}
-kind='Debug' if a.debug else 'Release';cmd=[a.gradle,'-p',str(root),'assemble'+kind,'lint'+kind,'--console=plain']
+kind='Debug' if a.debug else 'Release';cmd=[a.gradle,'-p',str(root),'assemble'+kind,'lint'+kind,'test'+kind+'UnitTest','--console=plain']
 if a.compatibility:cmd.append('-PmotchiCompatibility=true')
 subprocess.run(cmd,check=True,env=env)
 apk=root/'app/build/outputs/apk'/kind.lower()/('app-'+kind.lower()+'.apk')

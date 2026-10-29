@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import ipaddress
+import io
 import json
 import math
 import os
@@ -27,6 +28,10 @@ import threading
 import time
 import uuid
 import wave
+from voice_companion import VoiceCompanion, spoken_wav
+from mac_voice import MacVoice
+import doubao_speech
+from configure_doubao import save_private
 
 SUPPORT = Path.home() / 'Library/Application Support/Mochi/android'
 MAX_AUDIO = 16000 * 2 * 60 + 4096
@@ -133,7 +138,7 @@ class PortalStore:
 
 
 class AndroidPortal:
-    def __init__(self, bridge, root=SUPPORT, host=None, port=47831, transcriber=None):
+    def __init__(self, bridge, root=SUPPORT, host=None, port=47831, transcriber=None, speaker=spoken_wav):
         self.bridge, self.root = bridge, Path(root)
         self.host, self.port = host or lan_address(), port
         if not ipaddress.ip_address(self.host).is_private:
@@ -153,6 +158,13 @@ class AndroidPortal:
         self.project_locks = {}
         self.cache, self.cache_at = {}, 0
         self.transcriber = transcriber or self.transcribe
+        self.speech_lock = threading.Lock()
+        self.voice = VoiceCompanion(self.local_transcribe, lambda: self.read_snapshot().get('projects', []),
+                                    self.voice_ask, self.device_permitted, transcribe_request=self.voice_transcribe,
+                                    refine_addressed=self.refine_addressed)
+        self.voice_audio = {}
+        self.speaker = speaker
+        self.mac_voice = MacVoice(self)
         self.pair_attempts = {}
         self.closed = False
         key, cert, self.fingerprint = certificate(self.root)
@@ -191,6 +203,19 @@ class AndroidPortal:
                         self.response(401,{'error':'Device not paired or access revoked.'}); return
                     if self.command == 'GET' and self.path == '/v1/projects':
                         self.response(200, portal.read_snapshot()); return
+                    if self.path == '/v1/speech-provider':
+                        if self.command == 'POST':
+                            provider=self.body(1024).get('provider')
+                            if provider not in ('local','doubao'): raise ValueError('Choose Local or Doubao speech.')
+                            save_private(portal.root/'speech-provider.json',{'provider':provider})
+                        elif self.command != 'GET': raise ValueError('Use the speech provider controls.')
+                        self.response(200,doubao_speech.info(portal.root)); return
+                    if self.path == '/v1/mac-voice':
+                        if self.command == 'POST':
+                            portal.mac_voice.control(device,self.body(4096))
+                        elif self.command != 'GET':
+                            raise ValueError('Use the Mac microphone controls.')
+                        self.response(200,portal.mac_voice.poll(device)); return
                     if self.command == 'GET' and re.fullmatch(r'/v1/operations/[a-zA-Z0-9-]{8,100}',self.path):
                         self.response(200,portal.job(device,self.path.rsplit('/',1)[1])); return
                     if self.command == 'DELETE' and self.path == '/v1/device':
@@ -198,6 +223,21 @@ class AndroidPortal:
                     if self.command == 'POST' and self.path == '/v1/operations':
                         body = self.body(24000)
                         self.response(202,portal.submit(device,body)); return
+                    if self.command == 'GET' and re.fullmatch(r'/v1/voice-audio/[a-zA-Z0-9-]{8,100}', self.path):
+                        with portal.lock:
+                            entry = portal.voice_audio.get((device, self.path.rsplit('/', 1)[1]))
+                        self.response(200, {'wav': base64.b64encode(entry[1]).decode() if entry and time.monotonic()-entry[0]<120 else None}); return
+                    if self.command == 'POST' and self.path == '/v1/voice':
+                        body = self.body(900_000)
+                        if body.get('cancel') is True:
+                            portal.voice.cancel(device, str(body.get('generation', '')))
+                            self.response(200, {'paused': True}); return
+                        data = base64.b64decode(body.pop('audio', ''), validate=True)
+                        if not 44 < len(data) <= 640044:
+                            raise ValueError('Wake listening accepts speech segments up to 20 seconds.')
+                        request = {k: body.get(k) for k in ('operationId', 'generation', 'session', 'projectId', 'selection', 'preview', 'activated', 'language')}
+                        request.update(action='listen', audioHash=hashlib.sha256(data).hexdigest())
+                        self.response(202, portal.submit(device, request, audio=data)); return
                     if self.command == 'POST' and self.path == '/v1/speech':
                         if self.headers.get('Content-Type') != 'audio/wav':
                             raise ValueError('Record mono 16kHz WAV audio.')
@@ -293,7 +333,8 @@ class AndroidPortal:
                 config=json.loads(voice.read_text());speech=Path(config['binary']).is_file() and Path(config['model']).is_file()
             except (OSError,ValueError,KeyError): speech=False
             self.cache={'projects':projects,'updatedAt':time.time(),'catalogIssue':raw.get('catalogIssue'),
-                        'speechAvailable':speech,'scope':'Discovered local Mac projects'}
+                        'speechAvailable':speech,'wakeVoiceAvailable':speech,'speechProvider':doubao_speech.info(self.root),
+                        'scope':'Discovered local Mac projects'}
             self.cache_at=time.monotonic()
             return self.cache
 
@@ -330,9 +371,15 @@ class AndroidPortal:
         if not isinstance(operation,str) or not re.fullmatch(r'[a-zA-Z0-9-]{8,100}',operation):
             raise ValueError('A stable operation ID is required.')
         action=request.get('action')
-        if action not in ('ask','comment','send','start','toggle','undo','resolveDuplicate','transcribe'):
+        if action not in ('ask','comment','send','start','toggle','undo','resolveDuplicate','transcribe','listen'):
             raise ValueError('Action unavailable. Approval decisions stay on the Mac.')
-        if action!='transcribe': self.target(request, fresh=False)
+        if action not in ('transcribe','listen'): self.target(request, fresh=False)
+        if action == 'listen':
+            if not isinstance(audio, bytes) or not 44 < len(audio) <= 640044:
+                raise ValueError('Wake speech must be a bounded WAV recording.')
+            with wave.open(io.BytesIO(audio), 'rb') as wav:
+                if wav.getnchannels()!=1 or wav.getsampwidth()!=2 or wav.getframerate()!=16000 or not 0<wav.getnframes()<=320000:
+                    raise ValueError('Wake speech must be mono 16kHz PCM, up to 20 seconds.')
         if action=='toggle' and type(request.get('done')) is not bool:
             raise ValueError('Choose a checked or unchecked task state.')
         if action in ('ask','comment','send','start'):
@@ -347,6 +394,8 @@ class AndroidPortal:
             if old:
                 if old!=(device,signature): raise ValueError('Operation ID already used for another request.')
                 return self.job(device,operation)
+            if action == 'listen' and self.store.db.execute("SELECT 1 FROM jobs WHERE device=? AND action='listen' AND status IN ('queued','running')", (device,)).fetchone():
+                raise ValueError('A voice segment is already being processed. No ambient audio was queued.')
             count=self.store.db.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
             if count>=24: raise ValueError('Motchi is busy. Wait for existing requests to finish.')
             self.store.db.execute('INSERT INTO jobs VALUES (?,?,?,?,?,?,?,?)',
@@ -370,8 +419,27 @@ class AndroidPortal:
             with self.store.lock:
                 permitted=self.store.db.execute('SELECT revoked FROM devices WHERE id=?',(device,)).fetchone()
             if not permitted or permitted[0]: raise ValueError('Device access was revoked.')
-            if action=='transcribe':
-                result={'text':self.transcriber(audio)}
+            if action=='listen':
+                result=self.voice.run(device, request, audio)
+                if result.get('wake') and result.get('text') and not result.get('partial'):
+                    try:
+                        spoken = self.speaker(result['text'])
+                        self.voice.allowed(device, request['generation'])
+                        if spoken:
+                            with self.lock:
+                                self.voice_audio = {k:v for k,v in self.voice_audio.items() if time.monotonic()-v[0]<120}
+                                if len(self.voice_audio)>=8: self.voice_audio.pop(next(iter(self.voice_audio)))
+                                self.voice_audio[(device,identity)] = (time.monotonic(), spoken)
+                            result['spokenReply']=True
+                    except Exception:
+                        result['spokenReply']=False
+                        result['speechIssue']='Spoken reply unavailable. The answer is readable on screen.'
+                # Unaddressed background segments must not leave durable logs.
+                if result.get('partial') or not result.get('wake'):
+                    with self.store.lock, self.store.db:
+                        self.store.db.execute("DELETE FROM jobs WHERE device=? AND action='listen' AND status='done' AND at<?", (device,time.time()-120))
+            elif action=='transcribe':
+                result={'text':self.local_transcribe(audio)}
             else:
                 with self.lock:
                     project_lock=self.project_locks.setdefault(request['projectId'],threading.RLock())
@@ -412,9 +480,9 @@ class AndroidPortal:
             self.store.db.execute('UPDATE jobs SET status=?,result=? WHERE id=?',
                                   (status,json.dumps(result,ensure_ascii=False),identity))
 
-    def transcribe(self, audio):
+    def transcribe(self, audio, language='auto', wake=False):
         if not audio or len(audio)>MAX_AUDIO: raise ValueError('Record up to 60 seconds.')
-        with tempfile.TemporaryDirectory(prefix='motchi-voice-') as directory:
+        with tempfile.TemporaryDirectory(prefix='motchi-voice-',dir=self.root) as directory:
             source=Path(directory)/'speech.wav';source.write_bytes(audio)
             with wave.open(str(source),'rb') as wav:
                 if wav.getnchannels()!=1 or wav.getsampwidth()!=2 or wav.getframerate()!=16000 or not 0<wav.getnframes()<=16000*60:
@@ -429,16 +497,50 @@ class AndroidPortal:
             if not binary.is_absolute() or not binary.is_file() or not model.is_absolute() or not model.is_file():
                 raise ValueError('Local speech engine is unavailable. Use typing.')
             output=Path(directory)/'transcript'
-            proc=subprocess.run([str(binary),'-m',str(model),'-f',str(source),'-l','auto','-otxt','-of',str(output),'-nt'],
+            args=[str(binary),'-m',str(model),'-f',str(source),'-l',language,'-otxt','-of',str(output),'-nt']
+            if wake and language == 'en': args += ['--prompt','Motchi. Hey Motchi. Project progress and checklist.']
+            elif wake and language == 'zh': args += ['--prompt','莫奇。项目进度和任务清单。']
+            proc=subprocess.run(args,
                                 capture_output=True,timeout=180)
             if proc.returncode: raise ValueError('Local transcription failed. Try again or type your question.')
             text=output.with_suffix('.txt').read_text().strip()
             if not text: raise ValueError('No speech recognized. Try again or type your question.')
             return text[:3000]
 
+    def device_permitted(self, device):
+        with self.store.lock:
+            row=self.store.db.execute('SELECT revoked FROM devices WHERE id=?', (device,)).fetchone()
+        return bool(row and not row[0])
+
+    def local_transcribe(self, audio):
+        with self.speech_lock:
+            if self.transcriber==self.transcribe and doubao_speech.selected(self.root)=='doubao':
+                return doubao_speech.recognize(self.root,audio)
+            return self.transcriber(audio)
+
+    def voice_transcribe(self, audio, request):
+        language=request.get('language') or 'en'
+        if language not in ('auto','en','zh'): raise ValueError('Choose English, Chinese or automatic speech language.')
+        with self.speech_lock:
+            if self.transcriber==self.transcribe and request.get('_addressed') is True and doubao_speech.selected(self.root)=='doubao':
+                device,generation=request['_device'],request['generation']
+                return doubao_speech.recognize(self.root,audio,
+                    permitted=lambda:self.voice.allowed(device,generation),
+                    on_text=lambda text:self.mac_voice.publish_transcript(device,generation,text))
+            if self.transcriber == self.transcribe: return self.transcribe(audio,language=language,wake=True)
+            return self.transcriber(audio)
+
+    def refine_addressed(self, audio, request, local_text):
+        return self.voice_transcribe(audio,request) if doubao_speech.selected(self.root)=='doubao' else local_text
+
+    def voice_ask(self, project, selection, text):
+        self.target({'projectId': project['id'], 'selection': selection})
+        return self.bridge.ask_result({'selection': selection, 'text': text, 'autoFollow': False})
+
     def close(self):
         if self.closed:return
         self.closed=True
+        self.mac_voice.close()
         if self.thread.is_alive(): self.server.shutdown()
         self.server.server_close()
         self.executor.shutdown(wait=True,cancel_futures=True)

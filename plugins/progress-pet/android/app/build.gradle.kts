@@ -1,4 +1,5 @@
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android") }
+dependencies { testImplementation("junit:junit:4.13.2") }
 android {
     namespace = "ai.motchi.companion"
     compileSdk = 35
@@ -7,8 +8,8 @@ android {
         applicationId = "ai.motchi.companion"
         minSdk = 26
         targetSdk = 35
-        versionCode = 5
-        versionName = "0.14.1"
+        versionCode = 9
+        versionName = "0.16.0"
         buildConfigField("boolean", "COMPATIBILITY", (project.findProperty("motchiCompatibility") == "true").toString())
     }
     val signingPath = System.getenv("MOTCHI_SIGNING_FILE")

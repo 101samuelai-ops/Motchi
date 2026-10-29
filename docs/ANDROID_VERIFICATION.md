@@ -2,6 +2,14 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Voice and Doubao update — 0.16.0, 2026-10-29
+
+- Signed versionCode 9 installed in place over authorized WLAN; Android package inspection confirms 0.16.0. Calendar Mirror shows **Mac connected**, retained projects, the reference appearance and Mac microphone enabled. The updated Mac voice modules and raw-input helper were copied into the existing app, signed and restarted without changing pairing or trust.
+- Release build, lint, Kotlin unit tests and APK v2 signature verification pass. All 18 Python suites passed, including 24 deterministic Doubao protocol/auth/cloud-boundary tests, plus 26 Android routing/meter checks and 24 appearance checks.
+- Doubao is the requested selected provider. No Speech API key is configured: public status correctly reports setup needed without exposing credentials. The consumer Doubao app login cannot be used. The local private setup utility and documented official API console are ready.
+- Earlier Mac voice testing showed words but very poor accuracy, unreliable stop detection and no reply. Those are unresolved human acceptance failures. Version 0.16 adds official two-pass recognition and removes native voice processing that suppressed this Mac's input; neither change proves real accuracy before an API test.
+- AND-10 and AND-12 remain pending for live speech, wake/false activation, pause timing and returned answers. Existing firmware and field limits are unchanged. See [Doubao setup](DOUBAO_SPEECH.md).
+
 ## Reference appearance update — 0.14.1, 2026-10-28
 
 Signed versionCode 5 installed in place over WLAN with existing pairing/data retained. Calendar Mirror confirms the requested dark Companion canvas, serif speech bubble, larger rings, stacked Primary/Secondary sections, seven live projects and Mac connected. The old appearance remains restorable in Settings; all three designs are available. The 24 appearance and 22 core Android checks, browser persistence/restoration/draft checks, release build and lint passed. See [appearance verification](ANDROID_APPEARANCE.md) and [full checklist audit](CHECKLIST_AUDIT.md). Existing field and firmware limits remain open.

@@ -104,6 +104,12 @@ class QuickAccessReceiver : BroadcastReceiver() {
         try {
             val visible = QuickAccess.show(context)
             Log.i("MotchiAccess", if (visible) "Open Motchi button ready" else "Open Motchi button disabled or notifications unavailable")
+            // Android 11 permits restoring a user-enabled microphone FGS at
+            // startup. Newer Android versions require opening the app first.
+            if (Build.VERSION.SDK_INT <= 30 && VoiceService.enabled(context) &&
+                context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                VoiceService.setEnabled(context, true)
+            }
         } catch (error: Exception) {
             Log.w("MotchiAccess", "Open Motchi button unavailable: ${error.javaClass.simpleName}")
         }

@@ -2,10 +2,14 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <application android:icon="@drawable/motchi_icon" android:theme="@style/MotchiTheme" android:label="Motchi" android:allowBackup="false" android:usesCleartextTraffic="false" android:hardwareAccelerated="true" android:supportsRtl="true">
+        <service android:name=".VoiceService" android:exported="false" android:foregroundServiceType="microphone" />
         <receiver android:name=".QuickAccessReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

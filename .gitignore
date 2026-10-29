@@ -25,3 +25,8 @@ visible-history.sqlite3*
 local.properties
 *.jks
 *.keystore
+
+# Speech credentials and local provider state (normally in Application Support)
+doubao.json
+speech.json
+speech-provider.json
