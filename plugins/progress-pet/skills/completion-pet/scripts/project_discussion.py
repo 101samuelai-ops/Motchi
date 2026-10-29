@@ -1,10 +1,87 @@
 """Read-only project routing and bounded, source-backed discussion context."""
 import hashlib
+import json
 import math
 from pathlib import Path
 import re
 
 STOP = set('a an the is are was were be been to of on in for with and or my our your me it this that how what which project projects task tasks progress status done doing complete completed work working please can could tell about next remaining still has have do does i you'.split())
+
+SUMMARY_STYLE = (
+    "Synthesize an assessment for the user, rather than narrating the AI's activity log. "
+    "Return text as a natural, plain-language answer: normally 2-3 short sentences, at most 70 English words or 160 Chinese characters. "
+    "Lead with the practical outcome: what works now, the most important remaining issue, and what this means for the user. "
+    "Answer the actual question; greetings and ordinary chat need no project report. Match the user's language. "
+    "For an overview, prioritize the few projects needing attention instead of listing every event. "
+    "Put a short supporting explanation in details, one useful suggested next step in nextStep, and a material uncertainty in caveat. "
+    "Use empty strings when these fields add nothing. Keep IDs, quotes, history counts and technical implementation out of text. "
+    "Do not invent milestones, deadlines, percentages, blockers, successful tests or user acceptance. "
+    "A checklist checkmark is recorded completion, not proof of readiness. A suggestion is not an instruction already sent. "
+    "Resolve conflicting reports using chronology and scope: a later user-reported failure reopens the affected outcome despite an earlier AI success claim. "
+    "Distinguish reported, tested and user-confirmed outcomes without turning the answer into a technical audit. "
+    "For work claims, add evidence entries containing the exact supplied projectId, chat, messageId and a verbatim quote from retrieved history. "
+    "Use only references supporting this assessment; never fabricate or rewrite quotes. Details may explain the evidence, but must not expose private reasoning. "
+    "History coverage is displayed separately. Mention missing/stale data in caveat when it could change the conclusion. "
+)
+
+
+def answer_schema():
+    fields = {key: {'type': 'string'} for key in ('text', 'details', 'nextStep', 'caveat')}
+    fields.update(scope={'type': 'string', 'enum': ['project', 'overview', 'general']},
+                  projectId={'type': ['string', 'null']},
+                  evidence={'type': 'array', 'items': {'type': 'object',
+                      'properties': {key: {'type': 'string'} for key in ('projectId', 'chat', 'messageId', 'quote')},
+                      'required': ['projectId', 'chat', 'messageId', 'quote'], 'additionalProperties': False}})
+    return {'type': 'object', 'properties': fields, 'required': list(fields), 'additionalProperties': False}
+
+
+def presentation(raw, context, project_ids, question=''):
+    """Validate displayed references against the exact retrieved project snippets.
+
+    This verifies reference integrity, not the model's interpretation. Invalid or
+    oversized output falls back to known counts instead of displaying its claims.
+    """
+    try:
+        answer = json.loads(raw)
+        if not isinstance(answer, dict): raise ValueError()
+        clean = {}
+        for field, limit in (('text', 900), ('details', 4000), ('nextStep', 500), ('caveat', 700)):
+            value = answer.get(field, '')
+            if not isinstance(value, str) or len(value) > limit: raise ValueError()
+            clean[field] = value.strip()
+        if not clean['text']: raise ValueError()
+        evidence = answer.get('evidence', [])
+        if not isinstance(evidence, list) or len(evidence) > 8: raise ValueError()
+        messages = {(p['id'], m['chat'], m['id']): m
+                    for p in context['projects'] if p['id'] in project_ids
+                    for m in p['history']['messages']}
+        clean['evidence'] = []
+        for ref in evidence:
+            if not isinstance(ref, dict): raise ValueError()
+            key = tuple(ref.get(k) for k in ('projectId', 'chat', 'messageId'))
+            quote = ref.get('quote')
+            if (not all(isinstance(k, str) for k in key) or key not in messages or
+                    not isinstance(quote, str) or not 4 <= len(quote) <= 1000 or quote not in messages[key]['text']):
+                raise ValueError()
+            clean['evidence'].append({**{k: ref[k] for k in ('projectId', 'chat', 'messageId')},
+                                      'quote': quote, 'role': messages[key]['role'], 'at': messages[key]['at']})
+        return clean
+    except (ValueError, TypeError, KeyError):
+        chinese = bool(re.search(r'[\u3400-\u9fff]', question))
+        projects = [p for p in context['projects'] if p['id'] in project_ids]
+        counts = []
+        for p in projects[:3]:
+            c = p['checklist']
+            counts.append(p['name'] + ('：' if chinese else ': ') + (
+                (f"清单已勾选 {c['completed']}/{c['total']} 项" if chinese else f"{c['completed']} of {c['total']} checklist tasks checked")
+                if c.get('total') else ('进度未知' if chinese else 'progress unknown')))
+        text = ('；' if chinese else '; ').join(counts)
+        if len(projects) > 3: text += (f'；另有 {len(projects)-3} 个项目' if chinese else f'; plus {len(projects)-3} other projects')
+        if not text: text = '暂时无法生成可靠的回答，请再试一次。' if chinese else 'I could not produce a reliable answer. Please try again.'
+        caveat = ('实时总结暂不可用。这些是记录的清单数量，不能确认项目已可交付。' if chinese else
+                  'The live summary is unavailable. Recorded checklist counts do not confirm readiness.') if projects else (
+                  '回答服务暂不可用，或返回的内容未通过核实。' if chinese else 'The answer service is unavailable or its response could not be verified.')
+        return {'text': text, 'details': '', 'nextStep': '', 'evidence': [], 'summaryUnavailable': True, 'caveat': caveat}
 
 def terms(text):
     text = str(text).casefold().replace('’', "'")

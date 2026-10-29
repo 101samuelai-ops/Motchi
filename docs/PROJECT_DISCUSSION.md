@@ -1,5 +1,15 @@
 # History-backed project discussion — 0.17
 
+## Concise assessments — 0.17.1
+
+The paired dashboard's typed and voiced answers now lead with a short natural assessment: what works, the important remaining issue and its practical meaning. A separate next step is a suggestion, not a submitted instruction. Important caveats remain visible. Supporting explanation, exact source quotes and history coverage live in a collapsed **Why this assessment** section in the main character bubble. General conversation does not display unrelated project coverage. All three retained layouts share this presentation.
+
+The structured provider contract separates `text`, `details`, `nextStep`, `caveat` and `evidence`. The bridge checks every returned reference against the exact project/chat/message and verbatim retrieved snippet. A wrong explicit project, invalid quote or oversized summary discards the generated assessment and displays labelled recorded counts instead. Only validated displayed output enters follow-up context. Reference integrity is not proof that every interpretation is correct; model quality still needs broader evaluation.
+
+The prompt prioritizes later user-reported failures over earlier AI success claims, separates checkmarks from tested/user-confirmed outcomes, and forbids invented deadlines or readiness percentages. A live configured-provider test correctly identified an unresolved tablet failure despite an earlier passing-test claim, in a short answer with matching evidence. This is one synthetic conflict case, not a general accuracy benchmark. Project discussion regressions now include 34 checks.
+
+Voice transcription and turn-taking are unchanged in this patch. See [the proposed natural voice milestone](VOICE_CONVERSATION_PLAN.md) for the fixed-silence diagnosis and free/local versus optional GPT-Live options.
+
 Questions from the main composer and addressed voice now share one read-only discussion path. Motchi can discuss a named project, select distinctive checklist topics, ask when the name is ambiguous, compare several projects or give an overview of all available projects. General conversation does not require a project. A project follow-up keeps its context; explicit references can switch it. The model can resolve a question to a supplied project after reading its work history, with IDs validated against the local catalog.
 
 Before generating a project answer, the bridge captures available conversation changes, requests an evidence-backed checklist review, and retrieves initial requirements, recent AI updates and question-relevant evidence. Each folder supplies one checklist even when several chats refer to it. Claims should distinguish implementation, testing and user acceptance. A finished AI turn alone does not complete a project. Existing exact-quote validation, revision checks, manual overrides and Undo remain in effect.

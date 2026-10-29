@@ -28,3 +28,5 @@ Private runtime state, chat transcripts, credentials, built apps and compiler ca
 ## Compatibility after the rename
 
 The product is now **Motchi**. New companion builds and visible chat labels use that name. Existing technical names such as the `mochi` MCP namespace, `progress-pet` plugin ID, `MochiLauncher.swift`, `local.mochi.*` job IDs, and macOS `Application Support/Mochi` storage are retained for compatibility. The rename does not reinstall the already-running Mac companion or change its trusted approval-hook definition.
+
+For the proposed next voice milestone, see [natural conversation and GPT-Live options](docs/VOICE_CONVERSATION_PLAN.md).

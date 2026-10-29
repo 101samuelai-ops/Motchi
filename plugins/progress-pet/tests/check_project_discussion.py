@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory() as temp:
  # Completion is in the oldest batch; recent-only review cannot declare it read.
  review.reconcile(str(alpha),rows[:2],'initial')
  check(checklist(alpha)['tasks'][0]['done'],'Verified assistant evidence checks off the existing task')
- bridge=object.__new__(DogBridge);bridge.checklists=review;bridge.ask_locks={};bridge.snapshot=lambda:{'items':rows};captured=[]
+ bridge=object.__new__(DogBridge);bridge.checklists=review;bridge.ask_locks={};bridge.history={};bridge.snapshot=lambda:{'items':rows};captured=[]
  def ask(target,question,**options):captured.append((target,question,options));return 'Evidence-based answer'
  bridge.ask=ask
  result=bridge.discuss_result({'text':'How is Alpha?'})
@@ -70,7 +70,31 @@ with tempfile.TemporaryDirectory() as temp:
  check(result['projectId']==projects[1]['id'] and result['selection']=='b-chat','History analysis may resolve an otherwise general question to a supplied project')
  bridge.ask=lambda *a,**k:json.dumps({'scope':'project','projectId':'invented','text':'Invented project claims'})
  result=bridge.discuss_result({'text':'Can we talk about a new idea?'})
- check(result['scope']=='general' and 'Invented project claims' not in result['text'],'An invalid model project ID produces clarification instead of wrong-project claims')
+ check(result['scope']=='choice' and 'Invented project claims' not in json.dumps(result),'An invalid model project ID produces clarification instead of wrong-project claims')
+ bridge.ask=lambda *a,**k:json.dumps({'scope':'project','projectId':projects[1]['id'],'text':'Wrong project answer','details':'Wrong details'})
+ result=bridge.discuss_result({'text':'How is Alpha?'})
+ check(result.get('summaryUnavailable') and 'Wrong' not in json.dumps(result),'A provider cannot replace an explicitly selected project, including hidden details')
+ bridge.ask=lambda *a,**k:json.dumps({'scope':'general','projectId':None,'text':'Hello! What shall we discuss?','details':'','nextStep':'','caveat':'','evidence':[]})
+ result=bridge.discuss_result({'text':'Hello'})
+ check(not result['sources'] and not result.get('summaryUnavailable'),'General conversation shows no unrelated project coverage')
+ pid=projects[0]['id'];context={'projects':[{'id':pid,'name':'Alpha','checklist':{'completed':1,'total':2},'history':{'messages':[
+     {'id':'older','chat':'a-chat','role':'assistant','text':'Export is implemented and tested.','at':1},
+     {'id':'newer','chat':'a-chat','role':'user','text':'The export still fails on my device.','at':2}]}}]}
+ answer={'scope':'project','projectId':pid,'text':'Export is built, but it still fails on your device. It needs a fix before you can rely on it.',
+         'details':'The later device report contradicts the earlier test claim.','nextStep':'Reproduce and fix the device failure.',
+         'caveat':'A working device export has not been confirmed.','evidence':[{'projectId':pid,'chat':'a-chat','messageId':'newer','quote':'The export still fails on my device.'}]}
+ display=D.presentation(json.dumps(answer),context,{pid})
+ check(display['text']==answer['text'] and display['evidence'][0]['role']=='user','A concise assessment retains an exact later user report separately from its summary')
+ check('messageId' not in display['text'] and display['nextStep']==answer['nextStep'],'The main answer separates the suggested action from reference metadata')
+ for field,value in (('projectId','wrong-project'),('chat','b-chat'),('messageId','invented'),('quote','The export works perfectly.')):
+  invalid=json.loads(json.dumps(answer));invalid['evidence'][0][field]=value
+  display=D.presentation(json.dumps(invalid),context,{pid})
+  check(display.get('summaryUnavailable') and not display['evidence'] and 'works perfectly' not in display['text'],
+        'A fabricated or wrong-project '+field+' rejects the generated assessment')
+ invalid=dict(answer,text='a'*901)
+ check(D.presentation(json.dumps(invalid),context,{pid}).get('summaryUnavailable'),'An oversized summary is rejected without cutting off a qualifying sentence')
+ check(D.presentation('provider unavailable',context,{pid},'项目进度如何？')['caveat'].startswith('实时总结'),'Provider failure returns a labelled Chinese count fallback')
+ check('evidence' in D.answer_schema()['required'] and 'details' in D.answer_schema()['required'],'The provider contract includes summary and separate supporting references')
  text=['Hey Motchi, how are all projects doing?'];answers=[]
  voice=VoiceCompanion(lambda _:text[0],lambda:projects,lambda *a:None,lambda _:True,discuss=lambda r:answers.append(r) or {'scope':'overview','text':'Overview'})
  request={'generation':'generation-1234'}

@@ -653,7 +653,21 @@
         "quote": "Free bilingual ASR; respond when called; automatic project/general/macro discussion from AI history; main-section replies; evidence-backed check-offs.",
         "at": "2026-10-29"
       }
+    },
+    {
+      "id": "CHAT-07",
+      "title": "Give concise natural project assessments",
+      "done": true,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Paired typed/voice answers lead with a short practical summary, offer separate explanation/evidence, keep material uncertainty visible, validate exact source references and project identity, and verify a live contradictory-history case and the bundled UI.",
+      "manualOverride": true,
+      "evidence": {
+        "kind": "Verified 0.17.1 implementation",
+        "quote": "20 Python suites; 34 discussion checks; Android UI checks/build/lint/Kotlin tests. Live configured provider preserves a later user failure over an earlier AI success claim with matching evidence. Browser verifies concise summary and collapsed explanation.",
+        "at": "2026-10-29"
+      }
     }
   ],
-  "revision": 12
+  "revision": 13
 }

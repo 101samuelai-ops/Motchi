@@ -2,6 +2,15 @@
 
 Target: Allwinner 10A1 calendar, Android 11 / API 30, 32-bit ARM, 1280 × 800 physical panel. Its installed WebView is Chrome 83.0.4103.120. No Android speech-recognition or TTS service is available, so the app records locally and uses the Mac engine.
 
+## Concise practical assessments — 0.17.1, 2026-10-29
+
+- Signed Android versionCode 11 installed in place through the existing WLAN connection. Package inspection confirms 0.17.1 and APK v2 signature verification passes. Pairing, project pins and wake-listening selection are retained. The two changed Mac modules match source, were signed and normally relaunched.
+- All 20 Python suites pass, including 34 discussion cases for exact quotes, wrong-project output, invalid identities, short-summary fallbacks and contradiction context. Android core/appearance checks pass (26/24), along with Kotlin tests, release lint and the signed build. A final bridge-only serialization/fallback cleanup reran the discussion suite successfully.
+- A real configured-provider fixture test correctly treated a later tablet export failure as unresolved despite an earlier passing-test report. It returned a short practical assessment and matching references, with a suggested next step separate from actual work delivery. This is a single model-quality sample, not a measured accuracy guarantee.
+- The browser preview verifies short summary, separate next step/caveat and expandable supporting context. On the actual Chrome 83 calendar, the read-only question “How is the Motchi project doing? Give me a short practical summary.” completed beside the dog, identified voice/pause reliability as unresolved, and showed **Why this assessment** collapsed. Mac connected and local keyword listening were visible. No implementation instruction or approval was sent.
+- After a final bridge-only cleanup, a later normal restart encountered the known locked-Mac startup limit: native startup waits while opening saved project state and the calendar falls back to cached data. Unlocking the Mac is required for that reconnection check. This does not invalidate the earlier successful on-device answer; locked-startup reliability remains AND-07 work.
+- Voice recognition, endpoint timing, TTS and interrupt handling are unchanged. AND-10 remains open; see VOICE_CONVERSATION_PLAN.md. The current screenshot is private output, not a committed project transcript.
+
 ## Local bilingual speech and history discussion — 0.17.0, 2026-10-29
 
 - Signed versionCode 10 / 0.17.0 installed in place over authorized WLAN. APK v2 signature, Kotlin tests and release lint pass. Calendar Mirror shows **Mac connected**, six discovered projects, retained appearance and the main character stage. The installed Mac bridge modules were updated, signed, verified and normally relaunched after unlocking; private pairing and trust were retained.

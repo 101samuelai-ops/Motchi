@@ -68,6 +68,8 @@ This requirement supersedes dog-only presentation. The proposed build sequence i
 
 - [x] **CHAT-06: Analyze AI history for project and overview discussion** — Done when: Route named/topic questions, clarify ambiguity, support general and cross-project discussion, retrieve exact-project AI history and requirements before answers, expose bounded coverage, and verify a real read-only provider and calendar overview without silent work.
 
+- [x] **CHAT-07: Give concise natural project assessments** — Done when: Paired typed/voice answers lead with a short practical summary, offer separate explanation/evidence, keep material uncertainty visible, validate exact source references and project identity, and verify a live contradictory-history case and the bundled UI.
+
 ## P3 — Returning to work and managing multiple projects
 
 - [ ] **RETURN-01: Provide a where-we-left-off summary** — Done when: On request, summarize completed work, current work, postponed scope and the next unresolved decision since the user last checked the project.
@@ -108,3 +110,7 @@ The user now prefers Motchi to decide same/different itself, superseding that qu
 ## Bilingual voice and history discussion evidence — 2026-10-29
 
 AND-13, CHAT-06 and UI-01 are verified in 0.17. The signed calendar and Mac updates are installed, a real all-project question displayed its source-backed answer in the main stage, and the user confirmed “It wakes and answers” after the streaming keyword detector replaced ambient full-ASR wake matching. Twenty Python suites, Android routing/appearance checks, Kotlin tests, lint and signing pass. Broader real bilingual accuracy, false activations, battery and field checks remain AND-10/AND-07; this is not proof of Doubao parity. Milestone/lifecycle/memory criteria in CHAT-05 and other broader tasks remain open. See [speech setup and verification](docs/QWEN_SPEECH.md), [discussion limits](docs/PROJECT_DISCUSSION.md) and [rollout](docs/ANDROID_VERIFICATION.md).
+
+## Concise assessment evidence — 2026-10-29
+
+CHAT-07 is verified in 0.17.1: a short assessment, separate next step/material uncertainty and collapsed evidence are visible in the main calendar character section. Exact references and project IDs are validated; invalid provider output falls back to recorded counts. The live conflict sample, 34 discussion checks, all 20 Python suites and Android build/UI checks pass. Voice accuracy and conversational turn-taking remain open under AND-10; [the proposed voice milestone](docs/VOICE_CONVERSATION_PLAN.md) records the diagnosis and options.
