@@ -123,3 +123,5 @@ VOICE_CONVERSATION_PLAN.md records the diagnosed 0.84-second fixed pause cutoff,
 On-device 0.17.1 verification subsequently passed: a real read-only progress question displayed the concise assessment beside the dog with a collapsed explanation and correctly retained unresolved voice issues. The canonical roadmap/checklist now has 49 tasks, 15 complete. Current voice work remains pending.
 
 The final bridge-only restart later encountered the known locked-Mac startup limit (saved project state read waits); desktop-control explicitly reported locked and the calendar showed cached progress. Unlock/reconnection was requested. Do not claim locked startup is fixed or leave this limitation out of rollout status.
+
+After the user approved the unlock/access request, the existing companion resumed and its authenticated service listened again. Calendar Mirror visibly confirmed Mac connected, the new assessment retained and local keyword listening. Reconnection is verified; this does not fix startup while locked.
