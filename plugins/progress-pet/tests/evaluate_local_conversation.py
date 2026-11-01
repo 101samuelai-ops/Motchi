@@ -13,12 +13,65 @@ import subprocess
 import sys
 import tempfile
 import time
+import uuid
 import wave
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'skills/completion-pet/scripts'))
 from qwen_speech import Recognizer
 from smart_turn import Endpoint
 from voice_companion import unfinished
+
+
+def joined_turn(root, pcm, recognizer):
+    """Paced public synthetic PCM through the real wake/turn controller.
+
+    Does not open a microphone, pair a device or contact an answer provider.
+    """
+    from mac_voice import MacVoice
+    from voice_companion import VoiceCompanion
+    class Portal:
+        def __init__(self):
+            self.root = root
+            self.voice = VoiceCompanion(lambda _: '', lambda: [], lambda *a: {}, lambda _: True,
+                                        transcribe_request=self.voice_transcribe,
+                                        discuss=lambda _: {'scope': 'general', 'text': 'Synthetic routing received.'})
+        def device_permitted(self, device): return True
+        def voice_transcribe(self, audio, request):
+            return recognizer.recognize(audio, 'auto', request['_permitted'])
+        def run_mac_voice(self, device, request, audio, **extra):
+            return self.voice.run(device, request, audio, **extra)
+    class Input:
+        def __init__(self): self.position = 0
+        def read(self, length):
+            time.sleep(.02)
+            data = pcm[self.position:self.position+length]
+            self.position += length
+            return data
+    class Child:
+        stdout = Input()
+        stderr = io.BytesIO()
+        def poll(self): return None
+        def terminate(self): pass
+        def wait(self, timeout=None): pass
+    portal = Portal(); voice = MacVoice(portal)
+    try:
+        voice.wake_detector.start()
+        deadline = time.monotonic()+12
+        while not voice.wake_detector.ready:
+            if time.monotonic() >= deadline: raise ValueError('Synthetic wake startup timed out.')
+            time.sleep(.05)
+        recognizer.warm(); voice.endpoint.start()
+        voice.owner = 'synthetic-device'; voice.epoch = str(uuid.uuid4())
+        voice.lease = time.monotonic()+60; voice.process = Child()
+        voice.capture(voice.owner, voice.epoch, voice.process)
+        deadline = time.monotonic()+8
+        while voice.busy and time.monotonic() < deadline: time.sleep(.05)
+        events = list(voice.events)
+        final = next((event for event in reversed(events) if not event.get('partial') and event.get('heard')), {})
+        return {'wakeReceived': bool(voice.last_wake), 'questionSubmitted': bool(final),
+                'heard': final.get('heard'), 'timings': voice.timings}
+    finally:
+        voice.close()
 
 
 def normalized(text, language):
@@ -47,6 +100,7 @@ def main():
     parser.add_argument('--run', action='store_true', help='Run the already installed local models')
     parser.add_argument('--root', type=Path, default=Path.home() / 'Library/Application Support/Mochi/android')
     parser.add_argument('--report', type=Path)
+    parser.add_argument('--joined', action='store_true', help='Also test public joined wake/question audio through the real controller')
     args = parser.parse_args()
     if not args.run:
         parser.error('Use --run to opt in to local synthetic evaluation. No human speech is recorded.')
@@ -81,6 +135,14 @@ def main():
                         'syntheticTokenErrorRate': round(errors(normalized(text, language), normalized(transcript, language)), 4)}
                 report['cases'].append(item)
                 print(json.dumps(item, ensure_ascii=False), flush=True)
+            if args.joined:
+                report['joinedTurns'] = []
+                for language, text in [('en', 'Hey Mochi, what still needs attention in the calendar project?'),
+                                       ('zh', '你好莫奇，请告诉我这个项目还有哪些任务没有完成？')]:
+                    result = joined_turn(args.root, synth(text, language)+bytes(96000), recognizer)
+                    result.update(language=language, expected=text)
+                    report['joinedTurns'].append(result)
+                    print(json.dumps(result, ensure_ascii=False), flush=True)
     finally:
         recognizer.close(); endpoint.close()
     report['endpointCasesCorrect'] = sum(c['expectedComplete'] == c['autoFinishes'] for c in report['cases'])

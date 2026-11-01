@@ -65,6 +65,10 @@ class Recognizer:
                 except BaseException:
                     self.close();raise
 
+    def warm(self):
+        with self.lock:
+            self.start()
+
     def close(self):
         process,self.process=self.process,None
         if process:

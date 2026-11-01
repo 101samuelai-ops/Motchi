@@ -20,7 +20,9 @@ from wake_detector import WakeDetector, configuration as wake_configuration
 from smart_turn import Endpoint, configuration as turn_configuration
 from voice_companion import unfinished
 
-ENDPOINT_QUIET_FRAMES = 60  # At least 1.2 s: preserve a one-second thinking pause.
+ENDPOINT_QUIET_FRAMES = 28  # 560 ms; early completion needs stronger model confidence.
+ENDPOINT_PATIENT_FRAMES = 60  # 1.2 s for less certain complete turns.
+WAKE_BUFFER_FRAMES = 120  # 2.4 s in memory, shared only after a local wake.
 
 class Segmenter:
     def __init__(self, vad=None, automatic=True):
@@ -106,6 +108,11 @@ class MacVoice:
         self.endpoint_pending = False
         self.endpoint_checked = None
         self.endpoint_score = None
+        self.pre_roll = deque(maxlen=WAKE_BUFFER_FRAMES)
+        self.transcript_lock = threading.Lock()
+        self.checked_transcript = None
+        self.preview_stamp = None
+        self.timings = {}
         self.turn_id = ''
         self.stage = 'idle'
         self.last_activity = 0
@@ -155,19 +162,29 @@ class MacVoice:
         self.endpoint_pending = False
         self.endpoint_checked = None
         self.endpoint_score = None
+        self.pre_roll.clear()
+        self.checked_transcript = None
+        self.preview_stamp = None
+        self.timings = {}
         self.capped_until = 0
         self.question_revision += 1
         self.segmenter.reset()
         self.events.clear()
 
-    def activate(self):
+    def activate(self, pre_roll=()):
         self.invalidate(preserve_choice=not self.busy)
         self.activated_at = self.clock()
         self.muted_until = 0
         self.active_until = self.clock()+30
         self.last_activity = self.clock()
         self.stage = 'listening'
+        # Keyword inference can finish after the next words have begun. Replay
+        # only the bounded local wake context so those words are not clipped.
+        for frame in pre_roll:
+            self.segmenter.push(frame)
         self.issue = None
+        if self.endpoint:
+            self.endpoint_issue = None  # Retry transient worker failure on a fresh wake.
         self.last_wake = int(time.time()*1000)
         self.events.append({'wake': True, 'partial': True, 'heard': '',
                             'text': "I'm listening. Go ahead.", 'stage': 'listening',
@@ -199,6 +216,8 @@ class MacVoice:
                     self.owner = None; raise ValueError('The Mac microphone helper could not start.')
                 threading.Thread(target=self.capture, args=(device,self.epoch,self.process), daemon=True).start()
                 threading.Thread(target=self.watchdog, args=(self.process,), daemon=True).start()
+                if hasattr(self.portal, 'warm_mac_voice'):
+                    self.worker.submit(self.portal.warm_mac_voice)
             self.lease = self.clock()+25
             context = {k:body.get(k) or None for k in ('projectId','selection')}
             if context != self.context or self.language != language:
@@ -234,6 +253,7 @@ class MacVoice:
                 'stage':self.stage, 'turnId':self.turn_id,
                 'turnDetector':'Smart Turn v3.2 · local' if self.endpoint else 'Manual Finish question',
                 'turnIssue':self.endpoint_issue, 'endpointProbability':self.endpoint_score,
+                'timings':dict(self.timings),
                 'wakeDetector':'Local bilingual keyword detector' if self.wake_detector else 'Unavailable · use Listen now',
                 'wakeReady':self.wake_detector.ready if self.wake_detector else False,
                 'status':self.status, 'issue':self.issue or (self.wake_detector.issue if self.wake_detector else None), 'lastWakeAt':self.last_wake,
@@ -250,35 +270,64 @@ class MacVoice:
 
     def finalize(self, data, transcript=None):
         self.question_revision += 1
+        self.checked_transcript = None
+        self.preview_stamp = self.endpoint_checked = None
         self.busy = True
         self.active_until = 0
         self.stage = 'processing'
         self.status = 'Checking your question · say Hey Motchi to change it'
         self.worker.submit(self.recognize, self.owner, self.epoch, data, False, True, transcript)
 
+    def transcribe_candidate(self, device, epoch, version, pcm, permitted):
+        """Reuse only the exact voiced revision; never a guessed partial text."""
+        with self.transcript_lock:
+            permitted()
+            with self.lock:
+                cached = self.checked_transcript
+                if cached and cached[:2] == (epoch, version):
+                    self.timings['transcriptReused'] = True
+                    return cached[2]
+                language = self.language
+            start = self.clock()
+            request = {'generation': epoch, '_device': device, '_addressed': True,
+                       '_permitted': permitted, 'language': language}
+            text = self.portal.voice_transcribe(wav_bytes(pcm), request)
+            permitted()
+            with self.lock:
+                self.valid(device, epoch)
+                self.timings['recognitionMs'] = round((self.clock()-start)*1000)
+                if self.segmenter.version == version:
+                    self.checked_transcript = (epoch, version, text)
+            return text
+
     def assess_endpoint(self, device, epoch, version, pcm):
+        model_checked = False
         try:
             def permitted():
                 with self.lock:
                     self.valid(device, epoch)
                     if self.segmenter.version != version or self.clock() >= self.active_until:
                         raise ValueError('Speech resumed or activation expired.')
+            start = self.clock()
             score = self.endpoint.predict(pcm, permitted)
+            model_checked = True
             with self.lock:
                 self.valid(device, epoch)
                 if self.segmenter.version != version or self.segmenter.quiet < ENDPOINT_QUIET_FRAMES or self.busy or self.clock() >= self.active_until:
                     return
                 self.endpoint_score = score
+                self.timings['endpointMs'] = round((self.clock()-start)*1000)
+                quiet = self.segmenter.quiet
+                self.timings['candidateSilenceMs'] = quiet*20
                 candidate = bytes(self.segmenter.speech or b'')
-                language = self.language
-            if score >= .65:
+            # A fast, high-confidence complete sentence can proceed early. A
+            # tentative score waits for a longer pause instead of cutting in.
+            if score >= (.9 if quiet < ENDPOINT_PATIENT_FRAMES else .65):
                 transcript = None
                 if hasattr(self.portal, 'voice_transcribe'):
                     # Keep capture live throughout this local check. New speech
                     # invalidates it before any project question can be sent.
-                    request = {'generation': epoch, '_device': device, '_addressed': True,
-                               '_permitted': permitted, 'language': language}
-                    transcript = self.portal.voice_transcribe(wav_bytes(candidate), request)
+                    transcript = self.transcribe_candidate(device, epoch, version, candidate, permitted)
                 with self.lock:
                     permitted()
                     if self.busy or self.segmenter.quiet < ENDPOINT_QUIET_FRAMES:
@@ -300,7 +349,10 @@ class MacVoice:
         except Exception:
             with self.lock:
                 if self.owner == device and self.epoch == epoch and self.segmenter.version == version and self.clock() < self.active_until and not self.busy:
-                    self.endpoint_issue = 'Pause detector unavailable. Tap Finish question when ready.'
+                    if model_checked:
+                        self.issue = 'I couldn’t hear that clearly. Try Talk again or use Finish question.'
+                    else:
+                        self.endpoint_issue = 'Pause detector unavailable. Tap Finish question when ready.'
                     self.stage = 'listening'
         finally:
             with self.lock:
@@ -331,7 +383,15 @@ class MacVoice:
                         self.session = None
                     keyword = self.wake_detector.feed(data) if self.wake_detector else None
                     if keyword and self.clock() >= self.muted_until and self.clock()-self.activated_at >= 1.2:
-                        self.activate()
+                        # Local providers can recover speech around the wake.
+                        # Never extend a cloud provider's consent boundary to
+                        # audio captured before local activation.
+                        cloud = hasattr(self.portal, 'root') and doubao_speech.selected(self.portal.root) == 'doubao'
+                        self.activate(() if cloud else tuple(self.pre_roll))
+                    if self.clock() >= self.muted_until:
+                        self.pre_roll.append(data)
+                    else:
+                        self.pre_roll.clear()
                     if self.busy or self.clock() < self.muted_until:
                         # Measure rather than blocking the pipe. During speaker
                         # playback, voice interruption is deliberately disabled
@@ -345,7 +405,8 @@ class MacVoice:
                         self.segmenter.push(data); self.segmenter.reset()
                         self.recent = max(self.segmenter.rms, self.recent*.996)
                         self.stage = 'idle'
-                        self.status = 'Listening for Hey Motchi · local keyword detector' if self.wake_detector else 'Tap Listen now to ask a question'
+                        self.status = ('Listening for Hey Motchi · local keyword detector' if self.wake_detector.ready
+                                       else 'Starting wake detector · use Talk until ready') if self.wake_detector else 'Tap Listen now to ask a question'
                         continue
                     version = self.segmenter.version
                     self.segmenter.push(data)
@@ -363,21 +424,27 @@ class MacVoice:
                         continue
                     endpoint = self.segmenter.endpoint_audio()
                     if endpoint and self.endpoint and not self.endpoint_pending and not self.endpoint_issue:
-                        stamp = (self.epoch, self.segmenter.version)
+                        # Retry once at the patient threshold even if nobody
+                        # speaks again after an uncertain early assessment.
+                        stamp = (self.epoch, self.segmenter.version,
+                                 self.segmenter.quiet >= ENDPOINT_PATIENT_FRAMES)
                         if stamp != self.endpoint_checked:
                             self.endpoint_checked = stamp
                             self.endpoint_pending = True
                             self.stage = 'possible-end'
-                            self.status = 'Checking whether you have finished…'
+                            self.status = 'Understanding your question…'
                             self.endpoint_worker.submit(self.assess_endpoint, device, self.epoch, stamp[1], endpoint)
                     if self.segmenter.quiet >= 300:
                         self.status = 'Still listening · tap Finish question if you are done'
-                    if not self.preview and self.clock()-self.last_preview > 1.2:
+                    trailing = 8 <= self.segmenter.quiet < ENDPOINT_QUIET_FRAMES
+                    stamp = (self.epoch, self.segmenter.version)
+                    if not self.preview and stamp != self.preview_stamp and (trailing or self.clock()-self.last_preview > 1.2):
                         partial = self.segmenter.partial()
-                        if partial and self.segmenter.quiet < 60:
+                        if partial and self.segmenter.quiet < ENDPOINT_QUIET_FRAMES:
                             self.last_preview = self.clock()
+                            self.preview_stamp = stamp
                             self.preview = True
-                            self.worker.submit(self.recognize, device, self.epoch, partial, True, True)
+                            self.worker.submit(self.recognize, device, self.epoch, partial, True, True, None, stamp[1])
         except (OSError, ValueError):
             pass
         finally:
@@ -387,7 +454,7 @@ class MacVoice:
                     self.issue = message[-400:] or 'Mac microphone stopped. Check microphone access, then try Listen now.'
                     self.status = 'Mac microphone needs attention'; self.process = None
 
-    def recognize(self, device, epoch, pcm, preview, activated=None, transcript=None):
+    def recognize(self, device, epoch, pcm, preview, activated=None, transcript=None, version=None):
         revision = None
         try:
             with self.lock:
@@ -404,8 +471,19 @@ class MacVoice:
                 # Internal authenticated path avoids a long project lookup
                 # occupying the only HTTP voice-segment slot. Preview and final
                 # recognition still share the bounded local ASR worker.
+                if preview and version is not None and hasattr(self.portal, 'voice_transcribe'):
+                    def permitted():
+                        with self.lock:
+                            self.valid(device, epoch)
+                            if self.busy or self.clock() >= self.active_until:
+                                raise ValueError('Partial recognition was superseded.')
+                    transcript = self.transcribe_candidate(device, epoch, version, pcm, permitted)
+                start = self.clock()
                 result = self.portal.run_mac_voice(device, request, wav_bytes(pcm),
                                                    **({'transcript': transcript} if transcript is not None else {}))
+                with self.lock:
+                    if self.owner == device and self.epoch == epoch and not preview:
+                        self.timings['answerMs'] = round((self.clock()-start)*1000)
                 if self.conversation_version < 2 and not preview and result.get('wake') and result.get('text') and hasattr(self.portal,'prepare_mac_reply'):
                     # Installed older clients expect audio on the original
                     # answer. Do not send them a second visible answer event.

@@ -39,6 +39,9 @@ with tempfile.TemporaryDirectory() as temp:
  def spawn(command,**options):return original([sys.executable,'-u',str(worker)],**options)
  recognizer=Recognizer(root)
  with patch('qwen_speech.subprocess.Popen',side_effect=spawn):
+  recognizer.warm()
+  check(recognizer.process is not None and not list(root.glob('qwen-speech-*')),
+        'Warmup loads the local worker without recording or submitting microphone audio')
   check(recognizer.recognize(wav())=='English and 中文','Offline worker returns bilingual Unicode text')
   check(not list(root.glob('qwen-speech-*')),'Successful transcription removes temporary audio')
   first=recognizer.process

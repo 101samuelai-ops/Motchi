@@ -114,7 +114,7 @@ with tempfile.TemporaryDirectory() as root:
     check(not calls and not events,'Idle keyword listening does not run full ASR on background speech')
     calls,events,_=capture_with_keywords(10)
     check(events and events[0]['wake'] and events[0]['partial'],'A keyword acknowledges immediately without waiting for transcription')
-    check(calls and all(call[-1] is True for call in calls),'Only keyword-activated audio reaches the full question recognizer')
+    check(calls and all(call[5] is True for call in calls),'Only keyword-activated audio reaches the full question recognizer')
     calls,events,session=capture_with_keywords(None,expired=True)
     check(not calls and session is None,'An expired pending question returns to keyword-only listening')
 print(f'{checks} Mac microphone ownership, live text, segmentation and disconnect checks passed')

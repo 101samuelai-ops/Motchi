@@ -29,8 +29,8 @@ def silence(buffer, count=70):
 
 buffer = Segmenter(automatic=False)
 speech(buffer); silence(buffer, 50)
-check(buffer.partial() is not None and buffer.endpoint_audio() is None,
-      'A one-second thinking pause neither flushes the question nor runs automatic endpoint detection')
+check(buffer.partial() is not None and buffer.endpoint_audio() is not None,
+      'A short pause proposes an endpoint assessment without flushing the question')
 before = len(buffer.speech); speech(buffer, 50)
 check(len(buffer.speech)>before, 'Resumed speech stays in the original question buffer')
 silence(buffer, 400)
@@ -86,6 +86,94 @@ with tempfile.TemporaryDirectory() as directory:
         voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
         check(voice.busy and voice.stage=='processing' and submitted.call_count==1,
               'A completed turn submits one final question and closes new automatic input')
+    voice.close()
+
+    portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,28)
+    voice.endpoint=Endpoint(.99)
+    def unclear(*args): raise ValueError('No clear speech recognized')
+    portal.voice_transcribe=unclear
+    voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+    check(voice.issue and not voice.endpoint_issue,
+          'An unclear transcript does not permanently disable automatic pause detection')
+    voice.endpoint_issue='Transient worker stopped'; voice.activate()
+    check(not voice.endpoint_issue,'A fresh wake retries an installed endpoint after a transient failure')
+    voice.close()
+
+    portal,voice=ready(); voice.endpoint=Endpoint(.8)
+    child=Child(frame(300)*90+frame(0)*70); voice.process=child
+    predictions=[]
+    def endpoint_now(fn,*args):
+        predictions.append(args); fn(*args)
+    with patch.object(voice.endpoint_worker,'submit',side_effect=endpoint_now), patch.object(voice.worker,'submit'):
+        voice.capture('calendar',voice.epoch,child)
+    check(len(predictions)==2 and voice.busy,
+          'The capture loop retries an uncertain early result at 1.2 seconds without requiring new speech')
+    voice.close()
+
+    portal,voice=ready(); portal.root=directory; voice.active_until=0; voice.activated_at=90
+    voice.wake_detector=Keywords(80)
+    child=Child(frame(310)*70+frame(620)*20); voice.process=child
+    with patch('mac_voice.doubao_speech.selected',return_value='doubao'), patch.object(voice.worker,'submit'):
+        voice.capture('calendar',voice.epoch,child)
+    check(frame(310) not in voice.segmenter.speech and frame(620) in voice.segmenter.speech,
+          'Cloud recognition never receives the new pre-activation wake buffer')
+    voice.close()
+
+    portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,28)
+    voice.endpoint=Endpoint(.99)
+    with patch.object(voice.worker,'submit') as submitted:
+        voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+    check(voice.busy and submitted.call_count==1 and voice.timings['candidateSilenceMs']==560,
+          'A high-confidence complete turn begins processing after 560 ms instead of a fixed 1.2 seconds')
+    voice.close()
+
+    portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,28)
+    voice.endpoint=Endpoint(.8)
+    with patch.object(voice.worker,'submit') as submitted:
+        voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+        check(not submitted.called and voice.segmenter.partial(),
+              'A tentative completion cannot cut in at the shorter pause')
+        silence(voice.segmenter,32)
+        voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+        check(submitted.call_count==1 and voice.busy,
+              'The same tentative completion can finish after the patient pause')
+    voice.close()
+
+    portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,28)
+    transcriptions=[]
+    def transcribe(audio,request):
+        transcriptions.append(audio); return 'What remains?'
+    portal.voice_transcribe=transcribe
+    version=voice.segmenter.version
+    permitted=lambda:voice.valid('calendar',voice.epoch)
+    voice.transcribe_candidate('calendar',voice.epoch,version,bytes(voice.segmenter.speech),permitted)
+    voice.endpoint=Endpoint(.99)
+    with patch.object(voice.worker,'submit') as submitted:
+        voice.assess_endpoint('calendar',voice.epoch,version,voice.segmenter.endpoint_audio())
+    check(len(transcriptions)==1 and submitted.call_args.args[-1]=='What remains?' and voice.timings['transcriptReused'],
+          'The exact trailing caption is reused for final processing without a second transcription')
+    voice.activate(); speech(voice.segmenter)
+    voice.transcribe_candidate('calendar',voice.epoch,voice.segmenter.version,bytes(voice.segmenter.speech),permitted)
+    check(len(transcriptions)==2,'A new activation cannot reuse the previous question transcript')
+    speech(voice.segmenter,5)
+    voice.transcribe_candidate('calendar',voice.epoch,voice.segmenter.version,bytes(voice.segmenter.speech),permitted)
+    check(len(transcriptions)==3,'Additional speech cannot reuse a caption missing the new words')
+    with patch.object(voice.worker,'submit'):
+        voice.finalize(voice.segmenter.finish(),'What remains?')
+    check(voice.checked_transcript is None and voice.endpoint_checked is None,
+          'Finishing clears revision caches before an explicitly permitted follow-up')
+    voice.close()
+
+    portal,voice=ready(); voice.active_until=0; voice.activated_at=90
+    voice.wake_detector=Keywords(80)
+    child=Child(frame(310)*70+frame(620)*20); voice.process=child
+    with patch.object(voice.worker,'submit'):
+        voice.capture('calendar',voice.epoch,child)
+    check(frame(310) in voice.segmenter.speech and frame(620) in voice.segmenter.speech,
+          'Delayed wake detection retains the beginning of a joined wake-and-question utterance')
+    voice.stop()
+    check(not voice.pre_roll and voice.checked_transcript is None,
+          'Pausing discards the in-memory wake context and transcript reuse cache')
     voice.close()
 
     for transcript in ('Could you tell me about the project, especially.', '我想了解项目进度，尤其是。'):

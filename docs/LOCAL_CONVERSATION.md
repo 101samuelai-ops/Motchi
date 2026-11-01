@@ -5,7 +5,9 @@
 ## Behaviour
 
 - Capture, measured input levels and the local keyword detector remain responsive during recognition and project analysis. A fresh wake or Listen now replaces a read-only question. Generation/revision checks reject stale captions, answers and delayed audio; provider cancellation stops the old answer process.
-- Automatic completion waits at least **1.2 seconds** of candidate silence, then runs local Smart Turn on up to the last eight seconds. An unfinished prediction retains the whole question. Resumed speech invalidates both an endpoint prediction and its transcript confirmation.
+- Automatic completion first checks after **560 ms** of candidate silence, using local Smart Turn on up to the last eight seconds. An early score must reach 0.9; a tentative result gets another check after **1.2 seconds** at the existing 0.65 threshold. These scores are model outputs, not calibrated accuracy percentages. An unfinished prediction retains the whole question. Resumed speech invalidates both an endpoint prediction and its transcript confirmation.
+- Local recognition retains **2.4 seconds** of in-memory audio around a detected wake, so a joined “Hey Motchi, how is…” does not lose its beginning when keyword inference finishes late. Pause, context changes and replacement discard this buffer. The optional cloud recognizer never receives this pre-activation buffer.
+- When microphone listening starts, the already installed Qwen and endpoint workers preload without microphone audio or downloads. A caption taken just after speech pauses is reused only when its activation and voiced revision exactly match the final candidate; new words require a new transcription. This avoids repeating recognition after the endpoint decision. Unclear speech does not disable the pause model; a fresh wake can retry a transient endpoint failure.
 - A conservative transcript guard holds explicit dangling clauses such as “especially…” and “尤其是…”. It supplements the acoustic model; it is not a separate learned semantic model or a guarantee against every early cutoff. Manual **Finish question** bypasses the guard.
 - An automatically completed question reuses its checked transcript through an internal function argument. HTTP JSON cannot supply this argument. Partial captions never request an answer or update the project checklist.
 - The buffer has a **60-second** hard cap, followed by a bounded opportunity to Finish or restart. It never silently splits a question into multiple requests. Missing/failed pause detection requires explicit Finish; missing keyword setup requires Listen now.
@@ -29,7 +31,7 @@ Source: [Smart Turn](https://github.com/pipecat-ai/smart-turn), BSD-2-Clause. Pi
 
 ## Verification
 
-`check_local_conversation.py` covers one-second pauses, resumed speech, the buffer limit, unfinished phrases in both languages, expiry, live levels/wake during delayed work, late partial/final suppression, retained project choices, older-client compatibility, answer-before-TTS and discarded obsolete audio. `check_smart_turn.py` covers checksum rejection, bounded input, warm reuse, nonfinite results, cancellation/recovery and no endpoint audio files. Project discussion regressions verify cancellation before adding follow-up history.
+`check_local_conversation.py` covers fast/confident versus tentative endpoints, a second check without resumed speech, retained pauses, the buffer limit, unfinished phrases in both languages, wake-buffer privacy, exact-revision transcription reuse, expiry, live levels/wake during delayed work, late partial/final suppression, retained project choices, older-client compatibility, answer-before-TTS and discarded obsolete audio. `check_smart_turn.py` covers checksum rejection, bounded input, warm reuse, nonfinite results, cancellation/recovery and no endpoint audio files. Project discussion regressions verify cancellation before adding follow-up history.
 
 The explicit `evaluate_local_conversation.py --run` smoke test uses locally synthesized public phrases, records no microphone audio and deletes its temporary WAVs. On this Mac:
 
@@ -55,3 +57,13 @@ Run `python3 plugins/progress-pet/android/preview.py --live` from the repository
 The preview pairs a temporary local device with the authenticated HTTPS service. Pair credentials stay in Python; browser requests require the exact loopback host, origin and a per-process nonce. It blocks work submissions, comments, checklist edits and approvals. The installed background checklist analyzer continues independently. Normal preview shutdown stops its microphone session and revokes the temporary device. Keep the preview on this Mac; it is not a calendar pairing or public service.
 
 Verified: 26 loopback HTTP/voice/permission-boundary checks, JavaScript syntax, six real project groups in the browser, a completed typed progress question and live Mac microphone controls. The test capture was paused afterwards. Real bilingual speaking and endpoint acceptance still need human testing; AND-10 remains open. No calendar update was installed.
+
+## Response-timing follow-up
+
+The user reports that pauses and recognition starts remain unreliable. The live preview showed surrounding conversation keeping an activated question open to the 60-second cap. The speech detector does not identify a primary speaker; do not describe the timing patch as speaker filtering or reliable suppression of nearby voices.
+
+The changed controller uses the earlier conditional endpoint, local wake buffer, preloading and exact-caption reuse described above. The main character section now shows **Thinking** when the completed question reaches project analysis. Private diagnostic snapshots include stage timings without audio or transcript storage.
+
+`evaluate_local_conversation.py --run --joined` additionally feeds paced, public synthetic English/Chinese wake-and-question phrases through the actual keyword detector, Qwen and controller. Both woke and submitted the complete question in this run, with exact trailing-caption reuse. Candidate VAD silence was 580 ms for English and 1220 ms for Chinese; warm ASR took about 321/372 ms and endpoint checks 47/55 ms. The answer was a local routing fixture, so this does **not** measure real answer-provider latency, human speech accuracy or speaker discrimination. The original four synthetic endpoint fixtures still pass; cold ASR took roughly 2.5–2.9 seconds versus approximately 0.2–0.6 seconds warm.
+
+The three updated Mac modules are installed with a local app backup and verified signing. Desktop control reports the Mac locked, so restart and live preview verification of this patch await unlocking. The calendar and its staged APK are not updated. AND-10 remains open.

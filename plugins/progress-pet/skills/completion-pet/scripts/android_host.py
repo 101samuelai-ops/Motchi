@@ -525,6 +525,18 @@ class AndroidPortal:
                 return doubao_speech.recognize(self.root,audio)
             return self.transcriber(audio)
 
+    def warm_mac_voice(self):
+        # Load already installed models while the user is preparing to speak.
+        # No microphone audio, downloads or question submission are involved.
+        try:
+            if self.transcriber == self.transcribe and doubao_speech.selected(self.root) == 'qwen':
+                self.qwen.warm()
+            if self.mac_voice.endpoint:
+                with self.mac_voice.endpoint.lock:
+                    self.mac_voice.endpoint.start()
+        except (ValueError, OSError):
+            pass  # Normal recognition reports setup failures if needed.
+
     def voice_transcribe(self, audio, request):
         language=request.get('language') or 'en'
         if language not in ('auto','en','zh'): raise ValueError('Choose English, Chinese or automatic speech language.')
