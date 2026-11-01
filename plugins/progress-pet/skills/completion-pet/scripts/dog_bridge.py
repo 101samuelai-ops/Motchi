@@ -815,7 +815,8 @@ class DogBridge:
                 flags += ["-c", f"{kind}.{name.strip(chr(34))}.enabled=false"]
         return flags
 
-    def ask(self, selection, question, approval_context=None, approval_id=None, discussion_context=None):
+    def ask(self, selection, question, approval_context=None, approval_id=None, discussion_context=None, permitted=None):
+        if permitted: permitted()
         if not isinstance(question, str) or not question.strip() or len(question) > 3000:
             raise ValueError("Ask a question of up to 3,000 characters.")
         item = self.resolve(selection) if selection is not None else {"title":"General chat","cwd":str(self.project),"progress":{}}
@@ -894,6 +895,7 @@ class DogBridge:
             answer = ""
             final_text = ""
             while time.monotonic() < deadline:
+                if permitted: permitted()
                 saved = Path(filename).read_text().strip()
                 if saved:
                     answer = saved
@@ -915,6 +917,7 @@ class DogBridge:
                           "Review the displayed request details or try your question again.") if approval_context is not None else (
                           "The live answer connection is taking too long or is unavailable. Here's the latest recorded project update instead:\n\n"
                           + (discussion_context["fallback"] if discussion_context else self.local_answer(item, "what has been done?")))
+            if permitted: permitted()
             history_answer = answer
             if discussion_context is not None:
                 try:
@@ -963,6 +966,8 @@ class DogBridge:
             return {"text": self.ask(target, request.get("text")), "routedSelection": target}
 
     def discuss_result(self, request):
+        permitted=request.get('_permitted') if callable(request.get('_permitted')) else None
+        if permitted: permitted()
         question=request.get('text')
         if not isinstance(question,str) or not 1<=len(question.strip())<=3000:
             raise ValueError('Ask a question of up to 3,000 characters.')
@@ -1009,7 +1014,9 @@ class DogBridge:
         if routing['scope']=='project' and anchor and any(i['id']==request.get('selection') for i in anchor[0]['items']):target=request['selection']
         lock=self.ask_locks.setdefault(context['historyKey'],threading.Lock())
         with lock:
-            answer=self.ask(target,question,discussion_context=context)
+            if permitted: permitted()
+            answer=self.ask(target,question,discussion_context=context,**({'permitted':permitted} if permitted else {}))
+            if permitted: permitted()
             try:
                 analyzed=json.loads(answer)
                 if not isinstance(analyzed,dict) or not isinstance(analyzed.get('text'),str):raise ValueError()
@@ -1034,6 +1041,7 @@ class DogBridge:
                 result['freshnessNotice']='部分对话仍在复核，进度可能会更新。' if re.search(r'[\u3400-\u9fff]',question) else 'Some conversation updates are still being reviewed; progress may change.'
             if routing['scope']=='project':result.update(projectId=anchor[0]['id'],projectName=anchor[0]['name'],routedSelection=target,selection=target)
             # Only validated, displayed output becomes follow-up context.
+            if permitted: permitted()
             self.history.setdefault(context['historyKey'], []).extend([
                 {'role':'user','text':question},
                 {'role':'assistant','text':'\n'.join(result[k] for k in ('text','nextStep','caveat') if result.get(k))}])

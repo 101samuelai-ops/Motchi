@@ -1,5 +1,7 @@
 # Free bilingual speech recognition — 0.17
 
+For the 0.18 Mac conversation update, see [turn handling and measured limits](LOCAL_CONVERSATION.md). The updated Mac path requires Listen now when the optional keyword detector is unavailable, rather than running full ASR on ambient speech. The calendar APK is staged while Mac tests continue.
+
 Motchi supports **Qwen3-ASR through MLX-Audio**, running locally on an Apple Silicon Mac. This is a speech engine integration, rather than a prompt-only skill: a skill by itself cannot improve the microphone signal or recognition model.
 
 ## Choice and evidence

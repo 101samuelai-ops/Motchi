@@ -102,5 +102,15 @@ with tempfile.TemporaryDirectory() as temp:
  check(result['scope']=='overview' and answers,'Voice and typing share the same macro discussion path')
  text[0]='Something in the room'
  check(voice.run('device',{**request,'session':result['session']},b'audio')=={'wake':False} and len(answers)==1,'After a reply, ambient speech cannot trigger another answer')
+ before=json.dumps(bridge.history,sort_keys=True);valid=[True]
+ def permitted():
+  if not valid[0]:raise ValueError('Question replaced')
+ def cancelled_answer(*args,**options):
+  valid[0]=False;return 'Obsolete answer'
+ bridge.ask=cancelled_answer
+ try:bridge.discuss_result({'text':'How is Alpha?','_permitted':permitted});cancelled=False
+ except ValueError:cancelled=True
+ check(cancelled and json.dumps(bridge.history,sort_keys=True)==before,
+       'A cancelled provider answer cannot enter project discussion history')
  review.close();review.history.close()
 print(f'{checks} project routing, history evidence, checklist and wake-only checks passed')

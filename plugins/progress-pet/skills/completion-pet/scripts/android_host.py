@@ -528,13 +528,15 @@ class AndroidPortal:
     def voice_transcribe(self, audio, request):
         language=request.get('language') or 'en'
         if language not in ('auto','en','zh'): raise ValueError('Choose English, Chinese or automatic speech language.')
+        permitted=request.get('_permitted') if callable(request.get('_permitted')) else lambda:self.voice.allowed(request['_device'],request['generation'])
         with self.speech_lock:
+            permitted()
             if self.transcriber==self.transcribe and doubao_speech.selected(self.root)=='qwen':
-                return self.qwen.recognize(audio,permitted=lambda:self.voice.allowed(request['_device'],request['generation']))
+                return self.qwen.recognize(audio,language='auto',permitted=permitted)
             if self.transcriber==self.transcribe and request.get('_addressed') is True and doubao_speech.selected(self.root)=='doubao':
                 device,generation=request['_device'],request['generation']
                 return doubao_speech.recognize(self.root,audio,
-                    permitted=lambda:self.voice.allowed(device,generation),
+                    permitted=permitted,
                     on_text=lambda text:self.mac_voice.publish_transcript(device,generation,text))
             if self.transcriber == self.transcribe: return self.transcribe(audio,language=language,wake=True)
             return self.transcriber(audio)
@@ -544,13 +546,46 @@ class AndroidPortal:
 
     def discuss(self, request):
         if not hasattr(self.bridge,'discuss_result'):raise ValueError('Update the Mac companion for general and project discussion.')
-        result=self.bridge.discuss_result({k:request.get(k) for k in ('text','projectId','selection')})
+        payload={k:request.get(k) for k in ('text','projectId','selection')}
+        if callable(request.get('_permitted')):
+            payload['_permitted']=request['_permitted']
+        result=self.bridge.discuss_result(payload)
         self.cache_at=0
         return result
 
     def voice_ask(self, project, selection, text):
         self.target({'projectId': project['id'], 'selection': selection})
         return self.bridge.ask_result({'selection': selection, 'text': text, 'autoFollow': False})
+
+    def run_mac_voice(self, device, request, audio, *, transcript=None):
+        """Private capture path; HTTP callers cannot supply a transcript here."""
+        self.voice.allowed(device, request['generation'])
+        return self.voice.run(device, request, audio, transcript=transcript)
+
+    def prepare_mac_reply(self, device, generation, result):
+        self.voice.allowed(device, generation)
+        audio = self.speaker(result['text'])
+        self.voice.allowed(device, generation)
+        if not audio:
+            return False
+        with self.lock:
+            self.voice_audio = {k:v for k,v in self.voice_audio.items() if time.monotonic()-v[0]<120}
+            if len(self.voice_audio)>=8:
+                self.voice_audio.pop(next(iter(self.voice_audio)))
+            self.voice_audio[(device,result['operationId'])] = (time.monotonic(), audio)
+        return True
+
+    def synthesize_mac_reply(self, device, generation, result):
+        if not result.get('text') or result.get('partial'):
+            return
+        try:
+            if not self.prepare_mac_reply(device, generation, result):
+                return
+            self.mac_voice.audio_ready(device, generation, result)
+        except Exception:
+            # Text delivery is independent of optional local speech synthesis.
+            with self.lock:
+                self.voice_audio.pop((device,result.get('operationId')), None)
 
     def close(self):
         if self.closed:return

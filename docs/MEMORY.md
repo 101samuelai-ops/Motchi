@@ -1,6 +1,6 @@
 # Persistent Motchi project memory
 
-Updated: 2026-10-29. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-11-01. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 ## Product intent
 
@@ -125,3 +125,21 @@ On-device 0.17.1 verification subsequently passed: a real read-only progress que
 The final bridge-only restart later encountered the known locked-Mac startup limit (saved project state read waits); desktop-control explicitly reported locked and the calendar showed cached progress. Unlock/reconnection was requested. Do not claim locked startup is fixed or leave this limitation out of rollout status.
 
 After the user approved the unlock/access request, the existing companion resumed and its authenticated service listened again. Calendar Mirror visibly confirmed Mac connected, the new assessment retained and local keyword listening. Reconnection is verified; this does not fix startup while locked.
+
+## Local conversation direction — 2026-10-30
+
+The user explicitly declines adding GPT-Live and wants similar conversation features in Motchi. This supersedes the optional GPT-Live prototype recommendation in the earlier voice plan. Retain local wake activation, use the Mac microphone fallback and keep answers/captions in the main character section. Speaker tracking should follow the person who activated Motchi; recognizing a registered identity remains a separate optional feature. Do not enable unrequested continuing conversations, create speech API credentials or start paid voice sessions.
+
+VOICE_CONVERSATION_PLAN.md now proposes a separate nonblocking conversation controller, local bilingual endpoint estimation, temporary speaker matching plus conversational intent checks, and tested speech playback/echo-aware interruption. Upstream Smart Turn v3.2 documentation lists Chinese/English and an 8 MB int8 CPU checkpoint; sherpa-onnx documents local speaker identification. These are researched candidates, not installed or benchmarked upgrades. The existing Qwen recognizer and configured text answer provider remain in place; local speech does not imply fully offline project discussion. No application source, runtime, APK, checklist completion or voice acceptance changed in this documentation update. AND-10 stays open.
+
+## Mac conversation increment — 2026-11-01
+
+The user approved implementation and explicitly chose **continue implementing/testing on the Mac before updating the calendar**. Do not request WLAN details or install the staged APK until they resume calendar rollout. Retain local speech, wake-only one-question activation and the existing configured text answer provider; no GPT-Live or paid speech setup.
+
+Source 0.18 adds continuous meter/keyword capture during analysis, superseded-turn cancellation, late transcript/answer/audio rejection, a 60-second question cap, minimum 1.2-second candidate silence, private Smart Turn v3.2 endpoint inference and an explicit unfinished-clause transcript guard. Resumed speech cancels endpoint confirmation. Missing setup requires Finish/Listen now. Protocol-2 clients get text before TTS and playback-only events; older calendar clients keep one combined event. Fresh activation preserves an outstanding project choice without granting ambient follow-up permission. Exact-project history, evidence-backed checklist changes, manual corrections, Undo and explicit execution/approval boundaries remain.
+
+The pinned Smart Turn CPU model and ONNX runtime are installed privately on the Mac. Four public synthetic English/Chinese fixtures transcribe without normalized token differences. The acoustic endpoint alone wrongly finished an English “especially…” clause (3/4); the additional explicit guard holds it (4/4 controller decisions). This is a smoke check, not real speech accuracy or Doubao parity. Regression evidence and setup are in LOCAL_CONVERSATION.md. Signed Android 0.18/versionCode 12 build, lint and Kotlin tests pass; the APK remains staged and uninstalled.
+
+Temporary speaker-reference matching, same-speaker intent filtering, overlap handling, echo-aware voice interruption, true streaming ASR and human conversational acceptance remain pending. Playback uses manual Listen now interruption while echo handling is unverified. AND-10 stays unchecked; do not infer completion from passing synthetic samples. Existing locked-Mac startup remains a separate limitation.
+
+Verification: all 22 Python suites pass (30 conversation cases, seven endpoint process cases), along with 19 native checks, 50 Android JavaScript checks, release lint/Kotlin tests and signatures. Updated Mac modules are installed with a local backup and signed under the existing app identity. Normal restart was requested, but macOS reports the screen locked; the project service is waiting and live restart/microphone verification is pending. The user was asked to unlock or choose automated checks only. Do not claim a live reconnection before checking it after their response. No calendar APK was installed.

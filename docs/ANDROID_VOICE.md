@@ -1,5 +1,7 @@
 # Voice on the Android calendar — 0.17.0
 
+The calendar remains on 0.17.1 while the user tests the 0.18 Mac increment. In updated Mac mode, a 1.2-second minimum pause, Smart Turn and an unfinished-clause guard replace the old fixed cutoff; questions can retain up to 60 seconds. Missing wake setup requires Listen now. Protocol-2 text-before-TTS UI support is staged in the uninstalled APK. See [current implementation and limits](LOCAL_CONVERSATION.md); descriptions below of the older fixed timing/ASR wake fallback are historical baseline behaviour.
+
 ## Current hardware finding
 
 Android enumerates a built-in microphone and grants capture access, but its stream is almost silent. The user confirmed that the recording meter did not respond to speech. Enumeration and a running service do not prove a working physical microphone. No firmware, restrictions or microphone permissions were bypassed.

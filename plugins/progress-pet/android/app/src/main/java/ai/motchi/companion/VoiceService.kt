@@ -57,11 +57,13 @@ class VoiceService : Service() {
     @Volatile private var macActivate = false
     @Volatile private var macFinish = false
     @Volatile private var macState = JSONObject()
+    @Volatile private var macTurnId = ""
     private var input: AudioRecord? = null
     private var gainControl: AutomaticGainControl? = null
     private var captureThread: Thread? = null
     private var player: MediaPlayer? = null
     private var playbackFile: File? = null
+    private var playbackRevision = 0L
     private var wakeLock: PowerManager.WakeLock? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -150,12 +152,18 @@ class VoiceService : Service() {
                     val epoch = generation
                     val activate = macActivate; macActivate = false
                     val finish = macFinish; macFinish = false
-                    val body = JSONObject().put("enabled", true).put("activate", activate).put("speaking", speaking)
+                    val body = JSONObject().put("enabled", true).put("conversationVersion", 2).put("activate", activate).put("speaking", speaking)
                         .put("finish", finish).put("language", language(this))
                         .put("projectId", projectId).put("selection", selection)
                     val value = mac.request(config, "/v1/mac-voice", "POST", body.toString().toByteArray())
                     if (captureTicket != ticket) break
                     macState = value; issue = value.optString("issue").takeIf { it.isNotEmpty() && it != "null" }
+                    val nextTurn = value.optString("turnId")
+                    if (nextTurn.isNotEmpty() && nextTurn != macTurnId) {
+                        macTurnId = nextTurn
+                        synchronized(events) { events.clear() }
+                        main.post { stopPlayback(); speaking = false }
+                    }
                     updateStatus(value.optString("status", "Listening on your Mac"))
                     val ready = value.optJSONArray("events") ?: JSONArray()
                     for (i in 0 until ready.length()) deliver(ready.getJSONObject(i), epoch)
@@ -172,18 +180,25 @@ class VoiceService : Service() {
     }
     private fun deliver(result: JSONObject, epoch: String) {
         if (!alive || epoch != generation || !result.optBoolean("wake")) return
+        val resultTurn = result.optString("turnId")
+        if (source(this) == "mac" && resultTurn.isNotEmpty() && resultTurn != macTurnId) return
+        if (result.optBoolean("stopPlayback")) main.post { stopPlayback(); speaking = false }
+        val audioOnly = result.optBoolean("audioOnly")
         val firstWake = System.currentTimeMillis() - lastWake > 30000
         lastWake = System.currentTimeMillis(); session = result.optString("session").takeIf { it.isNotEmpty() && (result.optBoolean("partial") || result.optInt("sessionSeconds") > 0) }
         if (!result.optBoolean("partial") && result.optString("heard").isNotEmpty()) activatedUntil = 0
         result.optString("projectId").takeIf { it.isNotEmpty() && it != "null" }?.let { projectId = it; selection = result.optString("selection") }
-        synchronized(events) { events.addLast(result); while(events.size > 8) events.removeFirst() }
+        if (!audioOnly) synchronized(events) { events.addLast(result); while(events.size > 8) events.removeFirst() }
         if (result.optBoolean("partial")) { updateStatus("I'm listening · live transcript"); if (firstWake) beep() }
         if (result.optBoolean("spokenReply")) {
             val config = mac.load() ?: return
             val wav = mac.request(config, "/v1/voice-audio/${result.getString("operationId")}").optString("wav")
             if (wav.isNotEmpty() && wav != "null" && epoch == generation) {
                 speaking = true
-                main.post { if (alive && epoch == generation) play(Base64.decode(wav, Base64.DEFAULT)) else speaking = false }
+                main.post {
+                    if (alive && epoch == generation && (resultTurn.isEmpty() || resultTurn == macTurnId)) play(Base64.decode(wav, Base64.DEFAULT))
+                    else speaking = false
+                }
             }
         }
     }
@@ -232,18 +247,21 @@ class VoiceService : Service() {
             player = MediaPlayer().apply {
                 setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ASSISTANT).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
                 setDataSource(file.absolutePath)
-                setOnCompletionListener { finishPlayback() }
-                setOnErrorListener { _, _, _ -> issue = "The reply is on screen; speaker playback failed."; finishPlayback(); true }
-                prepare(); start()
+                setOnCompletionListener { if (player === it) finishPlayback() }
+                setOnErrorListener { active, _, _ -> if (player === active) { issue = "The reply is on screen; speaker playback failed."; finishPlayback() }; true }
+                prepare()
             }
+            player?.start()
         } catch (_: Exception) { issue = "The reply is on screen; speaker playback is unavailable."; finishPlayback() }
     }
     private fun finishPlayback() {
         stopPlayback()
+        val completed = playbackRevision
         // Discard the loudspeaker tail before accepting another utterance.
-        main.postDelayed({ speaking = false; if (alive) updateStatus("Listening for your next question") }, 800)
+        main.postDelayed({ if (completed == playbackRevision) { speaking = false; if (alive) updateStatus("Listening for Hey Motchi") } }, 800)
     }
     private fun stopPlayback() {
+        playbackRevision++
         try { player?.stop() } catch (_: Exception) {}
         player?.release(); player = null; playbackFile?.delete(); playbackFile = null
     }
@@ -314,7 +332,7 @@ class VoiceService : Service() {
                 .put("busy", service?.busy == true).put("speaking", service?.speaking == true).put("lastWakeAt", service?.lastWake ?: 0)
                 .put("microphoneGranted", context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
             if (source(context) == "mac" && service != null) {
-                for (key in listOf("rms", "recentRms", "busy", "status", "issue", "lastWakeAt", "utteranceSeconds", "detector", "provider", "providerLabel", "providerReady", "providerIssue", "cloudSpeech", "providerAutoLanguage")) {
+                for (key in listOf("rms", "recentRms", "busy", "status", "issue", "lastWakeAt", "utteranceSeconds", "detector", "provider", "providerLabel", "providerReady", "providerIssue", "cloudSpeech", "providerAutoLanguage", "stage", "turnId", "turnDetector", "turnIssue", "endpointProbability")) {
                     if (service.macState.has(key)) result.put(key, service.macState.opt(key))
                 }
                 result.put("running", service.capturing && service.macState.optBoolean("running"))
@@ -331,6 +349,7 @@ class VoiceService : Service() {
         fun drain(): JSONArray = synchronized(events) { val result = JSONArray(); while(events.isNotEmpty()) result.put(events.removeFirst()); result }
         fun listenNow() {
             val service = instance ?: error("Enable the microphone first.")
+            service.main.post { service.stopPlayback(); service.speaking = false }
             service.activatedUntil = System.currentTimeMillis() + 30000
             if (source(service) == "mac") service.macActivate = true
             service.updateStatus("I'm listening · speak now")

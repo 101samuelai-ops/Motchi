@@ -1,4 +1,6 @@
-# Progress Dog · Motchi 0.11.0
+# Progress Dog · Motchi 0.18.0
+
+0.18 adds the first Mac local-conversation increment: retained thinking pauses, Smart Turn, conservative unfinished-phrase holds, responsive wake/meter during analysis and cancellation of obsolete replies. The calendar APK is staged while Mac testing continues. Speaker filtering and echo-aware voice interruption remain pending; see [implementation and measured limits](../../docs/LOCAL_CONVERSATION.md).
 
 Motchi 0.17 adds free local Qwen3-ASR for English/Chinese, wake-only answers, automatic project/general/overview discussion backed by retrieved AI chat history, and replies in the main character section. See [local speech setup and measured limits](../../docs/QWEN_SPEECH.md), [history-backed discussion](../../docs/PROJECT_DISCUSSION.md), [Android setup](../../docs/ANDROID.md) and [voice controls](../../docs/ANDROID_VOICE.md). Optional Doubao requires separate API access. The Mac remains responsible for analysis and execution; Android approval controls are outside this release.
 

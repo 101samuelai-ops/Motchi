@@ -114,3 +114,7 @@ AND-13, CHAT-06 and UI-01 are verified in 0.17. The signed calendar and Mac upda
 ## Concise assessment evidence — 2026-10-29
 
 CHAT-07 is verified in 0.17.1: a short assessment, separate next step/material uncertainty and collapsed evidence are visible in the main calendar character section. Exact references and project IDs are validated; invalid provider output falls back to recorded counts. The live conflict sample, 34 discussion checks, all 20 Python suites and Android build/UI checks pass. Voice accuracy and conversational turn-taking remain open under AND-10; [the proposed voice milestone](docs/VOICE_CONVERSATION_PLAN.md) records the diagnosis and options.
+
+## Mac conversation progress — 2026-11-01
+
+Source 0.18 implements the first local conversation increment and stages a signed Android APK. The user requested Mac testing before calendar rollout, so the calendar is not updated. Nonblocking capture, pause handling, cancellation and text-before-speech are covered by regression/synthetic checks; speaker filtering, echo-aware interruption and human speech acceptance remain pending. AND-10 remains unchecked. See [actual implementation and limits](docs/LOCAL_CONVERSATION.md).

@@ -36,6 +36,17 @@ def project_matches(text, projects):
     return matches
 
 
+def unfinished(text):
+    """Conservative extra hold for explicit unfinished clauses, not a turn model.
+
+    Run only after the acoustic completion model. Manual Finish bypasses this
+    guard; punctuation added by ASR cannot turn a dangling clause into a fact.
+    """
+    text = text.strip().rstrip(' ,.!?，。！？:：;；…').casefold()
+    return bool(re.search(r"\b(?:and|or|but|because|especially|including|whether|such as|for example|if|although|unless|whereas)$", text)
+                or re.search(r'(?:尤其是|特别是|特別是|因为|因為|所以|但是|可是|如果|以及|然后|然後|比如|例如|还有|還有|包括)$', text))
+
+
 class VoiceCompanion:
     def __init__(self, transcribe, projects, ask, permitted, speak=None, clock=time.monotonic, transcribe_request=None, refine_addressed=None, discuss=None):
         self.transcribe, self.projects, self.ask = transcribe, projects, ask
@@ -46,11 +57,13 @@ class VoiceCompanion:
         self.lock = threading.RLock()
         self.sessions = {}
         self.cancelled = {}
+        self.revisions = {}
 
     def cancel(self, device, generation):
         with self.lock:
             self.cancelled[(device, generation)] = self.clock()
-            self.sessions.pop(device, None)
+            if self.sessions.get(device, {}).get('generation') == generation:
+                self.sessions.pop(device, None)
             self.cancelled = {k: v for k, v in self.cancelled.items() if self.clock() - v < 3600}
 
     def allowed(self, device, generation):
@@ -58,12 +71,26 @@ class VoiceCompanion:
             if (device, generation) in self.cancelled or not self.permitted(device):
                 raise ValueError('Wake listening was paused or device access was revoked.')
 
-    def run(self, device, request, audio):
+    def replace(self, device, generation, replacement):
+        """A fresh wake may retain an unresolved project choice, never a lease."""
+        with self.lock:
+            previous = self.sessions.get(device, {})
+            self.cancel(device, generation)
+            if previous.get('generation') == generation and previous.get('question') and previous.get('choiceUntil', 0) > self.clock():
+                self.sessions[device] = {k: previous[k] for k in ('question', 'choices', 'choiceUntil') if k in previous}
+                self.sessions[device].update(generation=replacement, id=secrets.token_urlsafe(24), awaiting=False, until=0)
+
+    def run(self, device, request, audio, *, transcript=None):
         generation = request.get('generation')
         if not isinstance(generation, str) or not re.fullmatch(r'[a-zA-Z0-9-]{8,100}', generation):
             raise ValueError('A voice session generation is required.')
         self.allowed(device, generation)
         with self.lock:
+            self.allowed(device, generation)
+            previous = self.revisions.get(device, (generation, 0))
+            revision = (previous[1] if previous[0] == generation else 0) + (request.get('preview') is not True)
+            stamp = (generation, revision)
+            self.revisions[device] = stamp
             old = self.sessions.get(device, {})
             continuing = bool(request.get('session') and request['session'] == old.get('id') and
                               generation == old.get('generation') and old.get('awaiting') is True and old.get('until', 0) > self.clock())
@@ -71,18 +98,27 @@ class VoiceCompanion:
             session = dict(old) if same_session else {'id': secrets.token_urlsafe(24), 'generation': generation}
             if generation==old.get('generation') and old.get('question') and old.get('choiceUntil',0)>self.clock():
                 session['question']=old['question'];session['choices']=old.get('choices',[])
+        def current():
+            with self.lock:
+                self.allowed(device, generation)
+                if self.revisions.get(device) != stamp:
+                    raise ValueError('Voice request was superseded by the completed question.')
         # Provider choice cannot turn ambient listening into cloud capture.
         # Only the server-validated follow-up lease, explicit Listen now, or a
         # locally recognized wake name authorizes cloud refinement.
-        request = dict(request, _device=device, _addressed=continuing or request.get('activated') is True)
-        text = (self.transcribe_request(audio,request) if self.transcribe_request else self.transcribe(audio)).strip()
-        self.allowed(device, generation)
+        request = dict(request, _device=device, _addressed=continuing or request.get('activated') is True,
+                       _permitted=current)
+        # Only trusted in-process callers can reuse a checked endpoint transcript.
+        # A JSON request field cannot bypass recognition.
+        text = (transcript if transcript is not None else
+                self.transcribe_request(audio,request) if self.transcribe_request else self.transcribe(audio)).strip()
+        current()
         command = addressed(text)
         if command is None and not continuing and request.get('activated') is not True:
             return {'wake': False}
         if command is not None and not request['_addressed'] and self.refine_addressed:
             text = self.refine_addressed(audio, dict(request,_addressed=True), text).strip()
-            self.allowed(device, generation)
+            current()
             command = addressed(text)
         command = text if command is None else command
         projects = self.projects()
@@ -91,8 +127,8 @@ class VoiceCompanion:
         result = {'wake': True, 'session': session['id'], 'sessionSeconds': 30, 'heard': command, 'transcript': text}
         if request.get('preview') is True:
             result.update(partial=True, text=command or "I'm listening. Go ahead.")
-            self.allowed(device, generation)
             with self.lock:
+                current()
                 session['until'] = self.clock() + 20
                 session['awaiting'] = True
                 self.sessions[device] = session
@@ -101,8 +137,9 @@ class VoiceCompanion:
             pending=session.pop('question',None)
             query=(pending+' Project: '+command) if pending else command
             answer=self.discuss({'text':query,
-                                 'projectId':request.get('projectId'),'selection':request.get('selection')})
-            self.allowed(device,generation)
+                                 'projectId':request.get('projectId'),'selection':request.get('selection'),
+                                 '_permitted':current})
+            current()
             result.update(answer,question=command)
             if answer.get('scope')=='choice':session.update(question=pending or command,choiceUntil=self.clock()+60)
         elif not command:
@@ -128,9 +165,9 @@ class VoiceCompanion:
                 selection = request.get('selection') if selected['id'] == request.get('projectId') else selected['selection']
                 if not any(c['id'] == selection for c in selected['chats']):
                     raise ValueError('The selected chat changed. Refresh the project.')
-                self.allowed(device, generation)
+                current()
                 answer = self.ask(selected, selection, question)
-                self.allowed(device, generation)
+                current()
                 result.update(text=answer.get('text') or 'No answer was returned. Please try again.',
                               projectId=selected['id'], selection=selection, projectName=selected['name'], question=question)
             else:
@@ -139,8 +176,8 @@ class VoiceCompanion:
                 result.update(choices=[{'id': p['id'], 'name': p['name'], 'folderLabel': p.get('folderLabel', '')} for p in candidates],
                               text='Which project do you mean? ' + ', '.join(p['name'] for p in candidates[:4]) +
                               ('. Say its name or choose it on the screen.' if candidates else 'Open a project in Codex on your Mac first.'))
-        self.allowed(device, generation)
         with self.lock:
+            current()
             session['awaiting'] = not bool(command)
             session['until'] = self.clock() + (20 if session['awaiting'] else 0)
             result['sessionSeconds'] = 20 if session['awaiting'] else 0
