@@ -54,7 +54,14 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--port',type=int,default=0)
     p.add_argument('--apk',type=Path)
+    p.add_argument('--live',action='store_true',help='Test the running Mac companion with real projects and its microphone')
+    p.add_argument('--root',type=Path,default=Path.home()/'Library/Application Support/Mochi/android')
+    p.add_argument('--bridge-url',help='Private HTTPS address of the running Mac companion')
     args=p.parse_args()
+    if args.live:
+        from preview_live import run
+        run(args.root,args.port,args.bridge_url)
+        return
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             route=self.path.split('?')[0]
@@ -66,8 +73,8 @@ def main():
                     self.send_error(404);return
                 content=TRANSPORT.encode() if name=='native.js' else (ASSETS/name).read_bytes()
                 if name=='index.html':
-                    banner='<div class="preview-banner">Android 0.17.1 preview · Sample data · Voice requires installed app &nbsp; <button id="preview-completion">Try automatic completion</button>'
-                    if args.apk:banner+=' &nbsp; <a href="/Motchi.apk" download="Motchi-0.17.1.apk">Download Android APK</a>'
+                    banner='<div class="preview-banner">Android 0.18 preview · Sample data · Voice requires live Mac preview &nbsp; <button id="preview-completion">Try automatic completion</button>'
+                    if args.apk:banner+=' &nbsp; <a href="/Motchi.apk" download="Motchi-0.18.0.apk">Download Android APK</a>'
                     content=content.replace(b'<body>',('<body>'+banner+'</div>').encode())
                 if name=='app.css':content+=b'\n.preview-banner{padding:12px 24px;background:#203b39;color:white;font:14px system-ui;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.preview-banner a{color:white}.preview-banner button{padding:8px 12px}\n'
                 mime='text/html' if name.endswith('.html') else 'text/css' if name.endswith('.css') else 'image/svg+xml' if name.endswith('.svg') else 'application/javascript'
