@@ -565,7 +565,7 @@
       "manualOverride": true,
       "evidence": {
         "kind": "Mac implementation and regression checks; human acceptance pending",
-        "quote": "Source 0.18 adds nonblocking capture, Smart Turn plus unfinished-clause holds, bounded questions and superseded-reply cancellation. Local synthetic/regression checks pass; real bilingual accuracy, speaker filtering and echo-aware interruption remain pending. Signed APK staged, not installed; see docs/LOCAL_CONVERSATION.md.",
+        "quote": "Source 0.18 adds nonblocking capture, Smart Turn plus unfinished-clause holds, bounded questions and superseded-reply cancellation. Regression/synthetic checks pass. After unlocking, the live Mac service loaded six projects and a scoped check verified changing microphone input and a ready keyword detector. Human bilingual accuracy, speaker filtering and echo-aware interruption remain pending. Calendar APK staged, not installed; see docs/LOCAL_CONVERSATION.md.",
         "at": "2026-11-01"
       }
     },
@@ -669,5 +669,5 @@
       }
     }
   ],
-  "revision": 14
+  "revision": 15
 }
