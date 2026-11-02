@@ -12,7 +12,7 @@
 - A conservative transcript guard holds explicit dangling clauses such as “especially…” and “尤其是…”. It supplements the acoustic model; it is not a separate learned semantic model or a guarantee against every early cutoff. Manual **Finish question** bypasses the guard.
 - An automatically completed question reuses its checked transcript through an internal function argument. HTTP JSON cannot supply this argument. Partial captions never request an answer or update the project checklist.
 - The buffer has a **60-second** hard cap, followed by a bounded opportunity to Finish or restart. It never silently splits a question into multiple requests. Missing/failed pause detection requires explicit Finish; missing keyword setup requires Listen now.
-- A wake permits one question. Ordinary background speech during analysis does not start another question. A fresh wake can retain an unresolved project choice, while pause/project changes clear it. This does not add unrestricted follow-ups.
+- A wake permits one question. For an automatically ended question, speech starting within two seconds of processing is checked as a possible continuation. Meaningful words cancel the premature answer and restore the original audio plus the continuation. Acknowledgments/thinking sounds release the pending answer. This repair is limited to the already addressed question, ends before playback, and is not speaker identification. Manual Finish closes it explicitly. Later background speech does not start another question. A fresh wake can retain an unresolved project choice; pause/project changes clear it.
 - Protocol-2 clients receive visible text before optional speech synthesis, then a playback-only event. Older installed clients retain one combined answer/audio event. This compatibility path allows Mac rollout without installing the staged calendar APK.
 - The staged new client’s Listen now explicitly stops playback. Voice interruption during speaker output remains disabled until reference-aware echo handling is measured on the actual microphone/speaker arrangement. Input level monitoring continues; this is not verified full duplex.
 
@@ -98,3 +98,51 @@ The final Mac-speaker-to-physical-microphone test recognized **“What still nee
 Recording was stopped, its scoped exception removed, and the private local policy returned to `paused: true`. The preview displays **Mac microphone paused**; no Motchi microphone helper remains. Speaker mute was restored after testing; the user's raised input level was retained. The calendar APK remains unchanged.
 
 Targeted checks pass: 54 conversation, 22 Mac microphone, 16 local pause, 30 preview, 32 wake/privacy, 41 discussion, 42 portal, 17 paired wake and 17 hub cases, plus 26 Android core and 24 appearance checks. Swift compilation, JavaScript syntax and installed app signing pass. Broad human bilingual accuracy, main-speaker selection, echo-aware interruption and conversational latency acceptance remain open.
+
+
+## Combined turn signals and repair — 2026-11-02
+
+The two user-supplied articles recommend combining acoustic completion, grammatical completeness, conversational context, visible captions and recoverable interruptions. They are explanatory/product articles, not published evaluation datasets or source code. Their product latency claims are not Motchi measurements:
+
+- [The interruption problem](https://www.eecommerceai.com/post/the-interruption-problem-how-voice-ai-learns-when-to-speak-and-when-to-listen) distinguishes premature interruption, delayed response, prosody, incomplete clauses and meaningful interruption versus acknowledgment.
+- [Detecting interview questions](https://copilotinterview.com/blog/how-ai-detects-interview-questions) describes silence plus question/request shape, indirect requests, stacked questions, prior context, separate speaker streams, captions and manual recovery.
+
+Applied changes:
+
+- `turn_text()` combines inspectable English/Chinese grammar cues with Smart Turn. An unfinished “How would you scale…” or “Walk me through…” holds even when the acoustic model is very confident. Complete short questions (“Why that database?”), instructions and multipart questions qualify. Unknown statements need the patient acoustic threshold; punctuation is not completion evidence. These bounded rules are not a universal learned semantic parser.
+- Low-score candidates still receive a caption. Resumed speech invalidates the old snapshot after recognition without killing/reloading Qwen. A genuine pause, revocation or replacement still cancels the worker. Fixed English/Chinese choices are now honored by Qwen; automatic bilingual mode remains available.
+- Before an answer, a two-second same-question repair window checks new speech. It briefly withholds publication/history saving while deciding, cancels the old answer when meaningful continuation is recognized, and recombines the question. Pure “yeah”, “um” and “好的” do not become another question. Old text, audio and worker cleanup cannot overwrite the replacement. The window never enables unaddressed later follow-ups, remote actions or approvals.
+- Spoken project answers request one or two sentences, at most 45 English words or 100 Chinese characters. They still review the exact project's history and validate quoted references. Voice input uses a smaller disclosed selection of task/history detail; full counts and checklist reconciliation are preserved. This reduces input/output, but does not guarantee provider latency.
+
+Verified with the real installed local models on public synthetic speech: **11/11** selected sentence endpoint cases, with zero normalized token differences in these fixtures. Notably Smart Turn gave incomplete “How would you scale” a 0.98486 score and “Walk me through” 0.97855; the text guard correctly held both. This illustrates why acoustic confidence alone is insufficient; it is not a human accuracy score.
+
+Paced joined English/Chinese questions returned one answer each, entering processing about **0.77/1.54 seconds** after the last detected voiced frame. English and Chinese unfinished one-second pauses were retained, with final processing about **2.52/2.55 seconds** after the last voiced frame. In the two repair fixtures, an initially complete question was followed by another clause after a 1.2-second pause: each cancelled its first speculative answer attempt, retained both clauses and emitted **one final answer**. Their answer provider was a delayed local fixture, not the real project model.
+
+A separate exact-project request to the installed configured answer provider returned a valid concise assessment with three checked history references in **11.33 seconds**. This one request cannot establish a general latency improvement; it is still slower than natural conversation. No human speech result, main-speaker filtering, echo-aware voice interruption, full duplex or GPT-Live/Doubao equivalence is established. AND-10 remains open. The Mac modules are installed with a backup and verified app signing; no calendar APK rollout.
+
+Reproduce without opening a microphone:
+
+```sh
+python3 plugins/progress-pet/tests/check_turn_recovery.py
+python3 plugins/progress-pet/tests/evaluate_local_conversation.py --run --joined --pause-cases --conversation-cases
+```
+
+The first command checks race/privacy/control behavior with fixtures. The second explicitly uses already installed local speech models and temporary synthesized audio, deletes audio on exit, and fails if the selected scenarios fail. No raw test audio belongs in Git. Synthetic input exhaustion is a normal harness end, not a microphone failure.
+
+
+### Human failure and capture diagnosis
+
+The user then reported **words missing/no answer**, while speaking close to the MacBook. Keep this failed human acceptance above any synthetic success claim. At one inspection the microphone was receiving PCM but had no activation event: it was waiting for a keyword, not transcribing a question. A later explicitly activated segment returned no clear speech. These are distinct states; a moving meter alone does not prove an addressed question was recognized.
+
+A separate bounded direct-microphone diagnostic bypassed wake and endpoint logic, retained audio only in memory/temporary recognizer files and removed it afterwards. Both installed Qwen and Whisper engines recognized repeated English/Chinese greetings. This establishes capture and basic transcription for those greetings, not accuracy on a project question. It also exposed an approximately **8.7-second delay before the first PCM** in that fresh helper launch (36.3 seconds of PCM received during a 45-second wall-clock window). This is one startup observation, not a fixed delay on every launch.
+
+Corrections applied to the Mac/preview:
+
+- Talk queues its activation until the first actual PCM frame. The character says **Preparing microphone**, then acknowledges **I'm listening** once capture is real; microphone initialization must not invite speech too early.
+- The local keyword vocabulary now includes Hello/Hi Motchi and a Chinese pronunciation variant, matching greetings the direct diagnostic heard. Addressed-text handling includes the corresponding recognized name variants. Bare background mentions are not new keyword phrases.
+- A short unrecognized name alone cannot automatically become a model question unless a project-choice answer is pending. This avoids a misheard wake name becoming an unrelated discussion. Finish still provides explicit recovery.
+- When a local test expires, polling keeps it paused. An explicit Talk/Enable click can start another exact-device test capped at five minutes; polling and ordinary heartbeats cannot renew it. Other paired microphones remain blocked. The earlier frozen-test behavior and misleading restart instruction are fixed.
+
+The user’s latest screenshot showed the paused state. Speaker identity is not implemented; it is not the cause of a paused recorder. Wake activation, audio readiness, ASR wording and answer latency must be assessed separately. Human project-question/wake acceptance remains open, and no calendar update was installed.
+
+The final model evaluation also woke on two quiet synthetic greeting variants and rejected two unaddressed English/Chinese speech fixtures. These selected cases do not establish real-world wake accuracy or speaker filtering. The preview visibly transitions through Preparing before PCM readiness. After testing, global recording is paused with no temporary device exception and no microphone helper running; the preview stays open with **Mac microphone paused**.

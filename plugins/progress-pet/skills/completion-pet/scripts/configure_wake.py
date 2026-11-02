@@ -14,13 +14,23 @@ MODEL='sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20'
 URL='https://github.com/k2-fsa/sherpa-onnx/releases/download/kws-models/'+MODEL+'.tar.bz2'
 SHA256='68447f4fbc67e70eee3a93961f36e81e98f47aef73ce7e7ca00885c6cd3616a6'
 FILES=('encoder-epoch-13-avg-2-chunk-16-left-64.int8.onnx','decoder-epoch-13-avg-2-chunk-16-left-64.onnx','joiner-epoch-13-avg-2-chunk-16-left-64.int8.onnx','tokens.txt')
-KEYWORDS='HH EY1 M OW1 CH IY0 @HEY_MOTCHI\nHH EY1 M AA1 CH IY0 @HEY_MOTCHI\nn ǐ h ǎo m ò q í @你好莫奇\nh ēi m ò q í @嘿莫奇\n'
+KEYWORDS = '''HH EY1 M OW1 CH IY0 @HEY_MOTCHI
+HH EY1 M AA1 CH IY0 @HEY_MOTCHI
+HH AH0 L OW1 M OW1 CH IY0 @HELLO_MOTCHI
+HH AH0 L OW1 M AA1 CH IY0 @HELLO_MOTCHI
+HH AH0 L OW1 M OW1 JH IY0 @HELLO_MOTCHI
+HH AY1 M OW1 CH IY0 @HI_MOTCHI
+n ǐ h ǎo m ò q í @你好莫奇
+n ǐ h ǎo m ò q ì @你好莫奇
+h ēi m ò q í @嘿莫奇
+'''
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root',type=Path,default=Path.home()/'Library/Application Support/Mochi/android')
     parser.add_argument('--install',action='store_true')
+    parser.add_argument('--update-keywords',action='store_true',help='Update wake phrases on an already installed local model, without downloads.')
     parser.add_argument('--archive',type=Path,help='Use an already downloaded official archive, with the same checksum verification.')
     args=parser.parse_args()
     if args.install:
@@ -39,7 +49,12 @@ def main():
                     (target/name).write_bytes(source.extractfile(member).read())
             (target/'motchi-keywords.txt').write_text(KEYWORDS)
             save_private(args.root/'wake.json',{'python':str(python),'model':str(target),'source':URL,'sha256':SHA256,'runtime':PACKAGE})
-    configuration(args.root)
+    _, target = configuration(args.root)
+    if args.update_keywords:
+        previous=target/'motchi-keywords.txt'
+        backup=target/('motchi-keywords-'+hashlib.sha256(previous.read_bytes()).hexdigest()[:12]+'.backup')
+        if not backup.exists(): backup.write_bytes(previous.read_bytes())
+        previous.write_text(KEYWORDS)
     print('Local bilingual keyword detector configured. Restart Motchi; actual wake accuracy still needs a human test.')
 
 if __name__=='__main__':main()

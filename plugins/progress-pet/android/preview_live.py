@@ -144,18 +144,20 @@ class LivePreview:
         self.authority = '127.0.0.1:' + str(self.server.server_port)
         self.url = 'http://' + self.authority + '/'
 
-    def control(self, **extra):
-        if self.voice_test and not self.test_started:
+    def control(self, restart_test=False, **extra):
+        if self.voice_test:
+            from microphone_policy import allowed
+        if self.voice_test and (not self.test_started or
+                restart_test and not allowed(self.connection.root, self.connection.device_id)):
             from microphone_policy import allow_test
             allow_test(self.connection.root, self.connection.device_id)
             self.test_started = True
         if self.voice_test and self.test_started:
-            from microphone_policy import allowed
             if not allowed(self.connection.root, self.connection.device_id):
                 self.connection.request('/v1/mac-voice', {'enabled': False})
                 self.enabled = False; self.events.clear()
                 self.state = dict(self.state, enabled=False, running=False, busy=False, rms=0, recentRms=0,
-                                  stage='idle', issue='', status='Voice test ended · Mac microphone paused')
+                                  stage='idle', issue='', status='Voice test ended · tap Talk to start a new test')
                 return self.state
         payload = dict(self.context, enabled=True, conversationVersion=2, language=self.language, **extra)
         state = self.connection.request('/v1/mac-voice', payload)
@@ -183,13 +185,13 @@ class LivePreview:
                 result = list(self.events); self.events.clear(); return {'events': result}
             if action == 'wakeListening':
                 if type(body.get('enabled')) is not bool: raise ValueError('Choose whether to enable listening.')
-                if body['enabled']: return self.control()
+                if body['enabled']: return self.control(restart_test=True)
                 self.connection.request('/v1/mac-voice', {'enabled': False})
                 self.enabled = False; self.events.clear()
                 self.state = dict(self.state, enabled=False, running=False, speaking=False, busy=False,
                                   issue='', stage='idle', rms=0, recentRms=0, status='Mac microphone paused')
                 return self.state
-            if action in ('listenNow', 'finishVoice'): return self.control(**{'activate' if action == 'listenNow' else 'finish': True})
+            if action in ('listenNow', 'finishVoice'): return self.control(restart_test=action=='listenNow', **{'activate' if action == 'listenNow' else 'finish': True})
             if action == 'voiceSource' and body.get('source') == 'mac': return self.state
             if action == 'voiceLanguage' and body.get('language') in ('en', 'zh', 'auto'):
                 self.language = body['language']; return self.control() if self.enabled else dict(self.state, language=self.language)

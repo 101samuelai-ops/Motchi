@@ -68,12 +68,16 @@ with tempfile.TemporaryDirectory() as root:
         initial=voice.control('calendar',{'enabled':True,'projectId':'alpha','selection':'alpha-chat','activate':True})
         check(initial['inputSource']=='Mac microphone' and not initial['running'] and initial['starting'],
               'Starting a helper cannot claim live audio before the first frame')
+        check(voice.waiting_activation and not voice.last_wake and not voice.events and initial['stage']=='starting',
+              'Talk waits for actual PCM instead of telling the user to speak into an unready microphone')
         child.stdout.queue.put(frame(0))
         deadline=time.monotonic()+1
         while voice.last_frame_at is None and time.monotonic()<deadline:time.sleep(.01)
         check(voice.snapshot()['running'] and not voice.snapshot()['starting'],
               'Actual PCM, including silence, confirms the input stream is running')
-        check(voice.poll('calendar')['events'][0]['partial'],'Listen now immediately acknowledges on the calendar')
+        ready_event=voice.poll('calendar')['events'][0]
+        check(ready_event['partial'] and ready_event['ready'] and not voice.waiting_activation,
+              'The first real PCM frame acknowledges that Talk is ready to hear the question')
         check(not voice.poll('another')['enabled'],'Another device cannot read the microphone state or transcript')
         check(rejects(lambda:voice.control('another',{'enabled':True})),'A second device cannot hijack microphone capture')
         check(not voice.control('another',{'enabled':False})['enabled'] and not child.dead,'Another device cannot stop the owner’s microphone')

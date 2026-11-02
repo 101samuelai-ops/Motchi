@@ -184,4 +184,4 @@ def info(root):
         try:read_config(root);dependency(root)
         except ValueError as error:ready=False;issue=str(error)
     return {'provider':provider,'providerLabel':{'doubao':'Doubao Speech · cloud','qwen':'Qwen3-ASR · free local Mac','local':'Whisper · local Mac'}[provider],
-            'providerReady':ready,'providerIssue':issue,'cloudSpeech':provider=='doubao','providerAutoLanguage':provider in ('qwen','doubao')}
+            'providerReady':ready,'providerIssue':issue,'cloudSpeech':provider=='doubao','providerAutoLanguage':provider=='doubao'}

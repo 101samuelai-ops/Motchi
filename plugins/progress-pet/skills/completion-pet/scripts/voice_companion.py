@@ -15,7 +15,7 @@ from pathlib import Path
 def addressed(text):
     # Require the name at the start, optionally preceded by a greeting. Do not
     # wake on someone mentioning Motchi in an unrelated conversation.
-    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|(?:你好|您好|嘿|嗨|喂)[，,。.!！:：\s]*)?(?:motchi|mochi|莫奇|莫琪|摩奇|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
+    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|(?:你好|您好|嘿|嗨|喂)[，,。.!！:：\s]*)?(?:motchi|mochi|moji|莫奇|莫琪|摩奇|默契|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
     return text[match.end():].lstrip(' ,.!?，。！？:：') if match else None
 
 
@@ -42,9 +42,54 @@ def unfinished(text):
     Run only after the acoustic completion model. Manual Finish bypasses this
     guard; punctuation added by ASR cannot turn a dangling clause into a fact.
     """
-    text = text.strip().rstrip(' ,.!?，。！？:：;；…').casefold()
-    return bool(re.search(r"\b(?:and|or|but|because|especially|including|whether|such as|for example|if|although|unless|whereas)$", text)
-                or re.search(r'(?:尤其是|特别是|特別是|因为|因為|所以|但是|可是|如果|以及|然后|然後|比如|例如|还有|還有|包括)$', text))
+    return turn_text(text)['state'] in ('unfinished', 'filler')
+
+
+def turn_text(text):
+    """Bounded bilingual text cues, combined with the acoustic turn model.
+
+    This is deliberately inspectable grammar, not a learned intent classifier
+    or speaker recognition. ASR's invented punctuation is never evidence that
+    a clause is complete. Unknown statements still need acoustic confidence.
+    """
+    text = str(text or '').strip().rstrip(' ,.!?，。！？:：;；…').casefold().replace('’', "'")
+    command = addressed(text)
+    text = text if command is None else command
+    if not text:
+        return {'state': 'greeting' if command is not None else 'filler', 'reason': 'No question yet'}
+    if re.fullmatch(r"(?:u+h+|u+m+|e+r+m+|h+m+|ah|er|嗯+|呃+|额+|啊+|唔+)[\s,，.。…]*", text):
+        return {'state': 'filler', 'reason': 'Thinking sound'}
+    if re.fullmatch(r"(?:yes|yeah|yep|okay|ok|right|sure|thanks|thank you|got it|i see|uh huh|好的|好|对|對|是的|知道了|明白了|谢谢|謝謝)", text):
+        return {'state': 'acknowledgment', 'reason': 'Acknowledgment, not a new question'}
+    dangling = (
+        r"\b(?:and|or|but|because|especially|including|whether|such as|for example|if|although|unless|whereas|"
+        r"the|a|an|my|your|our|of|to|for|about|with|in|on|is|are|was|were|that means|which means)$",
+        r"\b(?:can|could|would|should|will|do|does|did|have|has) (?:i|you|we|it|they)$",
+        r"\b(?:how (?:can|could|would|should|will|do|does|did) (?:i|you|we|it|they) (?:scale|build|implement|add|use|change)|"
+        r"(?:tell|show) me|(?:walk|talk) me through|let me (?:think|explain)|i (?:want|need) to)$",
+        r"(?:尤其是|特别是|特別是|因为|因為|所以|但是|可是|如果|以及|然后|然後|比如|例如|还有|還有|包括|"
+        r"的|关于|關於|是否|有没有|有沒有|我想问一下|我想問一下|我想知道|你能不能|能不能帮我|能不能幫我|怎么把|怎麼把)$",
+    )
+    if any(re.search(pattern, text) for pattern in dangling):
+        return {'state': 'unfinished', 'reason': 'The clause still expects more words'}
+    english = len(re.findall(r'\b[a-z]+\b', text)) >= 2 and re.search(
+        r'\b(?:what|which|when|where|why|how|who)\b|\b(?:can|could|would|will) you\b|'
+        r'\b(?:tell|show|explain|summarize|summarise|describe|compare)\b|\b(?:walk|talk) me through\b|\bi (?:need|want) (?:an? |the )?update\b', text)
+    chinese = len(re.findall(r'[\u3400-\u9fff]', text)) >= 3 and re.search(
+        r'什么|什麼|哪些|多少|怎么|怎麼|如何|为什么|為什麼|吗|嗎|请|請|告诉|告訴|介绍|介紹|解释|解釋|总结|總結|进度|進度', text)
+    return {'state': 'request' if english or chinese else 'unknown',
+            'reason': 'Complete question or request' if english or chinese else 'Use acoustic completion and a patient pause'}
+
+
+def continues_question(text):
+    """A short repair before an answer; never an open follow-up permission."""
+    cue = turn_text(text)
+    if cue['state'] in ('filler', 'acknowledgment', 'greeting'):
+        return False
+    text = str(text).strip()
+    return bool(len(re.findall(r'\b[a-z]+\b', text, re.I)) >= 2 or
+                len(re.findall(r'[\u3400-\u9fff]', text)) >= 2 or
+                re.match(r'^(?:wait|actually|no|especially|because)\b', text, re.I))
 
 
 def explicit_question(text):
@@ -53,14 +98,7 @@ def explicit_question(text):
     ASR punctuation alone is insufficient. This is a heuristic for explicit
     questions/requests, not a language model or main-speaker identification.
     """
-    text = text.strip().rstrip(' ,.!?，。！？:：;；…').casefold()
-    if unfinished(text) or re.search(r'\b(?:the|a|an|my|your|of|to|for|about|with|in|on|is|are|was|were)$|(?:的|关于|關於|是否|有没有|有沒有)$', text):
-        return False
-    english = len(re.findall(r'\b[a-z]+\b', text)) >= 5 and re.search(
-        r'\b(?:what|which|when|where|why|how|who)\b|\b(?:can|could|would|will) you\b|\b(?:tell|show|explain|summarize)\b', text)
-    chinese = len(re.findall(r'[\u3400-\u9fff]', text)) >= 8 and re.search(
-        r'什么|什麼|哪些|多少|怎么|怎麼|如何|为什么|為什麼|吗|嗎|请|請|告诉|告訴', text)
-    return bool(english or chinese)
+    return turn_text(text)['state'] == 'request'
 
 
 class VoiceCompanion:
@@ -96,7 +134,14 @@ class VoiceCompanion:
                 self.sessions[device] = {k: previous[k] for k in ('question', 'choices', 'choiceUntil') if k in previous}
                 self.sessions[device].update(generation=replacement, id=secrets.token_urlsafe(24), awaiting=False, until=0)
 
+    def choice_pending(self, device, generation):
+        with self.lock:
+            session = self.sessions.get(device, {})
+            return bool(session.get('generation') == generation and session.get('question') and
+                        session.get('choiceUntil', 0) > self.clock())
+
     def run(self, device, request, audio, *, transcript=None):
+        local_guard = request.get('_permitted') if callable(request.get('_permitted')) else None
         generation = request.get('generation')
         if not isinstance(generation, str) or not re.fullmatch(r'[a-zA-Z0-9-]{8,100}', generation):
             raise ValueError('A voice session generation is required.')
@@ -114,11 +159,16 @@ class VoiceCompanion:
             session = dict(old) if same_session else {'id': secrets.token_urlsafe(24), 'generation': generation}
             if generation==old.get('generation') and old.get('question') and old.get('choiceUntil',0)>self.clock():
                 session['question']=old['question'];session['choices']=old.get('choices',[])
+        def check_current():
+            self.allowed(device, generation)
+            if self.revisions.get(device) != stamp:
+                raise ValueError('Voice request was superseded by the completed question.')
         def current():
+            # Trusted capture can briefly withhold a speculative answer while
+            # checking resumed speech. Never hold the session lock while waiting.
+            if local_guard: local_guard()
             with self.lock:
-                self.allowed(device, generation)
-                if self.revisions.get(device) != stamp:
-                    raise ValueError('Voice request was superseded by the completed question.')
+                check_current()
         # Provider choice cannot turn ambient listening into cloud capture.
         # Only the server-validated follow-up lease, explicit Listen now, or a
         # locally recognized wake name authorizes cloud refinement.
@@ -144,7 +194,7 @@ class VoiceCompanion:
         if request.get('preview') is True:
             result.update(partial=True, text=command or "I'm listening. Go ahead.")
             with self.lock:
-                current()
+                check_current()
                 session['until'] = self.clock() + 20
                 session['awaiting'] = True
                 self.sessions[device] = session
@@ -154,6 +204,7 @@ class VoiceCompanion:
             query=(pending+' Project: '+command) if pending else command
             answer=self.discuss({'text':query,
                                  'projectId':request.get('projectId'),'selection':request.get('selection'),
+                                 '_voice': True,
                                  '_permitted':current})
             current()
             result.update(answer,question=command)
@@ -192,8 +243,9 @@ class VoiceCompanion:
                 result.update(choices=[{'id': p['id'], 'name': p['name'], 'folderLabel': p.get('folderLabel', '')} for p in candidates],
                               text='Which project do you mean? ' + ', '.join(p['name'] for p in candidates[:4]) +
                               ('. Say its name or choose it on the screen.' if candidates else 'Open a project in Codex on your Mac first.'))
+        current()
         with self.lock:
-            current()
+            check_current()
             session['awaiting'] = not bool(command)
             session['until'] = self.clock() + (20 if session['awaiting'] else 0)
             result['sessionSeconds'] = 20 if session['awaiting'] else 0

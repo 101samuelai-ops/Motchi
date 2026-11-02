@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 import io
 import math
 from pathlib import Path
+import re
 import subprocess
 import sys
 import threading
@@ -18,13 +19,14 @@ import wave
 import doubao_speech
 from wake_detector import WakeDetector, configuration as wake_configuration
 from smart_turn import Endpoint, configuration as turn_configuration
-from voice_companion import unfinished, explicit_question
+from voice_companion import turn_text, continues_question
 import microphone_policy
 
 ENDPOINT_QUIET_FRAMES = 28  # 560 ms; early completion needs stronger model confidence.
 ENDPOINT_PATIENT_FRAMES = 60  # 1.2 s for less certain complete turns.
 ENDPOINT_TEXT_FRAMES = 100  # 2 s; a hesitant score also needs an explicit complete question.
 WAKE_BUFFER_FRAMES = 120  # 2.4 s in memory, shared only after a local wake.
+CONTINUATION_SECONDS = 2.0  # Repair the same question before its answer, not a follow-up lease.
 
 class Segmenter:
     def __init__(self, vad=None, automatic=True):
@@ -104,6 +106,7 @@ class MacVoice:
         self.owner = None; self.lease = 0; self.epoch = ''
         self.process = None; self.context = {}; self.session = None
         self.input_started_at = self.last_frame_at = None
+        self.waiting_activation = False
         self.active_until = self.muted_until = self.session_until = 0
         self.wake_detector = None
         self.endpoint = None
@@ -122,6 +125,11 @@ class MacVoice:
         self.activated_at = float('-inf')
         self.capped_until = 0
         self.question_revision = 0
+        self.pending_audio = None
+        self.continuation = None
+        self.continuation_until = 0
+        self.answer_gate = threading.Event(); self.answer_gate.set()
+        self.text_decision = None
         self.conversation_version = 2
         if hasattr(portal,'root'):
             try:
@@ -173,6 +181,11 @@ class MacVoice:
         self.question_revision += 1
         self.segmenter.reset()
         self.events.clear()
+        self.pending_audio = self.continuation = None
+        self.continuation_until = 0
+        self.answer_gate.set()
+        self.text_decision = None
+        self.waiting_activation = False
 
     def activate(self, pre_roll=()):
         self.invalidate(preserve_choice=not self.busy)
@@ -191,7 +204,7 @@ class MacVoice:
         self.last_wake = int(time.time()*1000)
         self.events.append({'wake': True, 'partial': True, 'heard': '',
                             'text': "I'm listening. Go ahead.", 'stage': 'listening',
-                            'turnId': self.turn_id, 'stopPlayback': True})
+                            'turnId': self.turn_id, 'stopPlayback': True, 'ready': True})
         self.status = "I'm listening · Mac microphone"
 
     def control(self, device, body):
@@ -232,12 +245,16 @@ class MacVoice:
             self.language = language
             self.conversation_version = 2 if body.get('conversationVersion') == 2 else 1
             if body.get('activate') is True:
-                self.activate()
+                if self.last_frame_at is None:
+                    self.waiting_activation = True
+                    self.stage = 'starting'
+                else:
+                    self.activate()
             if body.get('speaking') is True and body.get('activate') is not True: self.muted_until = self.clock()+2
             if body.get('finish') is True and not self.busy and self.clock() < self.active_until:
                 data=self.segmenter.finish()
                 if data:
-                    self.finalize(data)
+                    self.finalize(data, resumable=False)
                 else:
                     self.issue='No speech has been captured yet. Tap Listen now and speak near your Mac.'
             return self.snapshot()
@@ -252,7 +269,7 @@ class MacVoice:
     def snapshot(self):
         alive = bool(self.process and self.process.poll() is None)
         starting = alive and self.last_frame_at is None
-        status = 'Waiting for Mac microphone audio · unlock the Mac and allow microphone access if asked' if starting else self.status
+        status = 'Starting Mac microphone · wait for “I’m listening” before speaking' if starting else self.status
         return {'enabled':bool(self.owner), 'running':alive and not starting, 'starting':starting,
                 'source':'mac', 'inputSource':'Mac microphone', 'rms':self.segmenter.rms,
                 'recentRms':self.recent, 'busy':self.busy or self.preview,
@@ -263,6 +280,7 @@ class MacVoice:
                 'turnDetector':'Smart Turn v3.2 · local' if self.endpoint else 'Manual Finish question',
                 'turnIssue':self.endpoint_issue, 'endpointProbability':self.endpoint_score,
                 'timings':dict(self.timings),
+                'textDecision':self.text_decision,
                 'wakeDetector':'Local bilingual keyword detector' if self.wake_detector else 'Unavailable · use Listen now',
                 'wakeReady':self.wake_detector.ready if self.wake_detector else False,
                 'status':status, 'issue':self.issue or (self.wake_detector.issue if self.wake_detector else None), 'lastWakeAt':self.last_wake,
@@ -279,7 +297,7 @@ class MacVoice:
                 or hasattr(self.portal, 'root') and not microphone_policy.allowed(self.portal.root, device)):
             raise ValueError('Voice turn was superseded or paused.')
 
-    def finalize(self, data, transcript=None):
+    def finalize(self, data, transcript=None, resumable=True):
         self.timings['processingAfterSpeechMs'] = round(max(0, self.clock()-self.last_activity)*1000)
         self.question_revision += 1
         self.checked_transcript = None
@@ -288,10 +306,86 @@ class MacVoice:
         self.active_until = 0
         self.stage = 'processing'
         self.status = 'Checking your question · say Hey Motchi to change it'
+        self.pending_audio = data if resumable else None
+        self.continuation = {'buffer': Segmenter(self.vad, automatic=False), 'pending': False, 'checked': None} if resumable else None
+        self.continuation_until = self.clock()+CONTINUATION_SECONDS if resumable else 0
+        self.answer_gate.set()
         if transcript and self.conversation_version >= 2:
             self.events.append({'wake': True, 'partial': True, 'processing': True,
                                 'heard': transcript, 'transcript': transcript, 'turnId': self.turn_id})
         self.worker.submit(self.recognize, self.owner, self.epoch, data, False, True, transcript)
+
+    def await_continuation(self, device, epoch):
+        """Do not publish/save an answer over a possible resumed sentence."""
+        deadline = time.monotonic()+4
+        while True:
+            with self.lock:
+                self.valid(device, epoch)
+                if self.answer_gate.is_set(): return
+            if time.monotonic() >= deadline:
+                raise ValueError('I heard more speech but could not confirm it. Tap Talk to retry your complete question.')
+            self.answer_gate.wait(.05)
+
+    def processing_frame(self, device, data):
+        """Inspect only a bounded continuation of this already addressed turn.
+
+        No speaker identity is inferred. Playback never enters this path. Pure
+        acknowledgments and thinking sounds do not replace the pending answer.
+        """
+        candidate = self.continuation
+        if not candidate or not self.pending_audio: return
+        buffer = candidate['buffer']
+        if self.clock() >= self.continuation_until and buffer.speech is None:
+            return
+        if self.clock() >= self.continuation_until+4:
+            self.answer_gate.set(); return
+        buffer.push(data)
+        if buffer.voiced >= 8 and (candidate['pending'] or candidate['checked'] != buffer.version):
+            self.answer_gate.clear()
+        if (not candidate['pending'] and buffer.voiced >= 8 and
+                (buffer.quiet >= 8 or buffer.voiced >= 30) and candidate['checked'] != buffer.version):
+            candidate.update(pending=True, checked=buffer.version)
+            self.worker.submit(self.check_continuation, device, self.epoch, candidate,
+                               buffer.version, bytes(buffer.speech))
+
+    def check_continuation(self, device, epoch, candidate, version, pcm):
+        def permitted():
+            with self.lock:
+                self.valid(device, epoch)
+                if not self.busy or self.continuation is not candidate:
+                    raise ValueError('Continuation expired.')
+        try:
+            if not hasattr(self.portal, 'voice_transcribe'): return
+            with self.transcript_lock:
+                permitted()
+                text = self.portal.voice_transcribe(wav_bytes(pcm),
+                    {'generation': epoch, '_device': device, '_addressed': True,
+                     '_permitted': permitted, 'language': self.language})
+            with self.lock:
+                permitted()
+                if continues_question(text):
+                    original = self.pending_audio
+                    extra = bytes(candidate['buffer'].speech or b'')
+                    combined = (original+extra)[:1920000]
+                    self.activate()
+                    # Keep the original question and every newly captured word.
+                    # activate() cancels the old provider and invalidates its TTS.
+                    for offset in range(0, len(combined)-639, 640):
+                        self.segmenter.push(combined[offset:offset+640])
+                    self.last_activity = self.clock()
+                    self.timings['resumedQuestion'] = True
+                    self.status = 'Go on · I’m listening to the rest of your question'
+                    self.events[-1].update(resumed=True, text='Go on. I’m listening to the rest of your question.')
+                elif candidate['buffer'].version == version:
+                    self.answer_gate.set()
+        except Exception:
+            with self.lock:
+                if self.epoch == epoch and self.continuation is candidate:
+                    self.answer_gate.set()
+        finally:
+            with self.lock:
+                if self.epoch == epoch and self.continuation is candidate:
+                    candidate['pending'] = False
 
     def transcribe_candidate(self, device, epoch, version, pcm, permitted):
         """Reuse only the exact voiced revision; never a guessed partial text."""
@@ -304,8 +398,16 @@ class MacVoice:
                     return cached[2]
                 language = self.language
             start = self.clock()
+            def audio_permitted():
+                with self.lock:
+                    self.valid(device, epoch)
+                    if self.busy or self.clock() >= self.active_until:
+                        raise ValueError('Question capture was replaced or expired.')
             request = {'generation': epoch, '_device': device, '_addressed': True,
-                       '_permitted': permitted, 'language': language}
+                       '_permitted': audio_permitted, 'language': language}
+            # Resumed words obsolete this snapshot, not the shared model. Let
+            # inference finish warm, then reject its stale revision below. A
+            # pause/revoke/new activation still cancels the recognizer promptly.
             text = self.portal.voice_transcribe(wav_bytes(pcm), request)
             permitted()
             with self.lock:
@@ -337,23 +439,34 @@ class MacVoice:
                 candidate = bytes(self.segmenter.speech or b'')
             # A fast, high-confidence complete sentence can proceed early. A
             # tentative score waits for a longer pause instead of cutting in.
+            transcript = None
+            if hasattr(self.portal, 'voice_transcribe'):
+                # Also caption uncertain/unfinished candidates. A low acoustic
+                # score must not leave a finished speaker staring at no words.
+                transcript = self.transcribe_candidate(device, epoch, version, candidate, permitted)
+            cue = turn_text(transcript) if transcript is not None else {'state': 'unavailable'}
+            with self.lock:
+                permitted()
+                self.text_decision = cue
+                if transcript:
+                    self.events.append({'wake': True, 'partial': True, 'heard': transcript,
+                                        'transcript': transcript, 'turnId': self.turn_id})
             acoustic_complete = score >= (.9 if quiet < ENDPOINT_PATIENT_FRAMES else .65)
-            text_candidate = quiet >= ENDPOINT_TEXT_FRAMES and score >= .4
-            if acoustic_complete or text_candidate:
-                transcript = None
-                if hasattr(self.portal, 'voice_transcribe'):
-                    # Keep capture live throughout this local check. New speech
-                    # invalidates it before any project question can be sent.
-                    transcript = self.transcribe_candidate(device, epoch, version, candidate, permitted)
+            text_candidate = quiet >= ENDPOINT_TEXT_FRAMES and score >= .4 and cue['state'] == 'request'
+            text_holds = cue['state'] in ('unfinished', 'filler', 'acknowledgment')
+            if cue['state'] == 'unknown' and len(re.findall(r'\b[a-z]+\b', transcript, re.I)) < 3 and len(re.findall(r'[\u3400-\u9fff]', transcript)) < 5:
+                # A wake name is often misheard as a short proper noun. Do not
+                # manufacture a question from it. A pending project choice is
+                # the explicit context in which a short name is sufficient.
+                pending = getattr(self.portal.voice, 'choice_pending', lambda *_: False)(device, epoch)
+                text_holds = not pending
+            # Unknown statements/short project choices may finish after the
+            # patient pause, but an early answer requires an explicit request.
+            early_unknown = quiet < ENDPOINT_PATIENT_FRAMES and cue['state'] == 'unknown'
+            if (acoustic_complete or text_candidate) and not text_holds and not early_unknown:
                 with self.lock:
                     permitted()
                     if self.busy or self.segmenter.quiet < ENDPOINT_QUIET_FRAMES:
-                        return
-                    if (transcript and unfinished(transcript)) or (not acoustic_complete and not explicit_question(transcript or '')):
-                        self.stage = 'listening'
-                        self.status = 'Take your time · I’m still listening'
-                        self.events.append({'wake': True, 'partial': True, 'heard': transcript,
-                                            'text': transcript, 'turnId': self.turn_id})
                         return
                     data = self.segmenter.finish()
                     if data:
@@ -406,6 +519,9 @@ class MacVoice:
                             or hasattr(self.portal, 'root') and not microphone_policy.allowed(self.portal.root, device)):
                         self.stop(); return
                     self.last_frame_at = self.clock()
+                    if self.waiting_activation:
+                        self.waiting_activation = False
+                        self.activate()
                     if self.session and self.clock() >= self.session_until:
                         self.session = None
                     keyword = self.wake_detector.feed(data) if self.wake_detector else None
@@ -426,6 +542,8 @@ class MacVoice:
                         samples = array('h', data)
                         self.segmenter.rms = math.sqrt(sum(n*n for n in samples)/len(samples))
                         self.recent = max(self.segmenter.rms, self.recent*.996)
+                        if self.busy and self.clock() >= self.muted_until:
+                            self.processing_frame(device, data)
                         continue
                     active = self.clock() < self.active_until
                     if not active:
@@ -496,6 +614,8 @@ class MacVoice:
                 self.status = ('Recognizing with Doubao after activation…' if request['activated'] or request['session']
                                else 'Checking the wake name locally…') if cloud else 'Recognizing your speech locally…'
             if hasattr(self.portal, 'run_mac_voice'):
+                if not preview:
+                    request['_permitted'] = lambda: self.await_continuation(device, epoch)
                 # Internal authenticated path avoids a long project lookup
                 # occupying the only HTTP voice-segment slot. Preview and final
                 # recognition still share the bounded local ASR worker.
@@ -530,6 +650,7 @@ class MacVoice:
                         if self.owner != device or self.epoch != epoch: return
                     job = self.portal.job(device, request['operationId'])
             if job['status'] != 'done': raise ValueError(job.get('result',{}).get('error','Speech was not recognized. Try again.'))
+            if not preview: self.await_continuation(device, epoch)
             with self.lock:
                 if self.owner != device or self.epoch != epoch: return
                 self.valid(device, epoch)
@@ -563,6 +684,8 @@ class MacVoice:
                 if preview: self.preview = False
                 else:
                     self.busy = False
+                    self.pending_audio = self.continuation = None
+                    self.answer_gate.set()
                     self.stage = 'listening' if self.clock()<self.active_until else 'idle'
                 if self.owner == device:
                     self.status = ('Checking your project history · say Hey Motchi to change it' if self.busy

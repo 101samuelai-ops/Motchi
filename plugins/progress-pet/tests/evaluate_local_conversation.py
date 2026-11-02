@@ -20,10 +20,10 @@ import wave
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'skills/completion-pet/scripts'))
 from qwen_speech import Recognizer
 from smart_turn import Endpoint
-from voice_companion import unfinished
+from voice_companion import unfinished, turn_text
 
 
-def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None):
+def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None, fixture_delay=0):
     """Paced public synthetic PCM through the real wake/turn controller.
 
     Does not open a microphone. An explicitly supplied connection permits one
@@ -31,6 +31,7 @@ def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None):
     """
     from mac_voice import MacVoice
     from voice_companion import VoiceCompanion
+    sample_position = [0]
     class Portal:
         def __init__(self):
             self.root = Path(scratch.name)
@@ -41,8 +42,11 @@ def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None):
                                         transcribe_request=self.voice_transcribe,
                                         discuss=self.discuss)
         def discuss(self, request):
-            self.questions.append({'sample': voice.process.stdout.position, 'text': request['text']})
+            self.questions.append({'sample': sample_position[0], 'text': request['text']})
             if connection is None:
+                deadline = time.monotonic()+fixture_delay
+                while time.monotonic() < deadline:
+                    request['_permitted'](); time.sleep(.05)
                 return {'scope': 'general', 'text': 'Synthetic routing received.'}
             job = connection.request('/v1/operations', {'action': 'discuss', 'text': request['text'],
                                                        'operationId': str(uuid.uuid4())})
@@ -64,6 +68,10 @@ def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None):
             time.sleep(.02)
             data = pcm[self.position:self.position+length]
             self.position += length
+            sample_position[0] = self.position
+            if len(data) != length:
+                # A finite fixture ended normally, not a failed microphone.
+                with voice.lock: voice.process = None
             return data
     class Child:
         stdout = Input()
@@ -90,6 +98,8 @@ def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None):
         return {'wakeReceived': bool(voice.last_wake), 'questionSubmitted': bool(final),
                 'heard': final.get('heard'), 'answer': final.get('text'), 'timings': voice.timings,
                 'questionCount': len(portal.questions), 'endpointProbability': voice.endpoint_score,
+                'answerCount': sum(not e.get('partial') and bool(e.get('heard')) for e in events),
+                'attemptedQuestions': [q['text'] for q in portal.questions],
                 'stage': voice.stage, 'issue': voice.issue, 'endpointIssue': voice.endpoint_issue,
                 'lastCheckedTranscript': voice.checked_transcript[2] if voice.checked_transcript else None,
                 'submittedDuringThinkingPause': bool(continuation_at and any(q['sample'] < continuation_at for q in portal.questions))}
@@ -126,6 +136,7 @@ def main():
     parser.add_argument('--report', type=Path)
     parser.add_argument('--joined', action='store_true', help='Also test public joined wake/question audio through the real controller')
     parser.add_argument('--pause-cases', action='store_true', help='Exercise unfinished phrases with a one-second pause before continuing')
+    parser.add_argument('--conversation-cases', action='store_true', help='Exercise article-style short, indirect, stacked and repaired turns')
     parser.add_argument('--live-answer', action='store_true', help='Use the running Mac read-only answer provider for one public synthetic project question')
     args = parser.parse_args()
     if not args.run:
@@ -149,6 +160,16 @@ def main():
                 ('chinese-complete', 'zh', True, '请告诉我这个项目还有哪些任务没有完成？'),
                 ('chinese-unfinished', 'zh', False, '我想了解这个项目的进度，尤其是'),
             ]
+            if args.conversation_cases:
+                cases += [
+                    ('short-question', 'en', True, 'Why that database?'),
+                    ('indirect-request', 'en', True, 'Walk me through your project.'),
+                    ('missing-question-object', 'en', False, 'How would you scale'),
+                    ('missing-instruction-object', 'en', False, 'Walk me through'),
+                    ('stacked-question', 'en', True, 'What did you build, and what would you change?'),
+                    ('short-chinese', 'zh', True, '项目进度怎么样？'),
+                    ('missing-chinese-object', 'zh', False, '请告诉我这个项目的'),
+                ]
             for name, language, complete, text in cases:
                 pcm = synth(text, language)
                 start = time.monotonic(); probability = endpoint.predict(pcm + bytes(19200))
@@ -156,7 +177,9 @@ def main():
                 start = time.monotonic(); transcript = recognizer.recognize(wav(pcm), 'auto')
                 item = {'name': name, 'expectedComplete': complete, 'probability': round(probability, 5),
                         'acousticAutoFinish': probability >= .65, 'guardHeld': unfinished(transcript),
-                        'autoFinishes': probability >= .65 and not unfinished(transcript), 'endpointMs': endpoint_ms,
+                        'autoFinishes': ((probability >= .65 or probability >= .4 and turn_text(transcript)['state']=='request')
+                                         and turn_text(transcript)['state'] not in ('unfinished','filler','acknowledgment')),
+                        'textState': turn_text(transcript)['state'], 'endpointMs': endpoint_ms,
                         'asrMs': round((time.monotonic() - start)*1000), 'expected': text, 'transcript': transcript,
                         'syntheticTokenErrorRate': round(errors(normalized(text, language), normalized(transcript, language)), 4)}
                 report['cases'].append(item)
@@ -169,6 +192,41 @@ def main():
                     result.update(language=language, expected=text)
                     report['joinedTurns'].append(result)
                     print(json.dumps(result, ensure_ascii=False), flush=True)
+            if args.conversation_cases:
+                report['conversationTurns'] = []
+                for language, first, last, delay in [
+                    ('en', 'Hey Mochi, how would you scale', 'this project to ten million users?', 0),
+                    ('en', 'Hey Mochi, what is finished?', 'and what still needs my attention?', 3),
+                    ('zh', '你好莫奇，哪些任务完成了？', '还有哪些任务需要我处理？', 3),
+                ]:
+                    beginning=synth(first,language)+bytes(38400)
+                    result=joined_turn(args.root,beginning+synth(last,language)+bytes(128000),recognizer,
+                                       continuation_at=len(beginning),fixture_delay=delay)
+                    result.update(language=language, kind='unfinished-clause' if not delay else 'resumed-after-complete-clause')
+                    result['continuationIncluded'] = (''.join(normalized(last,language)) in
+                                                     ''.join(normalized(result.get('heard') or '',language)))
+                    report['conversationTurns'].append(result)
+                    print(json.dumps(result,ensure_ascii=False),flush=True)
+                report['wakeAliases'] = []
+                for language, text in [('en','Hello Mochi, what remains in this project?'),
+                                       ('zh','你好默契，请告诉我这个项目的进度。')]:
+                    pcm=synth(text,language)
+                    # Compare a quieter fixture to the measured microphone
+                    # signal range; this is still synthesized speech, not a
+                    # human wake-accuracy result.
+                    from array import array
+                    quiet=array('h',(int(n*.15) for n in array('h',pcm))).tobytes()
+                    result=joined_turn(args.root,quiet+bytes(96000),recognizer)
+                    result.update(language=language,expected=text)
+                    report['wakeAliases'].append(result)
+                    print(json.dumps(result,ensure_ascii=False),flush=True)
+                report['wakeNegatives'] = []
+                for language, text in [('en','Hello, how is everyone doing today?'),
+                                       ('zh','我们今天下午讨论项目进度。')]:
+                    result=joined_turn(args.root,synth(text,language)+bytes(64000),recognizer)
+                    result.update(language=language,expectedWake=False)
+                    report['wakeNegatives'].append(result)
+                    print(json.dumps(result,ensure_ascii=False),flush=True)
             if args.pause_cases:
                 report['thinkingPauses'] = []
                 for language, first, last in [
@@ -198,6 +256,19 @@ def main():
         args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2) + '\n')
     print('Synthetic endpoint cases correct:', report['endpointCasesCorrect'], '/', len(report['cases']))
     print('This is not a human speech, noise, speaker or echo acceptance result.')
+    correct = report['endpointCasesCorrect'] == len(report['cases'])
+    for key in ('joinedTurns', 'thinkingPauses', 'conversationTurns', 'wakeAliases'):
+        for result in report.get(key, []):
+            correct = correct and result['wakeReceived'] and result['questionSubmitted'] and result['answerCount'] == 1
+            if key == 'thinkingPauses' or result.get('kind') == 'unfinished-clause':
+                correct = correct and not result['submittedDuringThinkingPause']
+            if result.get('kind') == 'resumed-after-complete-clause':
+                # With slower scheduling, speech can resume before finalizing
+                # the first clause. Holding it naturally is also correct.
+                correct = correct and result.get('continuationIncluded') and (
+                    result['timings'].get('resumedQuestion') is True or result['questionCount']==1)
+    correct = correct and all(not r['wakeReceived'] and not r['questionSubmitted'] for r in report.get('wakeNegatives', []))
+    if not correct: raise SystemExit('Some synthetic conversation checks failed; inspect the report before claiming success.')
 
 
 if __name__ == '__main__':

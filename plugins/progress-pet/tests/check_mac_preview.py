@@ -104,6 +104,13 @@ with tempfile.TemporaryDirectory() as directory:
         ended=trial.call({'action':'voiceInfo'})
         check(not ended['enabled'] and 'test ended' in ended['status'] and not policy.allowed(scoped.root,scoped.device_id),
               'Expired or locally stopped tests show paused and cannot silently renew their exception')
+        trial.call({'action':'listenNow'})
+        check(policy.allowed(scoped.root,scoped.device_id) and not policy.allowed(scoped.root,'calendar'),
+              'Explicit Talk starts another bounded local test without enabling the calendar microphone')
+        stamp=policy.read(scoped.root)
+        trial.call({'action':'voiceInfo'})
+        check(policy.read(scoped.root)==stamp and stamp['until']-stamp['issuedAt']<=300,
+              'Polling and active Talk do not silently extend the five-minute microphone lease')
     finally:trial.close()
     check(policy.read(scoped.root)=={'paused':True},'Closing a scoped test keeps the local microphone pause')
 print(f'{checks} live Mac preview HTTP, voice and read-only checks passed')

@@ -7,3 +7,8 @@ Reviewed for the product analysis preceding roadmap agreement on 2026-10-25.
 - [Apple Human Interface Guidelines: Notifications](https://developer.apple.com/design/human-interface-guidelines/notifications) — concise, timely, high-value information; avoid duplicate notifications and unnecessary foreground interruption; offer meaningful actions. Supports selective interruptions and a recoverable attention inbox.
 
 The detailed roadmap is a product recommendation and user-approved plan, not a claim that these sources validate Motchi's implementation or guarantee particular outcomes.
+
+
+## User-supplied conversation articles — 2026-11-02
+
+Read [The interruption problem](https://www.eecommerceai.com/post/the-interruption-problem-how-voice-ai-learns-when-to-speak-and-when-to-listen) and [How interview AI detects questions](https://copilotinterview.com/blog/how-ai-detects-interview-questions). Their shared design guidance is acoustic plus sentence/context signals, short turns, visible captions, indirect-request detection, and recovery when a speaker continues. Neither supplies a reproducible implementation or evidence of Motchi's performance; the second advertises its own product. Applied source changes and actual measurements are recorded in [local conversation](LOCAL_CONVERSATION.md). Speaker-separated audio and echo-aware barge-in remain unimplemented acceptance work.

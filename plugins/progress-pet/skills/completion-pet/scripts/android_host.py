@@ -550,7 +550,7 @@ class AndroidPortal:
         with self.speech_lock:
             permitted()
             if self.transcriber==self.transcribe and doubao_speech.selected(self.root)=='qwen':
-                return self.qwen.recognize(audio,language='auto',permitted=permitted)
+                return self.qwen.recognize(audio,language=language,permitted=permitted)
             if self.transcriber==self.transcribe and request.get('_addressed') is True and doubao_speech.selected(self.root)=='doubao':
                 device,generation=request['_device'],request['generation']
                 return doubao_speech.recognize(self.root,audio,
@@ -567,6 +567,8 @@ class AndroidPortal:
         payload={k:request.get(k) for k in ('text','projectId','selection')}
         if callable(request.get('_permitted')):
             payload['_permitted']=request['_permitted']
+        if request.get('_voice') is True:
+            payload['_voice'] = True
         result=self.bridge.discuss_result(payload)
         self.cache_at=0
         return result
