@@ -564,9 +564,9 @@
       "acceptance": "An explicit opt-in listens locally for Motchi, shows microphone state and provides pause/disable controls; false activations, project routing, privacy, battery and real calendar microphone behaviour are verified. Push-to-talk remains available.",
       "manualOverride": true,
       "evidence": {
-        "kind": "Mac implementation and regression checks; human acceptance pending",
-        "quote": "Source 0.18 adds nonblocking capture, Smart Turn plus unfinished-clause holds, bounded questions and superseded-reply cancellation. Regression/synthetic checks pass. After unlocking, the live Mac service loaded six projects and a scoped check verified changing microphone input and a ready keyword detector. Human bilingual accuracy, speaker filtering and echo-aware interruption remain pending. Calendar APK staged, not installed; see docs/LOCAL_CONVERSATION.md.",
-        "at": "2026-11-01"
+        "kind": "Mac pause and synthetic continuation checks; human acceptance pending",
+        "quote": "Persistent local pause blocks paired microphone reactivation. English/Chinese synthetic continuation checks pass. A physical-microphone speaker-loop question displayed its transcript and returned a real project answer without Finish: 1.292 seconds from last detected voice to processing, plus 30.404 seconds for the answer, excluding earlier unclear retries. Human voice accuracy and conversational latency remain unaccepted. Recording paused again; calendar unchanged. See docs/LOCAL_CONVERSATION.md.",
+        "at": "2026-11-02"
       }
     },
     {
@@ -669,5 +669,5 @@
       }
     }
   ],
-  "revision": 15
+  "revision": 16
 }

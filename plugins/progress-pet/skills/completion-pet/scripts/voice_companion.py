@@ -15,7 +15,7 @@ from pathlib import Path
 def addressed(text):
     # Require the name at the start, optionally preceded by a greeting. Do not
     # wake on someone mentioning Motchi in an unrelated conversation.
-    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|(?:你好|您好|嘿|嗨|喂)[，,\s]*)?(?:motchi|mochi|莫奇|莫琪|摩奇|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
+    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|(?:你好|您好|嘿|嗨|喂)[，,。.!！:：\s]*)?(?:motchi|mochi|莫奇|莫琪|摩奇|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
     return text[match.end():].lstrip(' ,.!?，。！？:：') if match else None
 
 
@@ -45,6 +45,22 @@ def unfinished(text):
     text = text.strip().rstrip(' ,.!?，。！？:：;；…').casefold()
     return bool(re.search(r"\b(?:and|or|but|because|especially|including|whether|such as|for example|if|although|unless|whereas)$", text)
                 or re.search(r'(?:尤其是|特别是|特別是|因为|因為|所以|但是|可是|如果|以及|然后|然後|比如|例如|还有|還有|包括)$', text))
+
+
+def explicit_question(text):
+    """Bounded text confirmation for a hesitant acoustic end prediction.
+
+    ASR punctuation alone is insufficient. This is a heuristic for explicit
+    questions/requests, not a language model or main-speaker identification.
+    """
+    text = text.strip().rstrip(' ,.!?，。！？:：;；…').casefold()
+    if unfinished(text) or re.search(r'\b(?:the|a|an|my|your|of|to|for|about|with|in|on|is|are|was|were)$|(?:的|关于|關於|是否|有没有|有沒有)$', text):
+        return False
+    english = len(re.findall(r'\b[a-z]+\b', text)) >= 5 and re.search(
+        r'\b(?:what|which|when|where|why|how|who)\b|\b(?:can|could|would|will) you\b|\b(?:tell|show|explain|summarize)\b', text)
+    chinese = len(re.findall(r'[\u3400-\u9fff]', text)) >= 8 and re.search(
+        r'什么|什麼|哪些|多少|怎么|怎麼|如何|为什么|為什麼|吗|嗎|请|請|告诉|告訴', text)
+    return bool(english or chinese)
 
 
 class VoiceCompanion:

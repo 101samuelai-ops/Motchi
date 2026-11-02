@@ -28,6 +28,8 @@ def run(text, **extra):
 check(addressed('Hey Motchi, how is Alpha?') == 'how is Alpha?', 'A greeted wake name extracts the question')
 check(addressed('Mochi!') == '', 'A standalone spoken name wakes Motchi')
 check(addressed('嗨莫奇，请问项目进度') == '请问项目进度', 'Chinese wake aliases are supported')
+for text in ('你好。莫奇。','你好！莫奇。','你好，莫奇。'):
+    check(addressed(text)=='','Punctuation inserted in a Chinese wake greeting does not become a slow project question')
 check(addressed('We discussed Motchi yesterday') is None, 'A name mentioned inside ambient speech does not wake')
 check(addressed('Hey Mochington') is None, 'A name prefix cannot activate listening')
 result = run('How is Alpha?', projectId='alpha', selection='alpha-chat')

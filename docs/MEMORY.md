@@ -2,6 +2,16 @@
 
 Updated: 2026-11-02. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
+## Current microphone decision — 2026-11-02
+
+The user now requests pausing all Motchi recording and an isolated Mac live test, superseding the earlier decision to leave the calendar microphone session intact. The persistent local pause prevents paired clients (including the calendar) from restarting Mac capture or speech processing. Only an exact temporary preview device may get a five-minute test exception; keep recording paused after testing. This does not disable unrelated applications' microphones or prove a disconnected Android microphone is off. No calendar rollout is requested.
+
+The longer English/Chinese synthetic pause tests initially failed to submit after completed speech. A third check at two seconds combines a hesitant acoustic score with an explicit complete-question text heuristic, retaining unfinished-clause holds. Both paced continuation fixtures now wait through the unfinished one-second pause and submit once. “Progressing” also retains project discussion routing when a name is misheard. A separate exact-project live provider question returned a concise supported answer in 12.39 seconds; a previous unscoped attempt timed out. These do not establish human accuracy or GPT-Live parity. See LOCAL_CONVERSATION.md; AND-10 remains open.
+
+Latest live feedback: the user reported sound detected but no words and slow recognition. Fixed a helper authorization wait, honest audio-start status/timeout, final transcript delivery before slow answers and punctuated Chinese wake-only greetings. Actual PCM and a Chinese greeting answer were observed, but a completed spoken progress question remains unaccepted. The Mac speakers were muted and physical microphone input was roughly 25%; desktop control could read but could not operate that gain slider. User adjustment was requested before another test. Do not report the speech issue solved or AND-10 complete from the synthetic checks.
+
+The user then confirmed raising input and unmuting output. A public spoken question reached the real microphone but misheard Motchi as Machi and exposed topic routing overriding a selected project. That follow-up bug is fixed. Bounded answer context retains complete counts and discloses omitted task details; full checklist reconciliation remains unchanged. The final speaker-loop question “What still needs attention in this project?” displayed its transcript while thinking and returned a real project answer in the main section. Last detected voice → processing was 1.292 seconds; answer generation took 30.404 seconds, with earlier unclear retries outside that metric. This is not accepted instant conversation or human accuracy. All Motchi recording is paused again, the test exception cleared, and speaker mute restored. AND-10 remains open; no calendar APK rollout occurred.
+
 ## Product intent
 
 The user wants Motchi to analyze each project's progress, discuss status, accept additional work through conversation, and continually recognize checklist commitments and completion evidence in available project conversations. The experience should reduce manual project management while making corrections easy.

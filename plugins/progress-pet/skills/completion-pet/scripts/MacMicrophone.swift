@@ -8,11 +8,24 @@ func fail(_ message: String) -> Never {
 }
 let permission = AVCaptureDevice.authorizationStatus(for: .audio)
 if permission == .notDetermined {
-    let ready = DispatchSemaphore(value: 0)
-    var granted = false
-    AVCaptureDevice.requestAccess(for: .audio) { granted = $0; ready.signal() }
-    ready.wait()
-    if !granted { fail("Allow Motchi microphone access in macOS System Settings → Privacy & Security → Microphone.") }
+    let lock = NSLock()
+    var result: Bool?
+    AVCaptureDevice.requestAccess(for: .audio) { allowed in
+        lock.lock(); result = allowed; lock.unlock()
+    }
+    // Authorization can need the main run loop. Blocking it on a semaphore
+    // left the helper alive without audio while macOS resolved consent.
+    let deadline = Date().addingTimeInterval(25)
+    while Date() < deadline {
+        lock.lock(); let resolved = result; lock.unlock()
+        if let allowed = resolved {
+            if !allowed { fail("Allow Motchi microphone access in macOS System Settings → Privacy & Security → Microphone.") }
+            break
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+    }
+    lock.lock(); let allowed = result; lock.unlock()
+    if allowed != true { fail("Mac microphone authorization is waiting. Unlock the Mac, then tap Talk again.") }
 } else if permission != .authorized {
     fail("Allow Motchi microphone access in macOS System Settings → Privacy & Security → Microphone.")
 }

@@ -46,7 +46,8 @@ class MacConnection:
             pin = hashlib.sha256(ssl.PEM_cert_to_DER_cert((self.root / 'server.pem').read_text())).hexdigest()
             ticket = self.store.issue(self.endpoint, pin).split('.', 1)[1]
             code = json.loads(base64.urlsafe_b64decode(ticket + '='*(-len(ticket) % 4)))['code']
-            self.token = self.request('/v1/pair', {'code': code, 'name': 'Local Mac voice preview'})['token']
+            paired = self.request('/v1/pair', {'code': code, 'name': 'Local Mac voice preview'})
+            self.token, self.device_id = paired['token'], paired['deviceId']
         except BaseException:
             self.store.close()
             raise
@@ -71,17 +72,22 @@ class MacConnection:
     def close(self):
         try:
             if self.token:
-                self.request('/v1/device', method='DELETE')
+                # Revoke locally even if Wi-Fi changed during the preview.
+                identity = self.store.authenticate(self.token)
+                if identity:
+                    self.store.revoke(identity)
         finally:
             self.token = None
             self.store.close()
 
 
 class LivePreview:
-    def __init__(self, connection, port=0):
+    def __init__(self, connection, port=0, voice_test=False):
         self.connection = connection
         self.lock = threading.RLock()
         self.enabled = False
+        self.voice_test = voice_test
+        self.test_started = False
         self.context = {'projectId': None, 'selection': None}
         self.language = 'auto'
         self.events = deque(maxlen=32)
@@ -139,6 +145,18 @@ class LivePreview:
         self.url = 'http://' + self.authority + '/'
 
     def control(self, **extra):
+        if self.voice_test and not self.test_started:
+            from microphone_policy import allow_test
+            allow_test(self.connection.root, self.connection.device_id)
+            self.test_started = True
+        if self.voice_test and self.test_started:
+            from microphone_policy import allowed
+            if not allowed(self.connection.root, self.connection.device_id):
+                self.connection.request('/v1/mac-voice', {'enabled': False})
+                self.enabled = False; self.events.clear()
+                self.state = dict(self.state, enabled=False, running=False, busy=False, rms=0, recentRms=0,
+                                  stage='idle', issue='', status='Voice test ended · Mac microphone paused')
+                return self.state
         payload = dict(self.context, enabled=True, conversationVersion=2, language=self.language, **extra)
         state = self.connection.request('/v1/mac-voice', payload)
         self.enabled = bool(state.get('enabled'))
@@ -193,14 +211,26 @@ class LivePreview:
             try:
                 if self.enabled: self.connection.request('/v1/mac-voice', {'enabled': False})
             finally:
-                try: self.connection.close()
+                try:
+                    if self.voice_test:
+                        from microphone_policy import finish_test
+                        finish_test(self.connection.root, self.connection.device_id)
+                    self.connection.close()
                 finally: self.server.server_close()
 
 
-def run(root, port=0, endpoint=None):
+def run(root, port=0, endpoint=None, voice_test=False):
     connection = MacConnection(root, endpoint)
-    try: preview = LivePreview(connection, port)
-    except BaseException: connection.close(); raise
+    from microphone_policy import read, finish_test
+    try:
+        if voice_test:
+            if not read(root)['paused']:
+                raise ValueError('Pause Motchi microphones before starting a scoped voice test.')
+        preview = LivePreview(connection, port, voice_test=voice_test)
+    except BaseException:
+        if voice_test:
+            finish_test(root, connection.device_id)
+        connection.close(); raise
     def stop(*_): raise KeyboardInterrupt
     previous = signal.signal(signal.SIGTERM, stop)
     print(preview.url, flush=True)
@@ -208,4 +238,7 @@ def run(root, port=0, endpoint=None):
     except KeyboardInterrupt: pass
     finally:
         try: preview.close()
-        finally: signal.signal(signal.SIGTERM, previous)
+        finally:
+            if voice_test:
+                finish_test(root, connection.device_id)
+            signal.signal(signal.SIGTERM, previous)

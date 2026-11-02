@@ -24,6 +24,13 @@ with tempfile.TemporaryDirectory() as temp:
        {'id':'b-chat','cwd':str(beta),'title':'Beta build','status':'idle','progress':checklist(beta)}]
  projects=D.grouped(rows)
  check(len(projects)==2 and projects[0]['progress']['total']==1,'Duplicate project chats share one checklist count')
+ many={'total':200,'completed':199,'tasks':[{'id':str(n),'title':'Old finished layout '+str(n),'done':True} for n in range(199)]+[
+     {'id':'pending','title':'Repair voice endpoint handling','done':False,'manualOverride':True,'acceptance':'English and Chinese pauses work.'}]}
+ compact=D.checklist_context(many,'What needs attention with voice endpoint handling?',budget=1000)
+ check(compact['total']==200 and compact['completed']==199 and compact['omittedTasks']>0,
+       'Bounded answer task details preserve exact full-checklist counts and disclose omissions')
+ check(compact['tasks'][0]['id']=='pending' and compact['tasks'][0]['manualOverride'] and len(many['tasks'])==200,
+       'Relevant unresolved work stays prominent without changing tasks or protected corrections')
  check(D.route('How is Alpha doing?',projects)['projects'][0]['name']=='Alpha','A named project selects directly')
  check(D.route('Can account backups export?',projects)['projects'][0]['name']=='Alpha','Distinctive checklist topics select the relevant project')
  check(D.route('How are all projects doing?',projects)['scope']=='overview','Macro questions request all projects')
@@ -31,6 +38,12 @@ with tempfile.TemporaryDirectory() as temp:
  check(D.route('Hello, how are you?',projects,projects[0]['id'])['scope']=='general','Ordinary conversation is not trapped in an old project')
  check(D.route('Hello Motchi',projects+[dict(projects[0],name='Motchi')],projects[0]['id'])['scope']=='general','Greeting the companion does not select the Motchi software project')
  check(D.route('What remains?',projects,projects[0]['id'])['scope']=='project','A project follow-up preserves context')
+ check(D.route('How is the misheard-name project progressing?',projects)['scope']=='overview','A progress question with an unrecognized name retains project context')
+ check(D.route('How is it progressing?',projects,projects[0]['id'])['scope']=='project','A spoken progressing follow-up stays on the selected project')
+ check(D.route('What progress remains in the calendar layout?',projects,projects[0]['id'])['projects'][0]['id']==projects[0]['id'],
+       'Overlapping task topics cannot steal an explicitly selected project progress question')
+ check(D.route('What progress remains in Beta?',projects,projects[0]['id'])['projects'][0]['id']==projects[1]['id'],
+       'An explicitly named other project can still change the discussion')
  check(D.route('How is Alpha?',projects+[dict(projects[1],name='Alpha',aliases=['Alpha'])])['scope']=='choice','Duplicate names require a choice')
  review=Checklists(history_path=root/'private.sqlite3')
  review.history.ingest(alpha,'a-chat',[{'id':'start','role':'user','text':'Implement account backup export.','at':1},

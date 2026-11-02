@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 import sys
+import tempfile
 import threading
 import urllib.error
 import urllib.request
@@ -87,4 +88,22 @@ try:
 finally:
     preview.server.shutdown();preview.close();thread.join(timeout=2)
 check(connection.closed,'Closing the preview revokes its temporary connection')
+
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'skills/completion-pet/scripts'))
+import microphone_policy as policy
+with tempfile.TemporaryDirectory() as directory:
+    scoped=Connection();scoped.root=Path(directory);scoped.device_id='preview-only'
+    policy.pause(scoped.root)
+    trial=LivePreview(scoped,voice_test=True)
+    try:
+        check(policy.read(scoped.root)=={'paused':True},'Opening a voice-test page does not start its microphone exception timer')
+        trial.call({'action':'wakeListening','enabled':True})
+        check(policy.allowed(scoped.root,scoped.device_id) and not policy.allowed(scoped.root,'calendar'),
+              'First Talk permits only the preview device while other microphones remain paused')
+        policy.pause(scoped.root)
+        ended=trial.call({'action':'voiceInfo'})
+        check(not ended['enabled'] and 'test ended' in ended['status'] and not policy.allowed(scoped.root,scoped.device_id),
+              'Expired or locally stopped tests show paused and cannot silently renew their exception')
+    finally:trial.close()
+    check(policy.read(scoped.root)=={'paused':True},'Closing a scoped test keeps the local microphone pause')
 print(f'{checks} live Mac preview HTTP, voice and read-only checks passed')

@@ -55,12 +55,14 @@ def main():
     p.add_argument('--port',type=int,default=0)
     p.add_argument('--apk',type=Path)
     p.add_argument('--live',action='store_true',help='Test the running Mac companion with real projects and its microphone')
+    p.add_argument('--voice-test',action='store_true',help='Allow only this preview microphone for five minutes while local pause remains enabled')
     p.add_argument('--root',type=Path,default=Path.home()/'Library/Application Support/Mochi/android')
     p.add_argument('--bridge-url',help='Private HTTPS address of the running Mac companion')
     args=p.parse_args()
+    if args.voice_test and not args.live:p.error('--voice-test requires --live')
     if args.live:
         from preview_live import run
-        run(args.root,args.port,args.bridge_url)
+        run(args.root,args.port,args.bridge_url,args.voice_test)
         return
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):

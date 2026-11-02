@@ -22,6 +22,7 @@ SUMMARY_STYLE = (
     "For work claims, add evidence entries containing the exact supplied projectId, chat, messageId and a verbatim quote from retrieved history. "
     "Use only references supporting this assessment; never fabricate or rewrite quotes. Details may explain the evidence, but must not expose private reasoning. "
     "History coverage is displayed separately. Mention missing/stale data in caveat when it could change the conclusion. "
+    "Selected task details may omit other tasks; keep full counts and never call a partial task list exhaustive. "
 )
 
 
@@ -95,6 +96,32 @@ def identity(cwd):
     return hashlib.sha256(str(Path(cwd).resolve()).encode()).hexdigest()[:24]
 
 
+def checklist_context(progress, question, budget=10000):
+    """Keep full counts; bound answer context to relevant/recent task details.
+
+    This never changes the actual checklist or its history-review coverage.
+    Omitted details remain visible in the project UI and explicitly disclosed.
+    """
+    compact = {k:v for k,v in progress.items() if k!='tasks'}
+    tasks = progress.get('tasks',[])
+    query = terms(question)
+    def rank(task):
+        overlap = len(query & terms(str(task.get('title') or '')+' '+str(task.get('acceptance') or '')))
+        evidence = task.get('evidence')
+        at = evidence.get('at',task.get('addedAt',0)) if isinstance(evidence,dict) else task.get('addedAt',0)
+        return (overlap, not task.get('done'), at if isinstance(at,(int,float)) else 0)
+    selected=[];used=0
+    for task in sorted(tasks,key=rank,reverse=True):
+        row={k:task[k] for k in ('id','title','done','acceptance','manualOverride') if k in task}
+        size=len(json.dumps(row,ensure_ascii=False))
+        if size>budget-used:continue
+        selected.append(row);used+=size
+        if len(selected)>=64:break
+    compact.update(tasks=selected,omittedTasks=len(tasks)-len(selected),
+                   taskDetailScope='Selected relevant, unfinished and recent task details; totals include the complete checklist.')
+    return compact
+
+
 def grouped(items):
     groups = {}
     for item in items:
@@ -135,6 +162,12 @@ def route(text, projects, selected=None):
         return {'scope':'overview','projects':matches if len(matches)>1 else projects,'reason':'You asked for a view across projects.'}
     if len(matches)>1:return {'scope':'choice','projects':matches,'reason':'The project name matches more than one project.'}
     if len(matches)==1:return {'scope':'project','projects':matches,'reason':'Matched the project named in your question.'}
+    # An open project's progress follow-up stays there. Topic overlap from an
+    # ASR misspelling must not replace an explicit UI selection with a choice.
+    if selected:
+        current=next((p for p in projects if p['id']==selected),None)
+        if current and re.search(r'\b(it|this|that|remain(?:s|ing)?|left|progress(?:ing)?|status|finished|attention|next|blocker|task|checklist)\b|进度|剩|任务|完成|这个|下一步',text,re.I):
+            return {'scope':'project','projects':[current],'reason':'Continued the selected project discussion.'}
     # Search task topics by distinctive terms; two meaningful terms and a clear
     # margin are required. Similar topics must produce a choice, not a guess.
     query = terms(text)
@@ -149,13 +182,7 @@ def route(text, projects, selected=None):
         if len(scores)==1 or scores[0][0]>scores[1][0]*1.4:
             return {'scope':'project','projects':[scores[0][1]],'reason':'Matched distinctive checklist topics in your question.'}
         return {'scope':'choice','projects':[p for score,p in scores if score>=scores[0][0]/1.4],'reason':'Several projects cover this topic.'}
-    if selected:
-        current=next((p for p in projects if p['id']==selected),None)
-        # Only project follow-ups retain a selected project. General questions
-        # can leave a project without being mislabelled as that project's work.
-        if current and re.search(r'\b(it|this|that|remain(?:s|ing)?|left|progress|status|finished|attention|next|blocker|task|checklist)\b|进度|剩|任务|完成|这个|下一步',text,re.I):
-            return {'scope':'project','projects':[current],'reason':'Continued the selected project discussion.'}
-    if re.search(r'\b(progress|status|attention|finished|remaining|projects|blockers?|checklist)\b|项目|进度|清单|完成|剩余',text,re.I):
+    if re.search(r'\b(progress(?:ing)?|status|attention|finished|remaining|projects|blockers?|checklist)\b|项目|进度|清单|完成|剩余',text,re.I):
         return {'scope':'overview','projects':projects,'reason':'Reviewed all projects because no single project was named.'}
     return {'scope':'general','projects':[],'reason':'General conversation; no project change requested.'}
 

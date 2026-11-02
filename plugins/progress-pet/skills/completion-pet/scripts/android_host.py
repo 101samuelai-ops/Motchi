@@ -29,6 +29,7 @@ import time
 import uuid
 import wave
 from voice_companion import VoiceCompanion, spoken_wav
+import microphone_policy
 from mac_voice import MacVoice
 import doubao_speech
 from qwen_speech import Recognizer
@@ -162,7 +163,7 @@ class AndroidPortal:
         self.speech_lock = threading.Lock()
         self.qwen = Recognizer(self.root)
         self.voice = VoiceCompanion(self.local_transcribe, lambda: self.read_snapshot().get('projects', []),
-                                    self.voice_ask, self.device_permitted, transcribe_request=self.voice_transcribe,
+                                    self.voice_ask, self.voice_permitted, transcribe_request=self.voice_transcribe,
                                     refine_addressed=self.refine_addressed,
                                     discuss=(self.discuss if hasattr(bridge,'discuss_result') else None))
         self.voice_audio = {}
@@ -376,6 +377,8 @@ class AndroidPortal:
         action=request.get('action')
         if action not in ('ask','discuss','comment','send','start','toggle','undo','resolveDuplicate','transcribe','listen'):
             raise ValueError('Action unavailable. Approval decisions stay on the Mac.')
+        if action in ('transcribe', 'listen') and not self.voice_permitted(device):
+            raise ValueError('Microphone processing is paused locally on the Mac.')
         if action not in ('transcribe','listen','discuss'): self.target(request, fresh=False)
         if action == 'listen':
             if not isinstance(audio, bytes) or not 44 < len(audio) <= 640044:
@@ -516,6 +519,9 @@ class AndroidPortal:
         with self.store.lock:
             row=self.store.db.execute('SELECT revoked FROM devices WHERE id=?', (device,)).fetchone()
         return bool(row and not row[0])
+
+    def voice_permitted(self, device):
+        return self.device_permitted(device) and microphone_policy.allowed(self.root, device)
 
     def local_transcribe(self, audio):
         with self.speech_lock:

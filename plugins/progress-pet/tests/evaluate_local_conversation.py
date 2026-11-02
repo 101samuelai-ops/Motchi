@@ -1,14 +1,15 @@
 """Explicit local synthetic speech smoke test, not a human accuracy benchmark.
 
-Uses installed macOS voices and private speech models. No microphone capture,
-cloud audio, project questions or answer-provider calls. Temporary audio is
-deleted on exit; only a requested JSON report of public fixtures is retained.
+Uses installed macOS voices and private speech models. No microphone capture
+or cloud audio. --live-answer explicitly permits a read-only project question
+to the configured answer provider. Temporary audio is deleted on exit.
 """
 import argparse
 import io
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -22,19 +23,36 @@ from smart_turn import Endpoint
 from voice_companion import unfinished
 
 
-def joined_turn(root, pcm, recognizer):
+def joined_turn(root, pcm, recognizer, continuation_at=None, connection=None):
     """Paced public synthetic PCM through the real wake/turn controller.
 
-    Does not open a microphone, pair a device or contact an answer provider.
+    Does not open a microphone. An explicitly supplied connection permits one
+    read-only live answer; the default uses a local routing fixture.
     """
     from mac_voice import MacVoice
     from voice_companion import VoiceCompanion
     class Portal:
         def __init__(self):
-            self.root = root
+            self.root = Path(scratch.name)
+            for name in ('wake.json', 'smart-turn.json', 'speech-provider.json'):
+                if (root/name).is_file(): shutil.copy2(root/name, self.root/name)
+            self.questions = []
             self.voice = VoiceCompanion(lambda _: '', lambda: [], lambda *a: {}, lambda _: True,
                                         transcribe_request=self.voice_transcribe,
-                                        discuss=lambda _: {'scope': 'general', 'text': 'Synthetic routing received.'})
+                                        discuss=self.discuss)
+        def discuss(self, request):
+            self.questions.append({'sample': voice.process.stdout.position, 'text': request['text']})
+            if connection is None:
+                return {'scope': 'general', 'text': 'Synthetic routing received.'}
+            job = connection.request('/v1/operations', {'action': 'discuss', 'text': request['text'],
+                                                       'operationId': str(uuid.uuid4())})
+            deadline = time.monotonic()+80
+            while job['status'] in ('queued', 'running') and time.monotonic() < deadline:
+                request['_permitted']()
+                time.sleep(.2)
+                job = connection.request('/v1/operations/'+job['id'])
+            if job['status'] != 'done': raise ValueError('Live read-only answer did not complete.')
+            return job['result']
         def device_permitted(self, device): return True
         def voice_transcribe(self, audio, request):
             return recognizer.recognize(audio, 'auto', request['_permitted'])
@@ -53,6 +71,7 @@ def joined_turn(root, pcm, recognizer):
         def poll(self): return None
         def terminate(self): pass
         def wait(self, timeout=None): pass
+    scratch = tempfile.TemporaryDirectory(prefix='motchi-paced-controller-')
     portal = Portal(); voice = MacVoice(portal)
     try:
         voice.wake_detector.start()
@@ -64,14 +83,19 @@ def joined_turn(root, pcm, recognizer):
         voice.owner = 'synthetic-device'; voice.epoch = str(uuid.uuid4())
         voice.lease = time.monotonic()+60; voice.process = Child()
         voice.capture(voice.owner, voice.epoch, voice.process)
-        deadline = time.monotonic()+8
-        while voice.busy and time.monotonic() < deadline: time.sleep(.05)
+        deadline = time.monotonic()+(85 if connection else 8)
+        while (voice.busy or voice.endpoint_pending or voice.preview) and time.monotonic() < deadline: time.sleep(.05)
         events = list(voice.events)
         final = next((event for event in reversed(events) if not event.get('partial') and event.get('heard')), {})
         return {'wakeReceived': bool(voice.last_wake), 'questionSubmitted': bool(final),
-                'heard': final.get('heard'), 'timings': voice.timings}
+                'heard': final.get('heard'), 'answer': final.get('text'), 'timings': voice.timings,
+                'questionCount': len(portal.questions), 'endpointProbability': voice.endpoint_score,
+                'stage': voice.stage, 'issue': voice.issue, 'endpointIssue': voice.endpoint_issue,
+                'lastCheckedTranscript': voice.checked_transcript[2] if voice.checked_transcript else None,
+                'submittedDuringThinkingPause': bool(continuation_at and any(q['sample'] < continuation_at for q in portal.questions))}
     finally:
         voice.close()
+        scratch.cleanup()
 
 
 def normalized(text, language):
@@ -101,6 +125,8 @@ def main():
     parser.add_argument('--root', type=Path, default=Path.home() / 'Library/Application Support/Mochi/android')
     parser.add_argument('--report', type=Path)
     parser.add_argument('--joined', action='store_true', help='Also test public joined wake/question audio through the real controller')
+    parser.add_argument('--pause-cases', action='store_true', help='Exercise unfinished phrases with a one-second pause before continuing')
+    parser.add_argument('--live-answer', action='store_true', help='Use the running Mac read-only answer provider for one public synthetic project question')
     args = parser.parse_args()
     if not args.run:
         parser.error('Use --run to opt in to local synthetic evaluation. No human speech is recorded.')
@@ -143,6 +169,27 @@ def main():
                     result.update(language=language, expected=text)
                     report['joinedTurns'].append(result)
                     print(json.dumps(result, ensure_ascii=False), flush=True)
+            if args.pause_cases:
+                report['thinkingPauses'] = []
+                for language, first, last in [
+                    ('en', 'Hey Mochi, could you tell me about the project, especially', 'what still needs attention?'),
+                    ('zh', '你好莫奇，我想了解这个项目的进度，尤其是', '还有哪些任务没有完成？')]:
+                    beginning = synth(first, language) + bytes(32000)
+                    result = joined_turn(args.root, beginning+synth(last, language)+bytes(96000), recognizer,
+                                         continuation_at=len(beginning))
+                    result.update(language=language)
+                    report['thinkingPauses'].append(result)
+                    print(json.dumps(result, ensure_ascii=False), flush=True)
+            if args.live_answer:
+                sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'android'))
+                from preview_live import MacConnection
+                connection = MacConnection(args.root)
+                try:
+                    report['liveAnswer'] = joined_turn(args.root, synth('Hey Mochi, how is the Motchi project progressing?', 'en')+bytes(96000),
+                                                      recognizer, connection=connection)
+                    print(json.dumps(report['liveAnswer'], ensure_ascii=False), flush=True)
+                finally:
+                    connection.close()
     finally:
         recognizer.close(); endpoint.close()
     report['endpointCasesCorrect'] = sum(c['expectedComplete'] == c['autoFinishes'] for c in report['cases'])

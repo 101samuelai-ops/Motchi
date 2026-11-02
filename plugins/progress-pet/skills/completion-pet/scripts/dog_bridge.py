@@ -999,10 +999,8 @@ class DogBridge:
         for project in targets[:20]:
             view=self.checklists.review_now(project['cwd'],project['items'],timeout=min(3,max(0,deadline-time.monotonic())))
             progress=checklist(project['cwd'])
-            history=discussion.context_for(self.checklists.history,project,question,budget=18000 if len(targets)==1 else 4500)
-            compact={k:v for k,v in progress.items() if k!='tasks'}
-            compact['tasks']=[{k:t[k] for k in ('id','title','done','acceptance','manualOverride') if k in t} for t in progress.get('tasks',[])][:300]
-            compact['omittedTasks']=max(0,len(progress.get('tasks',[]))-300)
+            history=discussion.context_for(self.checklists.history,project,question,budget=10000 if len(targets)==1 else 3500)
+            compact=discussion.checklist_context(progress,question,budget=10000 if len(targets)==1 else 3000)
             row={'id':project['id'],'name':project['name'],'checklist':compact,'review':{k:v for k,v in view.items() if k not in ('tasks','changes','matches')},
                  'activity':[{'chat':i['id'],'title':i['title'],'state':i['status'],'questions':i.get('questions',[]),'approvals':i.get('approvals',[])} for i in project['items']],
                  'history':history}

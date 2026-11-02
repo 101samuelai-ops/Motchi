@@ -66,7 +66,13 @@ with tempfile.TemporaryDirectory() as root:
     with patch('mac_voice.subprocess.Popen',return_value=child):
         voice=MacVoice(portal,binary,clock=lambda:now[0])
         initial=voice.control('calendar',{'enabled':True,'projectId':'alpha','selection':'alpha-chat','activate':True})
-        check(initial['inputSource']=='Mac microphone' and initial['running'],'The source is explicit and the microphone process starts')
+        check(initial['inputSource']=='Mac microphone' and not initial['running'] and initial['starting'],
+              'Starting a helper cannot claim live audio before the first frame')
+        child.stdout.queue.put(frame(0))
+        deadline=time.monotonic()+1
+        while voice.last_frame_at is None and time.monotonic()<deadline:time.sleep(.01)
+        check(voice.snapshot()['running'] and not voice.snapshot()['starting'],
+              'Actual PCM, including silence, confirms the input stream is running')
         check(voice.poll('calendar')['events'][0]['partial'],'Listen now immediately acknowledges on the calendar')
         check(not voice.poll('another')['enabled'],'Another device cannot read the microphone state or transcript')
         check(rejects(lambda:voice.control('another',{'enabled':True})),'A second device cannot hijack microphone capture')
@@ -82,6 +88,15 @@ with tempfile.TemporaryDirectory() as root:
               'A project switch cancels the old question session while retaining the microphone')
         voice.stop()
         check(child.dead and portal.cancelled and not voice.owner,'Pause terminates capture and cancels in-flight questions')
+        voice.close()
+    child=Child()
+    with patch('mac_voice.subprocess.Popen',return_value=child):
+        voice=MacVoice(portal,binary,clock=lambda:now[0]);voice.control('calendar',{'enabled':True})
+        now[0]+=31;voice.lease=now[0]+100
+        for _ in range(25):
+            if child.dead:break
+            time.sleep(.05)
+        check(child.dead and 'no audio' in voice.issue,'A waiting permission prompt cannot leave an empty recorder open indefinitely')
         voice.close()
     child=Child()
     with patch('mac_voice.subprocess.Popen',return_value=child):

@@ -12,7 +12,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'skills/completion-pet/scripts'))
 from mac_voice import MacVoice, Segmenter
 from smart_turn import configuration
-from voice_companion import VoiceCompanion
+from voice_companion import VoiceCompanion, explicit_question
 from android_host import AndroidPortal
 from dog_bridge import DogBridge
 
@@ -86,6 +86,30 @@ with tempfile.TemporaryDirectory() as directory:
         voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
         check(voice.busy and voice.stage=='processing' and submitted.call_count==1,
               'A completed turn submits one final question and closes new automatic input')
+    voice.close()
+
+    for text, expected in (
+            ('Could you tell me about the project? Especially, what still needs attention.', True),
+            ('你好，莫奇，我想了解这个项目的进度，尤其是还有哪些任务没有完成。', True),
+            ('Could you tell me about the project, especially.', False),
+            ('What are the remaining tasks for the.', False),
+            ('我想了解项目进度，尤其是。', False),
+            ('The weather is pleasant today.', False)):
+        check(explicit_question(text) == expected, 'Patient question confirmation: '+text)
+    for text, expected in (('What still needs attention in the project?', True),
+                           ('Tell me about the project, especially.', False),
+                           ('The weather is pleasant today.', False)):
+        portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,100)
+        voice.endpoint=Endpoint(.44); portal.voice_transcribe=lambda *a,t=text:t
+        with patch.object(voice.worker,'submit') as submitted:
+            voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+            check(submitted.called == expected, 'Hesitant acoustic score requires a complete explicit question after two seconds')
+        voice.close()
+    portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,60)
+    voice.endpoint=Endpoint(.44); portal.voice_transcribe=lambda *a:'What still needs attention in the project?'
+    with patch.object(voice.worker,'submit') as submitted:
+        voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+        check(not submitted.called,'A hesitant acoustic score cannot cut in before the two-second fallback')
     voice.close()
 
     portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,28)
@@ -162,6 +186,8 @@ with tempfile.TemporaryDirectory() as directory:
         voice.finalize(voice.segmenter.finish(),'What remains?')
     check(voice.checked_transcript is None and voice.endpoint_checked is None,
           'Finishing clears revision caches before an explicitly permitted follow-up')
+    check(voice.events[-1].get('processing') and voice.events[-1].get('transcript')=='What remains?',
+          'The checked question reaches the display before slow project analysis returns')
     voice.close()
 
     portal,voice=ready(); voice.active_until=0; voice.activated_at=90
