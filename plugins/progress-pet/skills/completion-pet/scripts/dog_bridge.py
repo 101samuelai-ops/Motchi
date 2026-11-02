@@ -20,6 +20,11 @@ import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
+# Installed modules live inside a signed app bundle. Interpreter caches must
+# never rewrite its sealed resources, including in the local speech children.
+sys.dont_write_bytecode = True
+os.environ['PYTHONDONTWRITEBYTECODE'] = '1'
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from codex_control import ManagedCodex
 from checklist_sync import Checklists, model_infer

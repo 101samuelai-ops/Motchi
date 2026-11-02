@@ -1,6 +1,6 @@
 # Persistent Motchi project memory
 
-Updated: 2026-11-01. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-11-02. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 ## Product intent
 
@@ -155,3 +155,11 @@ The user reports the conversation is still too slow and recognition starts are i
 Source now checks a high-score complete endpoint after 560 ms and rechecks tentative results at 1.2 seconds. It retains a 2.4-second local wake buffer, preloads existing speech workers when listening begins, reuses a caption only for the exact activation/voiced revision, clears follow-up caches, and separates unclear transcription from endpoint failure. The optional cloud recognizer does not receive pre-activation buffered audio. The main section shows Thinking during analysis. Real reply time still includes project analysis.
 
 Paced synthetic joined wake/question tests passed in both languages through the actual local keyword detector, Qwen and controller. Observed candidate silence was 580 ms English and 1220 ms Chinese, with exact caption reuse. Their answer is a local fixture, not a real provider timing/accuracy test. The existing four synthetic endpoint cases also pass. Updated Mac modules are installed with a backup and verified signing; desktop control reports the Mac locked, so restart and live verification await unlocking. The preview test microphone was paused and its temporary device revoked on shutdown. No calendar update was made; AND-10 stays open. See LOCAL_CONVERSATION.md.
+
+## Voice patch restart — 2026-11-02
+
+After the user unlocked and allowed the Documents prompt, the installed companion and HTTPS project service restarted. A process sample located the initial wait in the native completion-receipt file read; allowing access cleared it. The browser preview reconnected with six project groups and the installed voice module bytes match source.
+
+Verification found Python rewriting three bundled bytecode caches and invalidating the signed app's resource seal. The bridge now disables bytecode writes before importing local modules and passes the setting to its speech children. Installed/re-signed code was restarted; the signature remained valid after actual speech workers loaded. The 17 hub and 43 conversation checks pass.
+
+The calendar continued renewing its existing Mac microphone session, so a separate diagnostic client was correctly refused. Its temporary credentials were revoked. The user chose **finish checks without switching the microphone**; respect that choice and leave the calendar's session intact. The live browser stays connected with its microphone paused. This restart verifies service/worker startup and packaging, not a new human voice, primary-speaker or latency acceptance check. No APK was installed and AND-10 remains open.
