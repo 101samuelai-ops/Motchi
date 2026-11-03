@@ -2,6 +2,12 @@
 
 Updated: 2026-11-03. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
+## Reply responsiveness — 2026-11-03
+
+The user wants visible reassurance every few seconds while Motchi prepares an answer, short spoken reassurance during longer voice replies, and an answer/failure instead of stranded Thinking. Source now updates the main character section every four seconds, stops feedback on completion/cancellation/disconnection, polls discussion receipts every second, and prevents earlier requests from clearing newer feedback. Spoken notices run separately from answer generation and are discarded after completion, resumed speech, pause or a replaced turn; they never become project-history answers.
+
+Structured completed provider messages return without waiting for the CLI turn acknowledgement. Spoken inference is bounded to 12 seconds and typed discussion to 20; a provider delay falls back to clearly labelled recorded counts, retaining source coverage rather than inventing a summary. The authenticated discussion wrapper separately bounds context/lock waits to 20/32 seconds and rejects late publication. Multi-project history/task-detail budgets are shared across projects; full counts remain intact. Independent preview reads no longer block answer receipts behind a slow snapshot. The preview transport times out broken connections. Isolated timeout, stale-answer, bilingual UI cadence and routing checks pass; deployment and live measurements are recorded in LOCAL_CONVERSATION.md. The updated signed app and preview restarted; eight real project groups reconnected and a typed Chinese project question returned a validated assessment in the main section with waiting feedback cleared. It was visible by the 14.9-second follow-up observation, which is an upper bound rather than a precise latency measurement. These changes do not establish instant model answers or human voice acceptance. Keep AND-10 unchecked and the existing microphone pause intact; no calendar rollout.
+
 ## Current voice correction — 2026-11-03
 
 The user requests Chinese and bare Motchi/similar-sound activation without “Hey,” superseding greeting-only matching. The intermediate human test activated but reported slow captions and no prompt answer after finishing. Do not report AND-10 accepted. Broad matching can false-wake on background mentions; speaker identity/filtering is still absent.

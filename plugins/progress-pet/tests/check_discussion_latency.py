@@ -7,11 +7,15 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import time
+import threading
 from types import SimpleNamespace
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'skills/completion-pet/scripts'))
 from dog_bridge import DogBridge
+from android_host import AndroidPortal
+from mac_voice import MacVoice
 
 checks = 0
 def check(value, label):
@@ -48,6 +52,57 @@ print(json.dumps({'type':'turn.completed'}),flush=True)
     check(json.loads(answer)['text']=='Export needs its device check.',
           'The real answer subprocess receives retrieved history without a redundant notes RPC')
     check(not bridge.history,'An unvalidated provider response is not saved as displayed discussion')
+
+    # The structured final message is complete, but the CLI never sends its
+    # turn/shutdown acknowledgement. It must not add ten seconds to the reply.
+    code=worker.read_text()
+    worker.write_text(code.replace("print(json.dumps({'type':'turn.completed'}),flush=True)",
+                                   'import time; time.sleep(10)'))
+    began=time.monotonic()
+    answer=bridge.ask('alpha-chat','What remains?',discussion_context=context)
+    check(json.loads(answer)['text']=='Export needs its device check.' and time.monotonic()-began<2,
+          'A completed structured answer is returned without waiting for turn completion')
+    worker.write_text('#!'+sys.executable+'\nimport time; time.sleep(10)\n')
+    with patch('dog_bridge.VOICE_ANSWER_SECONDS',.1):
+        began=time.monotonic()
+        answer=bridge.ask('alpha-chat','项目进度？',discussion_context=dict(context,voiceTurn=True,fallback='Recorded counts only.'))
+    check(time.monotonic()-began<2 and 'Recorded counts only.' in answer,
+          'An unresponsive answer process is stopped and returns a labelled recorded fallback')
+
+    # Bound the earlier context lookup too, including code stuck before ask().
+    portal=object.__new__(AndroidPortal);release=threading.Event();checked=threading.Event();late=[]
+    portal.discussion_slots=threading.BoundedSemaphore(3)
+    def stuck(request):
+        release.wait(2)
+        try:request['_permitted']();late.append('saved')
+        except ValueError:checked.set()
+        return {'text':'obsolete'}
+    portal.bridge=SimpleNamespace(discuss_result=stuck)
+    with patch('android_host.VOICE_DISCUSSION_SECONDS',.1):
+        began=time.monotonic()
+        try:portal.discuss({'text':'项目进度？','_voice':True});timed_out=False
+        except ValueError as error:timed_out='超时' in str(error)
+    check(timed_out and time.monotonic()-began<1,'A stalled context lookup ends the request with a localized retry message')
+    release.set()
+    check(checked.wait(1) and not late,'A timed-out background lookup cannot save a late answer')
+
+    voice=MacVoice(SimpleNamespace(device_permitted=lambda _:True))
+    try:
+        voice.owner='test';voice.epoch='turn';voice.busy=True;voice.stage='processing'
+        notice=voice.processing_notice('test','turn',voice.question_revision,'项目进度？')
+        check(notice and '整理回答' in notice['text'] and notice['processingNotice'],
+              'A pending Chinese voice turn can get a brief spoken reassurance')
+        voice.audio_ready('test','turn',notice)
+        check(voice.events[-1]['audioOnly'],'Reassurance audio does not create a second answer or conversation entry')
+        voice.busy=False;voice.events.clear()
+        try:voice.audio_ready('test','turn',notice);obsolete=False
+        except ValueError:obsolete=True
+        check(obsolete and not voice.events,'A completed answer suppresses late reassurance audio')
+        voice.busy=True;voice.question_revision+=1
+        check(voice.processing_notice('test','turn',notice['noticeRevision'],'old') is None,
+              'Resuming speech invalidates an earlier reassurance')
+    finally:
+        voice.owner=None;voice.close()
 
     rows=[]
     for n in range(8):

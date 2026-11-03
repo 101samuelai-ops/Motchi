@@ -55,6 +55,19 @@ try:
     check(status({'action':'snapshot'},{'X-Motchi-Preview':'wrong'})==403,'A forged request cannot use the preview connection')
     check(status({'action':'snapshot'},{'Host':'other.example'})==403,'Host rebinding cannot reach live project data')
     check(call('snapshot')['data']['projects'][0]['id']=='alpha','Project cards come from the authenticated Mac service')
+    blocked=threading.Event();release=threading.Event();original=connection.request
+    def slow_snapshot(path,body=None):
+        if path=='/v1/projects':blocked.set();release.wait(2)
+        return original(path,body)
+    connection.request=slow_snapshot
+    slow=threading.Thread(target=lambda:preview.call({'action':'snapshot'}));slow.start()
+    try:
+        assert blocked.wait(1)
+        receipt=call('job',id='latency-test-123')
+        check(receipt['data']['status']=='done' and not release.is_set(),
+              'A slow project snapshot cannot block an already finished answer receipt')
+    finally:
+        release.set();slow.join(2);connection.request=original
     before=len(connection.calls);state=call('voiceInfo')['data']
     check(not state['enabled'] and len(connection.calls)==before,'Opening the preview does not start microphone capture')
     call('voiceContext',projectId='alpha',selection='alpha-chat')

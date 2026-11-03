@@ -377,7 +377,35 @@ class MacVoice:
         if transcript and self.conversation_version >= 2:
             self.events.append({'wake': True, 'partial': True, 'processing': True,
                                 'heard': transcript, 'transcript': transcript, 'turnId': self.turn_id})
+        if self.conversation_version >= 2 and hasattr(self.portal, 'synthesize_mac_reply'):
+            threading.Thread(target=self.processing_notices,
+                args=(self.owner,self.epoch,self.question_revision,transcript or ''),
+                daemon=True,name='motchi-reply-feedback').start()
         self.worker.submit(self.recognize, self.owner, self.epoch, data, False, True, transcript)
+
+    def processing_notice(self, device, epoch, revision, transcript):
+        """Short reassurance, never an answer or a new user conversation."""
+        with self.lock:
+            self.valid(device, epoch)
+            if not self.busy or self.last_result is not None or self.stage!='processing' or revision!=self.question_revision or not self.answer_gate.is_set():
+                return None
+            chinese=self.language=='zh' or bool(re.search(r'[\u3400-\u9fff]',transcript))
+            return {'wake':True,'processing':True,'processingNotice':True,
+                    'text':'我还在整理回答，请稍等。' if chinese else 'I’m still preparing your answer. One moment.',
+                    'operationId':str(uuid.uuid4()),'turnId':self.turn_id,'noticeRevision':revision}
+
+    def processing_notices(self, device, epoch, revision, transcript):
+        # Speech synthesis runs on this separate daemon, never on the answer
+        # worker. A completion, continuation, pause or new turn invalidates it.
+        interval=4
+        while True:
+            threading.Event().wait(interval)
+            try:
+                notice=self.processing_notice(device,epoch,revision,transcript)
+                if notice is None:return
+                self.portal.synthesize_mac_reply(device,epoch,notice)
+            except Exception:return
+            interval=8
 
     def await_continuation(self, device, epoch):
         """Do not publish/save an answer over a possible resumed sentence."""
@@ -802,6 +830,9 @@ class MacVoice:
     def audio_ready(self, device, epoch, result):
         with self.lock:
             self.valid(device, epoch)
+            if result.get('processingNotice') and (not self.busy or self.last_result is not None or self.stage!='processing' or
+                    result.get('noticeRevision')!=self.question_revision or result.get('turnId')!=self.turn_id):
+                raise ValueError('The waiting notice is no longer needed.')
             # A text answer is already visible. This event only starts playback.
             self.events.append({**result, 'wake': True, 'audioOnly': True, 'spokenReply': True})
             self.muted_until = self.clock()+4

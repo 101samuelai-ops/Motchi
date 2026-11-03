@@ -37,6 +37,8 @@ from configure_doubao import save_private
 
 SUPPORT = Path.home() / 'Library/Application Support/Mochi/android'
 MAX_AUDIO = 16000 * 2 * 60 + 4096
+VOICE_DISCUSSION_SECONDS = 20
+TYPED_DISCUSSION_SECONDS = 32
 
 
 def project_id(cwd):
@@ -153,6 +155,7 @@ class AndroidPortal:
             raise ValueError('Android connection is already running in Motchi.')
         self.store = PortalStore(self.root)
         self.executor = ThreadPoolExecutor(max_workers=3, thread_name_prefix='motchi-android')
+        self.discussion_slots = threading.BoundedSemaphore(3)
         self.lock = threading.RLock()
         self.refresh_lock = threading.Lock()
         self.refreshing = threading.Event()
@@ -565,11 +568,40 @@ class AndroidPortal:
     def discuss(self, request):
         if not hasattr(self.bridge,'discuss_result'):raise ValueError('Update the Mac companion for general and project discussion.')
         payload={k:request.get(k) for k in ('text','projectId','selection')}
-        if callable(request.get('_permitted')):
-            payload['_permitted']=request['_permitted']
+        original_guard=request.get('_permitted') if callable(request.get('_permitted')) else None
         if request.get('_voice') is True:
             payload['_voice'] = True
-        result=self.bridge.discuss_result(payload)
+        # Bound context lookup and project-lock waits as well as inference.
+        # A stuck lookup cannot occupy the request worker indefinitely or later
+        # publish/save an answer after this request has already timed out.
+        seconds=VOICE_DISCUSSION_SECONDS if payload.get('_voice') else TYPED_DISCUSSION_SECONDS
+        deadline=time.monotonic()+seconds
+        stopped=threading.Event();done=threading.Event();outcome={}
+        chinese=bool(re.search(r'[\u3400-\u9fff]',str(payload.get('text') or '')))
+        message=('回答准备超时，请稍后再试或缩小问题范围。没有发送任何工作指令。' if chinese else
+                 'The answer took too long. Try again or ask a narrower question. No work instructions were sent.')
+        def permitted():
+            if original_guard:original_guard()
+            if stopped.is_set() or time.monotonic()>=deadline:raise ValueError(message)
+        payload['_permitted']=permitted
+        if not self.discussion_slots.acquire(blocking=False):
+            raise ValueError('Earlier answers are still stopping. Please try again shortly.')
+        def run():
+            try:
+                permitted()
+                outcome['result']=self.bridge.discuss_result(payload)
+                permitted()
+            except Exception as error:outcome['error']=error
+            finally:
+                self.discussion_slots.release()
+                done.set()
+        threading.Thread(target=run,daemon=True,name='motchi-discussion').start()
+        try:
+            while not done.wait(min(.1,max(0,deadline-time.monotonic()))):permitted()
+            permitted()
+            if 'error' in outcome:raise outcome['error']
+            result=outcome['result']
+        finally:stopped.set()
         self.cache_at=0
         return result
 

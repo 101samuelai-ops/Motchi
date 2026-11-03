@@ -179,10 +179,20 @@ class LivePreview:
         return self.state
 
     def call(self, body):
+        # These authenticated requests do not mutate preview voice state. A
+        # slow snapshot/audio fetch must not block answer receipts or captions.
+        action = body.get('action')
+        if action == 'snapshot': return self.connection.request('/v1/projects')
+        if action in ('job', 'voiceAudio'):
+            identity = body.get('id', '')
+            if not isinstance(identity, str) or not re.fullmatch(r'[a-zA-Z0-9-]{8,100}', identity): raise ValueError('Invalid operation.')
+            return self.connection.request('/v1/'+('operations/' if action == 'job' else 'voice-audio/')+identity)
+        if action == 'submit':
+            request = body.get('request', {})
+            if not isinstance(request, dict) or request.get('action') not in ('ask', 'discuss'): raise ValueError('Questions only in this preview.')
+            return self.connection.request('/v1/operations', {k: request.get(k) for k in ('action', 'text', 'operationId', 'projectId', 'selection')})
         with self.lock:
-            action = body.get('action')
             if action == 'info': return {'paired': True}
-            if action == 'snapshot': return self.connection.request('/v1/projects')
             if action == 'voiceContext':
                 self.context = {k: body.get(k) or None for k in ('projectId', 'selection')}
                 return {'saved': True}
@@ -202,14 +212,6 @@ class LivePreview:
             if action == 'voiceLanguage' and body.get('language') in ('en', 'zh', 'auto'):
                 self.language = body['language']; return self.control() if self.enabled else dict(self.state, language=self.language)
             if action == 'quickAccessInfo': return {'enabled': False, 'visible': False, 'canPinShortcut': False}
-            if action in ('job', 'voiceAudio'):
-                identity = body.get('id', '')
-                if not isinstance(identity, str) or not re.fullmatch(r'[a-zA-Z0-9-]{8,100}', identity): raise ValueError('Invalid operation.')
-                return self.connection.request('/v1/'+('operations/' if action == 'job' else 'voice-audio/')+identity)
-            if action == 'submit':
-                request = body.get('request', {})
-                if not isinstance(request, dict) or request.get('action') not in ('ask', 'discuss'): raise ValueError('Questions only in this preview.')
-                return self.connection.request('/v1/operations', {k: request.get(k) for k in ('action', 'text', 'operationId', 'projectId', 'selection')})
             raise ValueError('Use the installed app for this action.')
 
     def close(self):
