@@ -7,7 +7,7 @@ import tarfile
 import tempfile
 from configure_doubao import save_private
 from qwen_speech import config as qwen_config
-from wake_detector import configuration
+from wake_detector import configuration,VAD_REVISION,VAD_SHA256
 
 PACKAGE='sherpa-onnx==2.0.1'
 MODEL='sherpa-onnx-kws-zipformer-zh-en-3M-2025-12-20'
@@ -23,6 +23,14 @@ HH AY1 M OW1 CH IY0 @HI_MOTCHI
 n ǐ h ǎo m ò q í @你好莫奇
 n ǐ h ǎo m ò q ì @你好莫奇
 h ēi m ò q í @嘿莫奇
+M OW1 CH IY0 @MOTCHI
+M AA1 CH IY0 @MOTCHI
+M OW1 JH IY0 @MOTCHI
+M OW1 K IY0 @MOTCHI
+m ò q í @莫奇
+m ò q ì @默契
+m ó q í @摩奇
+m ǒ q í @莫奇
 '''
 
 
@@ -31,6 +39,7 @@ def main():
     parser.add_argument('--root',type=Path,default=Path.home()/'Library/Application Support/Mochi/android')
     parser.add_argument('--install',action='store_true')
     parser.add_argument('--update-keywords',action='store_true',help='Update wake phrases on an already installed local model, without downloads.')
+    parser.add_argument('--install-vad',action='store_true',help='Install the pinned local speech/noise detector alongside wake detection.')
     parser.add_argument('--archive',type=Path,help='Use an already downloaded official archive, with the same checksum verification.')
     args=parser.parse_args()
     if args.install:
@@ -50,6 +59,18 @@ def main():
             (target/'motchi-keywords.txt').write_text(KEYWORDS)
             save_private(args.root/'wake.json',{'python':str(python),'model':str(target),'source':URL,'sha256':SHA256,'runtime':PACKAGE})
     _, target = configuration(args.root)
+    if args.install_vad:
+        import json
+        url='https://raw.githubusercontent.com/snakers4/silero-vad/'+VAD_REVISION+'/src/silero_vad/data/silero_vad.onnx'
+        vad=args.root/'models/silero-vad.onnx'
+        with tempfile.TemporaryDirectory(prefix='motchi-vad-setup-',dir=args.root) as directory:
+            download=Path(directory)/'vad.onnx'
+            subprocess.run(['curl','--fail','--location','--retry','2','--max-time','90',url,'--output',str(download)],check=True)
+            if hashlib.sha256(download.read_bytes()).hexdigest()!=VAD_SHA256:raise ValueError('Speech detector model checksum mismatch.')
+            download.replace(vad)
+        settings=json.loads((args.root/'wake.json').read_text())
+        settings.update(vadModel=str(vad),vadSha256=VAD_SHA256,vadRevision=VAD_REVISION,vadSource=url)
+        save_private(args.root/'wake.json',settings)
     if args.update_keywords:
         previous=target/'motchi-keywords.txt'
         backup=target/('motchi-keywords-'+hashlib.sha256(previous.read_bytes()).hexdigest()[:12]+'.backup')

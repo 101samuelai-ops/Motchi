@@ -25,11 +25,13 @@ def config(root):
 class Recognizer:
     def __init__(self,root):
         self.root=Path(root);self.lock=threading.Lock();self.process=None;self.responses=None
+        self.ready=False
         atexit.register(self.close)
 
     def start(self):
         if self.process and self.process.poll() is None:return
         python,model=config(self.root)
+        self.ready=False
         env={**os.environ,'HF_HUB_OFFLINE':'1','TRANSFORMERS_OFFLINE':'1','TOKENIZERS_PARALLELISM':'false'}
         self.process=subprocess.Popen([str(python),'-u',str(Path(__file__).with_name('qwen_worker.py')),str(model)],
             stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,text=True,env=env)
@@ -60,6 +62,7 @@ class Recognizer:
                         if result.get('error'):raise ValueError(result['error'])
                         text=result.get('text','')
                         if not isinstance(text,str) or not text.strip():raise ValueError('No clear speech recognized. Speak near your Mac and try again.')
+                        self.ready=True
                         return text.strip()[:3000]
                     raise ValueError('Local speech recognition timed out. Try a shorter question.')
                 except BaseException:
@@ -68,9 +71,23 @@ class Recognizer:
     def warm(self):
         with self.lock:
             self.start()
+            if self.ready:return
+            try:
+                # Compile the first inference before a human question. This
+                # uses digital silence in RAM, never microphone audio or files.
+                self.process.stdin.write(json.dumps({'warm':True})+'\n');self.process.stdin.flush()
+                result=self.responses.get(timeout=90)
+                if result.get('ready') is not True:raise ValueError('Local speech engine warmup failed.')
+                self.ready=True
+            except queue.Empty:
+                self.close()
+                raise ValueError('Local speech engine warmup timed out.') from None
+            except BaseException:
+                self.close();raise
 
     def close(self):
         process,self.process=self.process,None
+        self.ready=False
         if process:
             try:process.terminate();process.wait(timeout=2)
             except (OSError,subprocess.TimeoutExpired):

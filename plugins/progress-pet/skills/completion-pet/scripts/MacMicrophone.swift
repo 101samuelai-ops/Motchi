@@ -6,6 +6,13 @@ import Foundation
 func fail(_ message: String) -> Never {
     FileHandle.standardError.write(Data(message.utf8)); exit(1)
 }
+let startup = Date()
+func phase(_ value: String) {
+    let value: [String: Any] = ["phase": value, "elapsedMs": Int(Date().timeIntervalSince(startup) * 1000)]
+    if let data = try? JSONSerialization.data(withJSONObject: value) {
+        FileHandle.standardError.write(data); FileHandle.standardError.write(Data([10]))
+    }
+}
 let permission = AVCaptureDevice.authorizationStatus(for: .audio)
 if permission == .notDetermined {
     let lock = NSLock()
@@ -38,7 +45,11 @@ let source = input.outputFormat(forBus: 0)
 guard source.sampleRate > 0, source.channelCount > 0,
       let output = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: 16000, channels: 1, interleaved: true),
       let converter = AVAudioConverter(from: source, to: output) else { fail("The Mac has no available microphone input.") }
+converter.primeMethod = .none
+var firstInput = true
+var firstPCM = true
 input.installTap(onBus: 0, bufferSize: 1024, format: source) { buffer, _ in
+    if firstInput { firstInput = false; phase("inputCallback") }
     let capacity = AVAudioFrameCount(Double(buffer.frameLength) * 16000 / source.sampleRate + 32)
     guard let converted = AVAudioPCMBuffer(pcmFormat: output, frameCapacity: capacity) else { return }
     var supplied = false
@@ -48,8 +59,11 @@ input.installTap(onBus: 0, bufferSize: 1024, format: source) { buffer, _ in
         supplied = true; status.pointee = .haveData; return buffer
     }
     if error == nil, let samples = converted.int16ChannelData?[0], converted.frameLength > 0 {
+        if firstPCM { firstPCM = false; phase("pcmReady") }
         FileHandle.standardOutput.write(Data(bytes: samples, count: Int(converted.frameLength) * 2))
     }
 }
+engine.prepare()
 do { try engine.start() } catch { fail("Mac microphone could not start: \(error.localizedDescription)") }
+phase("engineStarted")
 RunLoop.main.run()

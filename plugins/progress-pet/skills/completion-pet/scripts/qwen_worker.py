@@ -14,6 +14,12 @@ def main():
         if len(line)>8192:break
         try:
             request=json.loads(line)
+            if request.get('warm') is True:
+                import numpy as np
+                with contextlib.redirect_stdout(sys.stderr):
+                    model.generate(np.zeros(16000,dtype=np.float32),language='Chinese',max_tokens=1)
+                print(json.dumps({'ready':True}),flush=True)
+                continue
             audio=Path(request['audio'])
             language={'en':'English','zh':'Chinese','auto':None}.get(request.get('language','auto'))
             with contextlib.redirect_stdout(sys.stderr):

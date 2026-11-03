@@ -39,6 +39,7 @@ class MacConnection:
         self.opener = urllib.request.build_opener(urllib.request.HTTPSHandler(context=self.ssl), NoRedirect())
         self.token = None
         self.store = PortalStore(self.root)
+        issued = None
         try:
             with self.store.lock:
                 if self.store.db.execute('SELECT COUNT(*) FROM pairing WHERE expires>?', (time.time(),)).fetchone()[0]:
@@ -46,9 +47,13 @@ class MacConnection:
             pin = hashlib.sha256(ssl.PEM_cert_to_DER_cert((self.root / 'server.pem').read_text())).hexdigest()
             ticket = self.store.issue(self.endpoint, pin).split('.', 1)[1]
             code = json.loads(base64.urlsafe_b64decode(ticket + '='*(-len(ticket) % 4)))['code']
+            issued = hashlib.sha256(code.encode()).hexdigest()
             paired = self.request('/v1/pair', {'code': code, 'name': 'Local Mac voice preview'})
             self.token, self.device_id = paired['token'], paired['deviceId']
         except BaseException:
+            if issued:
+                with self.store.lock, self.store.db:
+                    self.store.db.execute('DELETE FROM pairing WHERE code=?',(issued,))
             self.store.close()
             raise
 
@@ -119,7 +124,7 @@ class LivePreview:
                 if name == 'index.html':
                     content = content.replace(b'<head>', ('<head><meta name="motchi-preview" content="'+preview.csrf+'">').encode())
                     content = content.replace(b"connect-src 'none'", b"connect-src 'self'; media-src 'self' blob:")
-                    content = content.replace(b'<body>', b'<body class="preview-read-only"><div class="preview-banner">Motchi 0.18 live Mac test &middot; Real projects &middot; Work submissions disabled &nbsp; <span>Tap Talk, or enable wake listening and say Hey Motchi.</span></div>')
+                    content = content.replace(b'<body>', '<body class="preview-read-only"><div class="preview-banner">Motchi 0.18 live Mac test &middot; Real projects &middot; Work submissions disabled &nbsp; <span>Enable listening, then say Motchi / 莫奇 · English + 中文.</span></div>'.encode())
                 if name == 'app.css':
                     content += b'\n.preview-banner{padding:12px 24px;background:#203b39;color:white;font:14px system-ui;display:flex;gap:12px;flex-wrap:wrap}.preview-banner span{opacity:.8}.preview-read-only #comment,.preview-read-only #send,.preview-read-only #changes button{display:none}.preview-read-only #checklist input{pointer-events:none}\n'
                 mime = 'text/html' if name.endswith('.html') else 'text/css' if name.endswith('.css') else 'image/svg+xml' if name.endswith('.svg') else 'application/javascript'
@@ -159,7 +164,8 @@ class LivePreview:
                 self.state = dict(self.state, enabled=False, running=False, busy=False, rms=0, recentRms=0,
                                   stage='idle', issue='', status='Voice test ended · tap Talk to start a new test')
                 return self.state
-        payload = dict(self.context, enabled=True, conversationVersion=2, language=self.language, **extra)
+        payload = dict(self.context, enabled=True, heartbeat=not restart_test,
+                       conversationVersion=2, language=self.language, **extra)
         state = self.connection.request('/v1/mac-voice', payload)
         self.enabled = bool(state.get('enabled'))
         next_turn = state.get('turnId', '')

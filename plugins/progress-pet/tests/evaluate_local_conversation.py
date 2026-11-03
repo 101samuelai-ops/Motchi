@@ -137,6 +137,7 @@ def main():
     parser.add_argument('--joined', action='store_true', help='Also test public joined wake/question audio through the real controller')
     parser.add_argument('--pause-cases', action='store_true', help='Exercise unfinished phrases with a one-second pause before continuing')
     parser.add_argument('--conversation-cases', action='store_true', help='Exercise article-style short, indirect, stacked and repaired turns')
+    parser.add_argument('--name-only', action='store_true', help='Test name-only English/Chinese and similar pronunciations at quiet microphone levels')
     parser.add_argument('--live-answer', action='store_true', help='Use the running Mac read-only answer provider for one public synthetic project question')
     args = parser.parse_args()
     if not args.run:
@@ -192,6 +193,37 @@ def main():
                     result.update(language=language, expected=text)
                     report['joinedTurns'].append(result)
                     print(json.dumps(result, ensure_ascii=False), flush=True)
+            if args.name_only:
+                report['nameOnlyTurns'] = []
+                for language, text, level in [('en','Mochi, what remains in this project?',1),
+                                               ('zh','莫奇，项目进度怎么样？',1),
+                                               ('en','Moji, what is finished?',.02),
+                                               ('zh','默契，请告诉我项目进度。',.02)]:
+                    from array import array
+                    pcm=array('h',(int(n*level) for n in array('h',synth(text,language)))).tobytes()
+                    result=joined_turn(args.root,pcm+bytes(128000),recognizer)
+                    result.update(language=language,expected=text,fixtureLevel=level)
+                    report['nameOnlyTurns'].append(result)
+                    print(json.dumps(result,ensure_ascii=False),flush=True)
+                report['wakeNegatives'] = []
+                for language,text in [('en','Hello, how is everyone doing today?'),
+                                      ('en','The calendar project is finished.'),
+                                      ('zh','我们今天下午讨论项目进度。'),
+                                      ('zh','这个项目还有哪些任务没有完成？')]:
+                    result=joined_turn(args.root,synth(text,language)+bytes(64000),recognizer)
+                    result.update(language=language,expectedWake=False)
+                    report['wakeNegatives'].append(result)
+                    print(json.dumps(result,ensure_ascii=False),flush=True)
+                report['noiseTails'] = []
+                import math,random
+                rng=random.Random(194)
+                noise=array('h',(int(130*math.sin(n*2*math.pi*200/16000)+rng.uniform(-170,170))
+                                 for n in range(128000))).tobytes()
+                for language,text in [('en','Mochi, what is finished?'),('zh','莫奇，项目进度怎么样？')]:
+                    result=joined_turn(args.root,synth(text,language)+noise,recognizer)
+                    result.update(language=language,kind='speech-then-room-noise')
+                    report['noiseTails'].append(result)
+                    print(json.dumps(result,ensure_ascii=False),flush=True)
             if args.conversation_cases:
                 report['conversationTurns'] = []
                 for language, first, last, delay in [
@@ -257,7 +289,7 @@ def main():
     print('Synthetic endpoint cases correct:', report['endpointCasesCorrect'], '/', len(report['cases']))
     print('This is not a human speech, noise, speaker or echo acceptance result.')
     correct = report['endpointCasesCorrect'] == len(report['cases'])
-    for key in ('joinedTurns', 'thinkingPauses', 'conversationTurns', 'wakeAliases'):
+    for key in ('joinedTurns', 'thinkingPauses', 'conversationTurns', 'wakeAliases', 'nameOnlyTurns', 'noiseTails'):
         for result in report.get(key, []):
             correct = correct and result['wakeReceived'] and result['questionSubmitted'] and result['answerCount'] == 1
             if key == 'thinkingPauses' or result.get('kind') == 'unfinished-clause':

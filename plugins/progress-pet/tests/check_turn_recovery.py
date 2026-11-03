@@ -31,6 +31,8 @@ cases = {
         "What did you build, and what would you change?", "How does it work?",
         "I need an update on this project.", "完成了吗？", "项目进度？",
         "介绍一下这个项目。", "哪些完成了，还有哪些需要我处理？",
+        "这个项目还有哪个任务没有完成？", "哪一个任务没完成？", "哪个项目还需要处理？",
+        "這個項目哪項還沒完成？", "哪里需要修改？",
     ],
     'filler': ["Um...", "嗯。", ""],
     'acknowledgment': ["Yeah.", "Okay!", "好的。", "谢谢。"],
@@ -176,6 +178,35 @@ with tempfile.TemporaryDirectory() as directory:
             voice.assess_endpoint('preview',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
         check(voice.busy == choice,
               'A short unrecognized name needs a pending project-choice context before auto-submission: '+str(choice))
+        voice.close()
+
+    # Reproduce the reported Chinese wording using a generic fixture and a hesitant .48 endpoint. Manual
+    # Finish must not be needed, nor may an unrelated standalone statement
+    # remain listening forever after explicit activation.
+    for text,score,frames,expected in [
+        ('这个项目还有哪个任务没有完成？',.48,28,False),
+        ('这个项目还有哪个任务没有完成？',.48,60,True),
+        ('这个项目还有哪个任务没有完成？',.1,100,True),
+        ('I feel tired today.',.2,100,False),
+        ('I feel tired today.',.2,150,True),
+        ('我今天感觉有点累。',.2,150,True),
+        ('Tell me about the project, especially.',.99,150,False),
+        ('我想了解这个项目，尤其是。',.99,150,False),
+        ('Alpha',.2,150,False),
+    ]:
+        portal,voice,now,original=ready(text);voice.activate()
+        for _ in range(90):voice.segmenter.push(frame(300))
+        for _ in range(frames):voice.segmenter.push(frame(0))
+        class Hesitant:
+            def predict(self,pcm,permitted):return score
+            def close(self):pass
+        voice.endpoint=Hesitant()
+        with patch.object(voice.worker,'submit') as submitted:
+            voice.assess_endpoint('preview',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
+        check(voice.busy==expected and submitted.call_count==int(expected),
+              'Automatic completion after real silence: '+text+' / '+str(frames*20)+' ms')
+        if expected:
+            check(voice.timings['finishMode']=='automatic','Automatic completion is observable separately from manual Finish')
         voice.close()
 
     # The permission callback must not hold the companion session lock. A fresh

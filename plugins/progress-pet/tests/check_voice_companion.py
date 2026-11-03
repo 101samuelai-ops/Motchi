@@ -30,10 +30,17 @@ check(addressed('Mochi!') == '', 'A standalone spoken name wakes Motchi')
 check(addressed('嗨莫奇，请问项目进度') == '请问项目进度', 'Chinese wake aliases are supported')
 for text in ('你好。莫奇。','你好！莫奇。','你好，莫奇。'):
     check(addressed(text)=='','Punctuation inserted in a Chinese wake greeting does not become a slow project question')
-check(addressed('We discussed Motchi yesterday') is None, 'A name mentioned inside ambient speech does not wake')
+check(addressed('We discussed Motchi yesterday') == 'We discussed Motchi yesterday', 'Name-only mode activates on an embedded name without deleting a project reference')
+check(addressed('How is Motchi doing?') == 'How is Motchi doing?' and addressed('看看莫奇项目的进度') == '看看莫奇项目的进度',
+      'Project-subject references survive name-only activation in both languages')
+check(addressed('Mojie, what is finished?') == 'what is finished?', 'The observed local transcription of the similar name is removed as a greeting')
+check(addressed('项目进度怎么样，默奇？') == '项目进度怎么样', 'A Chinese name at the end retains the question before it')
+check(addressed('Moki, how is Alpha?') == 'how is Alpha?', 'A bounded similar pronunciation is recognized')
 check(addressed('Hey Mochington') is None, 'A name prefix cannot activate listening')
 result = run('How is Alpha?', projectId='alpha', selection='alpha-chat')
 check(result == {'wake': False} and not calls, 'Unaddressed speech is discarded even with a project selected')
+chinese = run('莫奇')
+check(chinese['wake'] and '我在' in chinese['text'] and not calls, 'A Chinese name alone receives a local Chinese greeting')
 result = run('Hey Motchi')
 check(result['wake'] and not calls and 'heard' in result, 'A wake alone responds locally without an answer-provider request')
 token = result['session']

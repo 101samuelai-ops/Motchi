@@ -13,10 +13,23 @@ from pathlib import Path
 
 
 def addressed(text):
-    # Require the name at the start, optionally preceded by a greeting. Do not
-    # wake on someone mentioning Motchi in an unrelated conversation.
-    match = re.match(r"^\s*(?:(?:hey|hi|hello|okay|ok)[\s,.!，。！:：-]+|(?:你好|您好|嘿|嗨|喂)[，,。.!！:：\s]*)?(?:motchi|mochi|moji|莫奇|莫琪|摩奇|默契|麻糬|麻薯)(?=$|[\s,.!?，。！？:：'’的帮幫请請你])", text, re.I)
-    return text[match.end():].lstrip(' ,.!?，。！？:：') if match else None
+    # User-selected name-only activation: greeting is optional and the name
+    # can occur within a sentence. Keep the question on either side of it.
+    # These are bounded phonetic aliases, not arbitrary fuzzy word matching.
+    english = r"(?<![a-z])(?:motchi|mochi|mochie|moji|mojie|moki|mo[ -]qi)(?![a-z])"
+    chinese = r"(?:莫奇|莫琪|莫棋|默契|默奇|墨奇|摩奇|麻糬|麻薯)"
+    match = re.search(english+'|'+chinese, text, re.I)
+    if not match:return None
+    prefix, suffix = text[:match.start()], text[match.end():]
+    before = text[:match.start()].strip(' ,.!?，。！？:：')
+    greeting = re.fullmatch(r'(?:hey|hi|hello|okay|ok|你好|您好|嘿|嗨|喂)',before,re.I)
+    if before and not greeting and not prefix.rstrip().endswith((',', '，', '?', '？')) and not suffix.lstrip().startswith((',', '，')):
+        # A name used as the project subject must survive routing: “How is
+        # Motchi doing?” activates, but still asks about that exact project.
+        return text.strip()
+    if greeting:before=''
+    after = text[match.end():].lstrip(' ,.!?，。！？:：')
+    return (before+(' ' if before and after else '')+after).strip()
 
 
 def project_matches(text, projects):
@@ -76,7 +89,8 @@ def turn_text(text):
         r'\b(?:what|which|when|where|why|how|who)\b|\b(?:can|could|would|will) you\b|'
         r'\b(?:tell|show|explain|summarize|summarise|describe|compare)\b|\b(?:walk|talk) me through\b|\bi (?:need|want) (?:an? |the )?update\b', text)
     chinese = len(re.findall(r'[\u3400-\u9fff]', text)) >= 3 and re.search(
-        r'什么|什麼|哪些|多少|怎么|怎麼|如何|为什么|為什麼|吗|嗎|请|請|告诉|告訴|介绍|介紹|解释|解釋|总结|總結|进度|進度', text)
+        r'什么|什麼|哪些|哪个|哪個|哪一|哪项|哪項|哪里|哪裡|哪儿|哪兒|多少|怎么|怎麼|如何|为什么|為什麼|'
+        r'何时|何時|能否|是否|吗|嗎|请|請|告诉|告訴|介绍|介紹|解释|解釋|总结|總結|进度|進度', text)
     return {'state': 'request' if english or chinese else 'unknown',
             'reason': 'Complete question or request' if english or chinese else 'Use acoustic completion and a patient pause'}
 
@@ -210,7 +224,8 @@ class VoiceCompanion:
             result.update(answer,question=command)
             if answer.get('scope')=='choice':session.update(question=pending or command,choiceUntil=self.clock()+60)
         elif not command:
-            result['text'] = "I'm here. What would you like to ask about your projects?"
+            result['text'] = ('我在。想了解哪个项目，或者有什么想聊的？' if re.search(r'[\u3400-\u9fff]',text)
+                              else "I'm here. What would you like to ask about your projects?")
         else:
             choices = session.get('choices', [])
             # A spoken project name can resolve the previous ambiguity while

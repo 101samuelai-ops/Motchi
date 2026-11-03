@@ -34,13 +34,13 @@ with tempfile.TemporaryDirectory() as temp:
  (root/'qwen.json').write_text(json.dumps({'python':sys.executable,'model':str(model)}))
  check(config(root)[1]==model,'Runtime and model must be local absolute existing paths')
  worker=root/'fixture.py'
- worker.write_text('import sys,json,os,time\nfrom pathlib import Path\nassert os.environ["HF_HUB_OFFLINE"]=="1"\nassert os.environ["TRANSFORMERS_OFFLINE"]=="1"\nfor line in sys.stdin:\n r=json.loads(line);p=Path(r["audio"]);assert p.is_file() and p.stat().st_mode&0o777==0o600\n if r["language"]=="zh":time.sleep(5)\n print(json.dumps({"text":"English and 中文"}),flush=True)\n')
+ worker.write_text('import sys,json,os,time\nfrom pathlib import Path\nassert os.environ["HF_HUB_OFFLINE"]=="1"\nassert os.environ["TRANSFORMERS_OFFLINE"]=="1"\nfor line in sys.stdin:\n r=json.loads(line)\n if r.get("warm"):\n  assert "audio" not in r;print(json.dumps({"ready":True}),flush=True);continue\n p=Path(r["audio"]);assert p.is_file() and p.stat().st_mode&0o777==0o600\n if r["language"]=="zh":time.sleep(5)\n print(json.dumps({"text":"English and 中文"}),flush=True)\n')
  original=subprocess.Popen
  def spawn(command,**options):return original([sys.executable,'-u',str(worker)],**options)
  recognizer=Recognizer(root)
  with patch('qwen_speech.subprocess.Popen',side_effect=spawn):
   recognizer.warm()
-  check(recognizer.process is not None and not list(root.glob('qwen-speech-*')),
+  check(recognizer.ready and recognizer.process is not None and not list(root.glob('qwen-speech-*')),
         'Warmup loads the local worker without recording or submitting microphone audio')
   check(recognizer.recognize(wav())=='English and 中文','Offline worker returns bilingual Unicode text')
   check(not list(root.glob('qwen-speech-*')),'Successful transcription removes temporary audio')

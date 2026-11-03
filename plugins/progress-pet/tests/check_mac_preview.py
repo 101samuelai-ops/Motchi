@@ -63,7 +63,8 @@ try:
           'Explicit listening uses the exact context and the updated Mac conversation protocol')
     connection.events=[{'wake':True,'partial':True,'heard':'What remains?','turnId':connection.turn}]
     call('voiceInfo',speaking=True)
-    check(connection.calls[-1][1]['speaking'] is True,'Playback state reaches the Mac echo-muting control')
+    check(connection.calls[-1][1]['speaking'] is True and connection.calls[-1][1]['heartbeat'] is True,
+          'Playback heartbeat reaches echo muting without granting an automatic microphone restart')
     check(call('voiceEvents')['data']['events'][0]['heard']=='What remains?' and not call('voiceEvents')['data']['events'],
           'Live captions drain once instead of creating duplicate messages')
     connection.events=[{'wake':True,'text':'old answer'}];call('voiceInfo');call('listenNow')

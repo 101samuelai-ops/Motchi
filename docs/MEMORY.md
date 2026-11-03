@@ -1,6 +1,16 @@
 # Persistent Motchi project memory
 
-Updated: 2026-11-02. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-11-03. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+
+## Current voice correction — 2026-11-03
+
+The user requests Chinese and bare Motchi/similar-sound activation without “Hey,” superseding greeting-only matching. The intermediate human test activated but reported slow captions and no prompt answer after finishing. Do not report AND-10 accepted. Broad matching can false-wake on background mentions; speaker identity/filtering is still absent.
+
+Source now adds early bounded input gain, pinned optional Silero VAD, bounded asynchronous keyword startup, wider bilingual keyword decoding, genuine Qwen inference warmup and honest native PCM readiness. A distinct answer-loss race is fixed: automatic project routing changed server context before the next old-context heartbeat, which erased the completed answer. Caller context now remains until delivery, and adopting the returned exact project keeps delayed audio. Actual project switches still cancel. Failed/cancelled questions leave a visible main-stage message; paused/revoked clients get no late text.
+
+The selected synthetic noise-tail tests processed after 746/733 ms; this is not a human or provider latency claim. The existing authenticated service correctly transcribed retained public English/Chinese speech: cold 9.39 seconds, then warm 0.52 seconds. A full selected-project voice request returned a real assessment in 14.69 seconds. Real conversational acceptance, streaming ASR, speaker filtering and echo-aware interruption remain pending. Tested source modules are copied/signed in the existing Mac app. After the exact dog-menu quit, the updated app launched with a new bridge process and eight connected project groups. The first live capture stalled and stopped; the next warm-start observation delivered continuous audio for 14 seconds (first PCM 2.773 seconds, sampled audio ages 11–102 ms). Intermittent input stalls remain unresolved. The same sandbox cannot expose Metal to a new Qwen process. Keep the Mac recording policy paused, no test exception, and no calendar rollout. See LOCAL_CONVERSATION.md for evidence and next check.
+
+The latest human check confirmed visible words and an answer, but required manual Finish and still felt slow. Measured recognition was 621 ms, manual processing began after 11.787 seconds and the answer took another 22.889 seconds. The endpoint score was 0.4803; a missed Chinese question form made the text cue unknown. Added 哪个/哪一项 and related forms, a complete-request automatic 1.2–2-second pause policy, and a three-second fallback for sufficiently long addressed standalone statements. Unfinished clauses/fillers and short unknown names remain held; resumed speech still repairs the same turn. Finish mode is observable. Deidentified regression cases pass (78 turn / 56 conversation cases). The correction is copied/signed; final reload and hands-free test are pending. Human manual-Finish success does not complete AND-10. Preserve the long provider-latency and intermittent-capture limitations.
 
 ## Current microphone decision — 2026-11-02
 

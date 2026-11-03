@@ -544,7 +544,7 @@ class AndroidPortal:
             pass  # Normal recognition reports setup failures if needed.
 
     def voice_transcribe(self, audio, request):
-        language=request.get('language') or 'en'
+        language=request.get('language') or 'auto'
         if language not in ('auto','en','zh'): raise ValueError('Choose English, Chinese or automatic speech language.')
         permitted=request.get('_permitted') if callable(request.get('_permitted')) else lambda:self.voice.allowed(request['_device'],request['generation'])
         with self.speech_lock:

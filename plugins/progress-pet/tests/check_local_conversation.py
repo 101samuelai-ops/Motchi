@@ -109,7 +109,7 @@ with tempfile.TemporaryDirectory() as directory:
     voice.endpoint=Endpoint(.44); portal.voice_transcribe=lambda *a:'What still needs attention in the project?'
     with patch.object(voice.worker,'submit') as submitted:
         voice.assess_endpoint('calendar',voice.epoch,voice.segmenter.version,voice.segmenter.endpoint_audio())
-        check(not submitted.called,'A hesitant acoustic score cannot cut in before the two-second fallback')
+        check(submitted.call_count==1,'A complete request and hesitant acoustic score can finish after the patient 1.2-second pause')
     voice.close()
 
     portal,voice=ready(); speech(voice.segmenter); silence(voice.segmenter,28)
@@ -134,12 +134,30 @@ with tempfile.TemporaryDirectory() as directory:
           'The capture loop retries an uncertain early result at 1.2 seconds without requiring new speech')
     voice.close()
 
+    portal,voice=ready();voice.endpoint=Endpoint(.2)
+    portal.voice_transcribe=lambda *a:'I feel tired today.'
+    child=Child(frame(300)*90+frame(0)*160);voice.process=child;predictions=[]
+    with patch.object(voice.endpoint_worker,'submit',side_effect=endpoint_now),patch.object(voice.worker,'submit'):
+        voice.capture('calendar',voice.epoch,child)
+    check(len(predictions)==4 and voice.busy and voice.timings['finishMode']=='automatic',
+          'The capture loop reaches the three-second statement fallback without another word or a Finish tap')
+    voice.close()
+
+    portal,voice=ready(); epoch=voice.epoch
+    voice.wake_detector=Keywords(80)
+    child=Child(frame(3100)*100);voice.process=child
+    with patch.object(voice.worker,'submit'):
+        voice.capture('calendar',voice.epoch,child)
+    check(voice.epoch==epoch and voice.segmenter.voiced>80,
+          'Mentioning Motchi inside an already active question cannot restart it or erase earlier words')
+    voice.close()
+
     portal,voice=ready(); portal.root=directory; voice.active_until=0; voice.activated_at=90
     voice.wake_detector=Keywords(80)
-    child=Child(frame(310)*70+frame(620)*20); voice.process=child
+    child=Child(frame(3100)*70+frame(6200)*20); voice.process=child
     with patch('mac_voice.doubao_speech.selected',return_value='doubao'), patch.object(voice.worker,'submit'):
         voice.capture('calendar',voice.epoch,child)
-    check(frame(310) not in voice.segmenter.speech and frame(620) in voice.segmenter.speech,
+    check(frame(3100) not in voice.segmenter.speech and frame(6200) in voice.segmenter.speech,
           'Cloud recognition never receives the new pre-activation wake buffer')
     voice.close()
 
@@ -192,10 +210,10 @@ with tempfile.TemporaryDirectory() as directory:
 
     portal,voice=ready(); voice.active_until=0; voice.activated_at=90
     voice.wake_detector=Keywords(80)
-    child=Child(frame(310)*70+frame(620)*20); voice.process=child
+    child=Child(frame(3100)*70+frame(6200)*20); voice.process=child
     with patch.object(voice.worker,'submit'):
         voice.capture('calendar',voice.epoch,child)
-    check(frame(310) in voice.segmenter.speech and frame(620) in voice.segmenter.speech,
+    check(frame(3100) in voice.segmenter.speech and frame(6200) in voice.segmenter.speech,
           'Delayed wake detection retains the beginning of a joined wake-and-question utterance')
     voice.stop()
     check(not voice.pre_roll and voice.checked_transcript is None,

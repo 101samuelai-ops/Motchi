@@ -78,6 +78,12 @@ with tempfile.TemporaryDirectory() as root:
         ready_event=voice.poll('calendar')['events'][0]
         check(ready_event['partial'] and ready_event['ready'] and not voice.waiting_activation,
               'The first real PCM frame acknowledges that Talk is ready to hear the question')
+        voice.control('calendar',{'enabled':True,'projectId':'alpha','selection':'alpha-chat','activate':True})
+        check(voice.process is child and not voice.snapshot()['starting'],
+              'The next Talk reuses live capture without another hardware startup')
+        check(voice.snapshot()['language']=='auto' and voice.snapshot()['firstAudioMs']==0,
+              'English/Chinese auto detection is the default and audio readiness has a measured timestamp')
+        voice.poll('calendar')
         check(not voice.poll('another')['enabled'],'Another device cannot read the microphone state or transcript')
         check(rejects(lambda:voice.control('another',{'enabled':True})),'A second device cannot hijack microphone capture')
         check(not voice.control('another',{'enabled':False})['enabled'] and not child.dead,'Another device cannot stop the owner’s microphone')
@@ -94,6 +100,15 @@ with tempfile.TemporaryDirectory() as root:
         check(child.dead and portal.cancelled and not voice.owner,'Pause terminates capture and cancels in-flight questions')
         voice.close()
     child=Child()
+    class BrokenWake:
+        def start(self):raise ValueError('Speech detector checksum mismatch.')
+        def close(self):pass
+    with patch('mac_voice.subprocess.Popen',return_value=child):
+        voice=MacVoice(portal,binary,clock=lambda:now[0]);voice.wake_detector=BrokenWake()
+        check(rejects(lambda:voice.control('calendar',{'enabled':True})) and child.dead and voice.owner is None,
+              'A model-start failure terminates the microphone child even before watchdog setup')
+        voice.close()
+    child=Child()
     with patch('mac_voice.subprocess.Popen',return_value=child):
         voice=MacVoice(portal,binary,clock=lambda:now[0]);voice.control('calendar',{'enabled':True})
         now[0]+=31;voice.lease=now[0]+100
@@ -101,6 +116,11 @@ with tempfile.TemporaryDirectory() as root:
             if child.dead:break
             time.sleep(.05)
         check(child.dead and 'no audio' in voice.issue,'A waiting permission prompt cannot leave an empty recorder open indefinitely')
+        with patch('mac_voice.subprocess.Popen') as spawned:
+            voice.control('calendar',{'enabled':True,'heartbeat':True})
+            status=voice.poll('calendar')
+        check(not spawned.called and not status['enabled'] and 'no audio' in status['issue'],
+              'Polling preserves a failed startup instead of silently restarting capture and hiding the error')
         voice.close()
     child=Child()
     with patch('mac_voice.subprocess.Popen',return_value=child):

@@ -128,3 +128,11 @@ The 2026-11-02 article-driven Mac update combines acoustic completion with bilin
 
 
 The following human check still reported missing words/no answer. Direct Mac capture recognized greetings with both local engines and exposed delayed first PCM, missing Hello wake variants and the preview's expired-test restart bug. Startup acknowledgment, wake variants, unknown-name gating and explicit bounded test restart are corrected. Human project-question acceptance is still pending; AND-10 stays open.
+
+
+## Current Mac voice correction — 2026-11-03
+
+Bare Motchi/Chinese wake, early input gain, pinned Silero speech/noise detection, bounded wake startup and real Qwen warmup are implemented. The automatic-project answer-loss race is reproduced and fixed; adopting the returned project retains delayed speech while real project switches still cancel. Explicit failure/cancellation feedback replaces stranded Thinking. Selected synthetic noise-tail endpoints were 746/733 ms; current service transcribed public English/Chinese fixtures and returned a real voice project assessment. Cold recognition was still 9.39 seconds; the following warm request was 0.52 seconds and the full answer took 14.69 seconds. The updated Mac service restarted with eight project groups. A fresh capture stalled; the next warm-start capture stayed continuous during a 14-second check. Human pause/accuracy acceptance and intermittent capture stalls remain unresolved, so AND-10 remains unchecked. No calendar update. See [measurements and rollout limits](docs/LOCAL_CONVERSATION.md).
+
+
+The subsequent human check displayed words and an answer but required manual Finish. Recognition took 621 ms and answer generation 22.889 seconds. Missing Chinese question cues caused the automatic hold at a 0.4803 acoustic score. Added those cues, complete-request completion after 1.2–2 seconds, and a three-second standalone-statement fallback with unfinished-clause protection. Deidentified regressions pass (78 turn / 56 conversation cases); the installed correction awaits final reload/hands-free acceptance. AND-10 remains unchecked.

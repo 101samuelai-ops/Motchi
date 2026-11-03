@@ -300,7 +300,7 @@ class VoiceService : Service() {
         // The calendar enumerates an input but supplies no usable speech.
         // This release defaults to the user's requested computer fallback.
         fun source(context: Context) = preferences(context).getString("source", "mac") ?: "mac"
-        fun language(context: Context) = preferences(context).getString("language", "en") ?: "en"
+        fun language(context: Context) = preferences(context).getString("language", "auto") ?: "auto"
         fun setLanguage(context: Context, value: String) {
             require(value in listOf("en","zh","auto"))
             preferences(context).edit().putString("language",value).apply()
