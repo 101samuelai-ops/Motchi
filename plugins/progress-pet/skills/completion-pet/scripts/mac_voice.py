@@ -723,6 +723,10 @@ class MacVoice:
                     if self.owner == device and self.epoch == epoch and not preview:
                         self.timings['answerMs'] = round((self.clock()-start)*1000)
                         self.timings['answerAfterSpeechMs'] = round(max(0, self.clock()-self.last_activity)*1000)
+                        breakdown = result.get('discussionTimings', {})
+                        if isinstance(breakdown, dict):
+                            self.timings['discussion'] = {k: v for k, v in breakdown.items()
+                                if k in ('contextMs', 'providerMs', 'totalMs') and type(v) is int and v >= 0}
                 if self.conversation_version < 2 and not preview and result.get('wake') and result.get('text') and hasattr(self.portal,'prepare_mac_reply'):
                     # Installed older clients expect audio on the original
                     # answer. Do not send them a second visible answer event.

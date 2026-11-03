@@ -830,13 +830,16 @@ class DogBridge:
         if local is not None:
             return local
         history_key = "approval:" + approval_id if approval_id else (discussion_context.get("historyKey") if discussion_context else selection)
-        context = {"project": item["title"], "directory": item["cwd"], "checklist": progress,
-                   "checklistReview": item.get('checklist', {}), "pendingQuestions": item.get('questions', []),
-                   "activityState": item.get('status'),
-                   "approvalRequests": item.get("approvals", []), "recentAssistantNotes": self.recent_context(item),
-                   "conversation": self.history.get(history_key, [])[-6:]}
         if discussion_context is not None:
             context = dict(discussion_context, conversation=self.history.get(history_key, [])[-6:])
+        else:
+            # Discussion already retrieved exact-project history. Calling the
+            # legacy notes RPC here only to discard it can add a full timeout.
+            context = {"project": item["title"], "directory": item["cwd"], "checklist": progress,
+                       "checklistReview": item.get('checklist', {}), "pendingQuestions": item.get('questions', []),
+                       "activityState": item.get('status'),
+                       "approvalRequests": item.get("approvals", []), "recentAssistantNotes": self.recent_context(item),
+                       "conversation": self.history.get(history_key, [])[-6:]}
         if approval_context is not None:
             context["pendingApproval"] = approval_context
         prompt = ("You are Motchi, a friendly concise project companion. Answer the user's question about ONLY the selected project. "
@@ -974,6 +977,7 @@ class DogBridge:
             return {"text": self.ask(target, request.get("text")), "routedSelection": target}
 
     def discuss_result(self, request):
+        started = time.monotonic()
         permitted=request.get('_permitted') if callable(request.get('_permitted')) else None
         if permitted: permitted()
         question=request.get('text')
@@ -997,11 +1001,15 @@ class DogBridge:
         context={'scope':routing['scope'],'routeReason':routing['reason'],'projects':[],
                  'historyKey':'discussion:'+routing['scope']+':'+','.join(sorted(p['id'] for p in targets))}
         if request.get('_voice') is True: context['voiceTurn'] = True
-        deadline=time.monotonic()+8
+        # Start the same evidence review, but do not make a spoken turn wait
+        # behind the whole checklist inference. Retrieved history remains live
+        # and reviewPending/freshnessNotice disclose unfinished reconciliation.
+        voice_turn = context.get('voiceTurn') is True
+        deadline=time.monotonic()+(1 if voice_turn else 8)
         fallback=[]
         sources=[]
         for project in targets[:20]:
-            view=self.checklists.review_now(project['cwd'],project['items'],timeout=min(3,max(0,deadline-time.monotonic())))
+            view=self.checklists.review_now(project['cwd'],project['items'],timeout=min(.35 if voice_turn else 3,max(0,deadline-time.monotonic())))
             progress=checklist(project['cwd'])
             history=discussion.context_for(self.checklists.history,project,question,
                 budget=(6000 if context.get('voiceTurn') else 10000) if len(targets)==1 else 3500)
@@ -1024,7 +1032,9 @@ class DogBridge:
         lock=self.ask_locks.setdefault(context['historyKey'],threading.Lock())
         with lock:
             if permitted: permitted()
+            prepared = time.monotonic()
             answer=self.ask(target,question,discussion_context=context,**({'permitted':permitted} if permitted else {}))
+            answered = time.monotonic()
             if permitted: permitted()
             try:
                 analyzed=json.loads(answer)
@@ -1046,6 +1056,11 @@ class DogBridge:
             allowed={source['projectId'] for source in sources}
             result={'scope':routing['scope'], **discussion.presentation(answer,context,allowed,question),
                     'sources':sources,'routeReason':routing['reason']}
+            if voice_turn:
+                result['discussionTimings'] = {
+                    'contextMs': round((prepared-started)*1000),
+                    'providerMs': round((answered-prepared)*1000),
+                    'totalMs': round((answered-started)*1000)}
             if sources and any(s['reviewPending'] for s in sources):
                 result['freshnessNotice']='部分对话仍在复核，进度可能会更新。' if re.search(r'[\u3400-\u9fff]',question) else 'Some conversation updates are still being reviewed; progress may change.'
             if routing['scope']=='project':result.update(projectId=anchor[0]['id'],projectName=anchor[0]['name'],routedSelection=target,selection=target)

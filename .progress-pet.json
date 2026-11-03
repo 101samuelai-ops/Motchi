@@ -566,7 +566,7 @@
       "evidence": {
         "kind": "Partial verification — Mac only",
         "at": "2026-11-03",
-        "quote": "Bare-name bilingual wake, early gain, pinned Silero VAD and genuine Qwen warmup implemented. Automatic-project heartbeat answer-loss reproduced/fixed; exact returned-project adoption preserves delayed audio, real switches cancel. All Python suites pass after correcting late error publication on pause. Chosen synthetic noise tails processed at 746/733 ms; existing service recognized English/Chinese fixtures (cold 9.39 s, warm 0.52 s) and returned a real project voice assessment in 14.69 s. Human accuracy/pausing remains unaccepted. Installed source is signed and the service restarted with eight project groups. One capture stalled; a subsequent 14-second warm check stayed continuous. Intermittent capture failures remain unresolved. Mac recording paused; no calendar rollout. See docs/LOCAL_CONVERSATION.md. Human then confirmed words/answer with manual Finish only. At 621 ms recognition and 22.889 s answer time, the missed Chinese question cue blocked automatic submission. Added complete-request 1.2–2 s and standalone-statement 3 s fallback with incomplete-clause protection; 78 turn and 56 conversation checks pass. Final hands-free acceptance remains pending."
+        "quote": "Bare-name bilingual wake, early gain, pinned Silero VAD and genuine Qwen warmup implemented. Automatic-project heartbeat answer-loss reproduced/fixed; exact returned-project adoption preserves delayed audio, real switches cancel. All Python suites pass after correcting late error publication on pause. Chosen synthetic noise tails processed at 746/733 ms; existing service recognized English/Chinese fixtures (cold 9.39 s, warm 0.52 s) and returned a real project voice assessment in 14.69 s. Human accuracy/pausing remains unaccepted. Installed source is signed and the service restarted with eight project groups. One capture stalled; a subsequent 14-second warm check stayed continuous. Intermittent capture failures remain unresolved. Mac recording paused; no calendar rollout. See docs/LOCAL_CONVERSATION.md. Human then confirmed words/answer with manual Finish only. At 621 ms recognition and 22.889 s answer time, the missed Chinese question cue blocked automatic submission. Added complete-request 1.2–2 s and standalone-statement 3 s fallback with incomplete-clause protection; 78 turn and 56 conversation checks pass. Final hands-free acceptance remains pending. Next human reply still felt slow: retained timing was 755 ms to processing and 17.164 s in the answer path. Removed a redundant history RPC and capped voice reconciliation wait at 1 s, preserving available history/counts and pending-review disclosure. Main-stage received/preparing states settle the waveform; diagnostics split context/provider latency. Regression checks pass; installed signed modules await reload and fresh timing. No validated standalone provider speed comparison or calendar rollout."
       }
     },
     {
@@ -669,5 +669,5 @@
       }
     }
   ],
-  "revision": 17
+  "revision": 18
 }

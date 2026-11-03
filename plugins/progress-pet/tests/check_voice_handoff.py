@@ -33,7 +33,8 @@ class Portal:
     def run_mac_voice(self,device,request,audio,**extra):
         if self.error:raise ValueError(self.error)
         return {'wake':True,'heard':'How is Alpha?', 'text':'One verified task remains.',
-                'projectId':'alpha','selection':'alpha-chat','projectName':'Alpha'}
+                'projectId':'alpha','selection':'alpha-chat','projectName':'Alpha',
+                'discussionTimings':{'contextMs':250,'providerMs':1000,'totalMs':1250,'other':'omit'}}
     def synthesize_mac_reply(self,*args):pass
 
 class Connection:
@@ -54,6 +55,8 @@ with tempfile.TemporaryDirectory() as directory:
     try:
         voice.busy=True
         voice.recognize('preview',epoch,bytes(640),False,True,'How is Alpha?')
+        check(voice.timings['discussion']=={'contextMs':250,'providerMs':1000,'totalMs':1250},
+              'Voice diagnostics separate context and provider time and retain only numeric timing fields')
         check(voice.context=={'projectId':None,'selection':None},
               'Automatic project routing does not change the caller context before delivery')
         preview.call({'action':'voiceInfo'})
