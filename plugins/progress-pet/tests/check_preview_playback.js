@@ -1,7 +1,7 @@
 /* Runs the shipped transport: exact playback completion, errors and replacement. */
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const source=fs.readFileSync(require('node:path').join(__dirname,'../android/preview_voice.js'),'utf8');
-let calls=[],events=[],turn='first-turn',players=[],denied=false,missing=false;
+let calls=[],events=[],turn='first-turn',players=[],denied=false,missing=false,holdStart=false,releaseStart;
 class Audio {
  constructor(url){this.src=url;players.push(this);}
  play(){return denied?Promise.reject(new Error('autoplay denied')):Promise.resolve();}
@@ -14,7 +14,10 @@ const context={window,document:{querySelector:()=>({content:'test-nonce'})},Audi
  fetch:async (url,options)=>{
   const body=JSON.parse(options.body);calls.push(body);
   let data={};
-  if(body.action==='voiceInfo')data={enabled:true,turnId:turn};
+  if(body.action==='voiceInfo'){
+   data={enabled:true,turnId:turn};
+   if(holdStart&&body.speaking===true)await new Promise(resolve=>{releaseStart=resolve;});
+  }
   if(body.action==='voiceAudio')data=missing?{}:{wav:Buffer.from('RIFFtest').toString('base64')};
   if(body.action==='voiceEvents'){data={events};events=[];}
   return {json:async()=>({ok:true,data})};
@@ -32,6 +35,10 @@ async function play(id){events=[{wake:true,audioOnly:true,spokenReply:true,turnI
  check(heartbeat.speaking&&calls.at(-1).playbackTurnId===turn,'Playback polling retains exact identity');
  players.at(-1).onended();await flush();
  check(receipt('answer-one',false).length===1,'Natural audio completion immediately releases microphone muting');
+ holdStart=true;await play('answer-slow-start');players.at(-1).onended();await flush();
+ check(receipt('answer-slow-start',false).length===1,
+       'Completion is sent without waiting for a delayed playback-start acknowledgement');
+ holdStart=false;releaseStart();await flush();
  await play('answer-two');players.at(-1).onerror();await flush();
  check(receipt('answer-two',false).length===1,'Audio failure also releases microphone muting');
  denied=true;await play('answer-denied');denied=false;

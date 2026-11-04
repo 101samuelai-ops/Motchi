@@ -12,6 +12,8 @@ The user reports that the first question works but the second does not. They wan
 
 The signed installed Mac app and loopback preview are now running after unlocked startup. On 2026-11-05 the refreshed preview showed eight connected projects, live capture/transcription and Ready with the microphone enabled. Human acceptance of an intentional first question and unaddressed second question remains pending; do not infer it from ambient captured speech. No calendar rollout.
 
+The user then requests immediate listening after the spoken answer. Exact completion now removes the former 180 ms mute tail and the browser sends that completion without waiting for its start acknowledgement. Thirty controller and ten actual-player checks pass, including zero-clock-advance speech and a late start receipt. The 20 seconds remains a follow-up opportunity, not a wait. Installation/live acceptance is tracked separately; this does not establish instantaneous captions/model answers or full duplex.
+
 ## Reply responsiveness — 2026-11-03
 
 The user wants visible reassurance every few seconds while Motchi prepares an answer, short spoken reassurance during longer voice replies, and an answer/failure instead of stranded Thinking. Source now updates the main character section every four seconds, stops feedback on completion/cancellation/disconnection, polls discussion receipts every second, and prevents earlier requests from clearing newer feedback. Spoken notices run separately from answer generation and are discarded after completion, resumed speech, pause or a replaced turn; they never become project-history answers.

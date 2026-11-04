@@ -10,7 +10,7 @@ import tempfile
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'skills/completion-pet/scripts'))
-from mac_voice import MacVoice, FOLLOWUP_SECONDS, PLAYBACK_TAIL_SECONDS
+from mac_voice import MacVoice, FOLLOWUP_SECONDS
 from voice_companion import VoiceCompanion
 
 checks = 0
@@ -82,17 +82,23 @@ with tempfile.TemporaryDirectory() as directory:
               'Motchi speaker output cannot become a follow-up question')
         voice.control('preview',dict(enabled=True,conversationVersion=2,**voice.context,**ticket,speaking=False))
         deadline=voice.followup_until
-        check(deadline==now[0]+FOLLOWUP_SECONDS and voice.muted_until==now[0]+PLAYBACK_TAIL_SECONDS,
-              'The full follow-up window starts after playback, with only a short echo tail')
+        check(deadline==now[0]+FOLLOWUP_SECONDS and voice.muted_until<=now[0],
+              'Exact playback completion accepts the very next frame with no mute tail')
+        voice.control('preview',dict(enabled=True,conversationVersion=2,**voice.context,**ticket,speaking=True))
+        check(not voice.playback_active and voice.muted_until<=now[0],
+              'A delayed start receipt cannot re-mute capture after exact completion')
+        # No clock advance: speech starts at the same instant as playback end.
+        feed(frame(300)*3)
+        check(voice.epoch!=epoch and voice.turn_id!=turn and voice.events[0]['followup'],
+              'Immediate follow-up speech starts a fresh turn without a wake name')
+        active_until=voice.active_until
         now[0]+=.5
         voice.control('preview',dict(enabled=True,conversationVersion=2,**voice.context,**ticket,speaking=False))
-        check(voice.followup_until==deadline,
-              'Repeated stopped-playback heartbeats cannot renew follow-up consent')
-        feed(frame(300)*90+frame(0)*60)
-        check(voice.epoch!=epoch and voice.turn_id!=turn and voice.events[0]['followup'],
-              'Follow-up speech starts a fresh turn without a wake name')
+        check(voice.followup_until==0 and voice.active_until==active_until,
+              'A repeated completion cannot renew consent or replace the immediate new question')
+        feed(frame(300)*87+frame(0)*60)
         check(voice.segmenter.voiced>=80 and voice.checked_transcript is None,
-              'The new turn retains its first words and clears old transcript/endpoint caches')
+              'Immediate follow-up retains its first words and clears old transcript/endpoint caches')
         answer(second)
         check([r['text'] for r in portal.discussions]==[first,second] and
               all(r['projectId']=='alpha' and r['selection']=='alpha-chat' for r in portal.discussions),

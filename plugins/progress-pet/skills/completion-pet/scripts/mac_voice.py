@@ -30,7 +30,7 @@ ENDPOINT_STATEMENT_FRAMES = 150  # 3 s; an addressed standalone statement can be
 WAKE_BUFFER_FRAMES = 120  # 2.4 s in memory, shared only after a local wake.
 CONTINUATION_SECONDS = 2.0  # Repair the same question before its answer, not a follow-up lease.
 FOLLOWUP_SECONDS = 20
-PLAYBACK_TAIL_SECONDS = .18
+PLAYBACK_TAIL_SECONDS = .18  # Legacy clients without an exact playback-end receipt.
 
 class InputLevel:
     """Bounded input gain before VAD/wake detection, not only before ASR.
@@ -270,7 +270,9 @@ class MacVoice:
             self.segmenter.reset(); self.pre_roll.clear()
         elif body.get('speaking') is False:
             self.playback_active = False; self.playback_done = True
-            self.muted_until = self.clock()+PLAYBACK_TAIL_SECONDS
+            # The exact player has finished. Accept the next PCM frame rather
+            # than dropping the start of a prompt reply in an extra mute tail.
+            self.muted_until = self.clock()
             self.segmenter.reset(); self.pre_roll.clear()
             if self.last_result and not self.busy and self.conversation_version >= 2:
                 self.followup_until = self.clock()+FOLLOWUP_SECONDS
