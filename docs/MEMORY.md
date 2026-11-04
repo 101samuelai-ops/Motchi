@@ -1,6 +1,6 @@
 # Persistent Motchi project memory
 
-Updated: 2026-11-04. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-11-05. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 ## Microphone preference — 2026-11-04
 
@@ -9,6 +9,8 @@ The user explicitly requests enabling Motchi's microphone in the Mac preview. Th
 ## Consecutive voice questions — 2026-11-04
 
 The user reports that the first question works but the second does not. They want conversational follow-ups after the initial activation. The Mac controller now opens a 20-second follow-up window after a complete answer, renewed once after that exact answer's playback ends. Actual new speech starts a fresh turn, retaining project context and clearing old transcript/endpoint caches. The loopback player reports exact turn/operation playback completion, including playback errors; repeated or obsolete receipts cannot renew the window. Idle expiry, a real project switch and pause clear follow-up permission. Recognition remains muted during Motchi output, with a short post-playback echo tail. This is bounded follow-up support, not speaker identification or full duplex. Fixture checks pass; deployment and human acceptance are tracked in LOCAL_CONVERSATION.md. AND-10 remains open.
+
+The signed installed Mac app and loopback preview are now running after unlocked startup. On 2026-11-05 the refreshed preview showed eight connected projects, live capture/transcription and Ready with the microphone enabled. Human acceptance of an intentional first question and unaddressed second question remains pending; do not infer it from ambient captured speech. No calendar rollout.
 
 ## Reply responsiveness — 2026-11-03
 
