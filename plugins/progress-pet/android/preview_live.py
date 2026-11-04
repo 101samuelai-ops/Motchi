@@ -196,7 +196,9 @@ class LivePreview:
             if action == 'voiceContext':
                 self.context = {k: body.get(k) or None for k in ('projectId', 'selection')}
                 return {'saved': True}
-            if action == 'voiceInfo': return self.control(speaking=body.get('speaking') is True) if self.enabled else self.state
+            if action == 'voiceInfo':
+                playback = {k:body.get(k) for k in ('playbackTurnId','playbackOperationId') if body.get(k)}
+                return self.control(speaking=body.get('speaking') is True, **playback) if self.enabled else self.state
             if action == 'voiceEvents':
                 result = list(self.events); self.events.clear(); return {'events': result}
             if action == 'wakeListening':

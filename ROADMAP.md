@@ -141,3 +141,5 @@ The next returned answer still felt slow. Retained diagnostics show processing a
 
 
 The 2026-11-03 reply-responsiveness increment adds bilingual feedback every four seconds, optional short voice reassurance, earlier structured-answer delivery, bounded provider/context waits and explicit connection failures. Isolated cadence, stale-answer, privacy, routing and stalled-provider checks pass. This supports AND-10 but does not complete human wake, turn-taking or voice-accuracy acceptance. See [actual tests and deployment](docs/LOCAL_CONVERSATION.md).
+
+The 2026-11-04 Mac correction adds a bounded 20-second follow-up window after an answer and exact playback-end receipts, so the second question can start a fresh turn without another wake name. Twenty-eight consecutive bilingual fixture checks and nine shipped-player checks pass, including project retention, playback failure, expiry and stale receipts. The user has explicitly enabled the Mac microphone, superseding the previous global pause. Human consecutive-question acceptance and calendar rollout remain pending; AND-10 stays unchecked.

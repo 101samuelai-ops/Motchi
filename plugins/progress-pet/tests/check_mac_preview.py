@@ -78,6 +78,11 @@ try:
     call('voiceInfo',speaking=True)
     check(connection.calls[-1][1]['speaking'] is True and connection.calls[-1][1]['heartbeat'] is True,
           'Playback heartbeat reaches echo muting without granting an automatic microphone restart')
+    call('voiceInfo',speaking=False,playbackTurnId=connection.turn,playbackOperationId='answer-operation')
+    check(connection.calls[-1][1]['playbackTurnId']==connection.turn and
+          connection.calls[-1][1]['playbackOperationId']=='answer-operation' and
+          connection.calls[-1][1]['speaking'] is False,
+          'Exact stopped-playback receipts reach the Mac controller for prompt follow-up listening')
     check(call('voiceEvents')['data']['events'][0]['heard']=='What remains?' and not call('voiceEvents')['data']['events'],
           'Live captions drain once instead of creating duplicate messages')
     connection.events=[{'wake':True,'text':'old answer'}];call('voiceInfo');call('listenNow')

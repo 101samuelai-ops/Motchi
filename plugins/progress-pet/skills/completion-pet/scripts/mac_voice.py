@@ -29,6 +29,8 @@ ENDPOINT_TEXT_FRAMES = 100  # 2 s; complete text can recover an uncertain acoust
 ENDPOINT_STATEMENT_FRAMES = 150  # 3 s; an addressed standalone statement can be a turn too.
 WAKE_BUFFER_FRAMES = 120  # 2.4 s in memory, shared only after a local wake.
 CONTINUATION_SECONDS = 2.0  # Repair the same question before its answer, not a follow-up lease.
+FOLLOWUP_SECONDS = 20
+PLAYBACK_TAIL_SECONDS = .18
 
 class InputLevel:
     """Bounded input gain before VAD/wake detection, not only before ASR.
@@ -163,6 +165,9 @@ class MacVoice:
         self.answer_gate = threading.Event(); self.answer_gate.set()
         self.text_decision = None
         self.conversation_version = 2
+        self.followup_until = 0
+        self.playback_ticket = None
+        self.playback_active = self.playback_done = False
         if hasattr(portal,'root'):
             try:
                 wake_configuration(portal.root)
@@ -209,6 +214,7 @@ class MacVoice:
         self.pre_roll.clear()
         self.checked_transcript = None
         self.preview_stamp = None
+        self.last_preview = 0
         self.timings = {}
         self.capped_until = 0
         self.question_revision += 1
@@ -219,8 +225,11 @@ class MacVoice:
         self.answer_gate.set()
         self.text_decision = None
         self.waiting_activation = False
+        self.followup_until = 0
+        self.playback_ticket = None
+        self.playback_active = self.playback_done = False
 
-    def activate(self, pre_roll=(), keyword=''):
+    def activate(self, pre_roll=(), keyword='', followup=False):
         self.invalidate(preserve_choice=not self.busy)
         self.activated_at = self.clock()
         self.muted_until = 0
@@ -239,8 +248,34 @@ class MacVoice:
         text = '我在听，请说。' if chinese else "I'm listening. Go ahead."
         self.events.append({'wake': True, 'partial': True, 'heard': '',
                             'text': text, 'stage': 'listening',
+                            'followup': followup,
                             'turnId': self.turn_id, 'stopPlayback': True, 'ready': True})
         self.status = "I'm listening · Mac microphone"
+
+    def followup_status(self):
+        self.stage = 'follow-up'
+        chinese = self.language == 'zh' or bool(re.search(r'[\u3400-\u9fff]',
+                    (self.last_result or {}).get('transcript','')))
+        self.status = ('可以继续问，我在听。' if chinese else
+                       'Ready for your next question · no wake name needed')
+
+    def playback(self, body):
+        """Exact playback receipts release echo suppression once, not per poll."""
+        ticket = (body.get('playbackTurnId'), body.get('playbackOperationId'))
+        if ticket != self.playback_ticket or self.playback_done:
+            return False
+        if body.get('speaking') is True:
+            self.playback_active = True
+            self.muted_until = self.clock()+2
+            self.segmenter.reset(); self.pre_roll.clear()
+        elif body.get('speaking') is False:
+            self.playback_active = False; self.playback_done = True
+            self.muted_until = self.clock()+PLAYBACK_TAIL_SECONDS
+            self.segmenter.reset(); self.pre_roll.clear()
+            if self.last_result and not self.busy and self.conversation_version >= 2:
+                self.followup_until = self.clock()+FOLLOWUP_SECONDS
+                self.followup_status()
+        return True
 
     def control(self, device, body):
         if body.get('enabled') is False:
@@ -305,7 +340,18 @@ class MacVoice:
                     self.stage = 'starting'
                 else:
                     self.activate()
-            if body.get('speaking') is True and body.get('activate') is not True: self.muted_until = self.clock()+2
+            if body.get('activate') is not True:
+                handled = self.playback(body) if body.get('playbackOperationId') else False
+                if not handled and not body.get('playbackOperationId'):
+                    if body.get('speaking') is True:
+                        self.playback_active = True; self.muted_until = self.clock()+2
+                    elif self.playback_active and body.get('speaking') is False:
+                        self.playback_active = False
+                        self.muted_until = self.clock()+PLAYBACK_TAIL_SECONDS
+                        self.segmenter.reset(); self.pre_roll.clear()
+                        if self.last_result and not self.busy and self.conversation_version >= 2:
+                            self.followup_until = self.clock()+FOLLOWUP_SECONDS
+                            self.followup_status()
             if body.get('finish') is True and not self.busy and self.clock() < self.active_until:
                 data=self.segmenter.finish()
                 if data:
@@ -340,6 +386,8 @@ class MacVoice:
                 'utteranceSeconds':round(len(self.segmenter.speech or b'')/32000,1),
                 'language':self.language,
                 'stage':self.stage, 'turnId':self.turn_id,
+                'followupSeconds':round(max(0,self.followup_until-self.clock()),1)
+                    if not self.playback_active and not self.busy else 0,
                 'turnDetector':'Smart Turn v3.2 · local' if self.endpoint else 'Manual Finish question',
                 'turnIssue':self.endpoint_issue, 'endpointProbability':self.endpoint_score,
                 'timings':dict(self.timings),
@@ -640,7 +688,8 @@ class MacVoice:
                         self.activate()
                     if self.session and self.clock() >= self.session_until:
                         self.session = None
-                    keyword = self.wake_detector.feed(data) if self.wake_detector else None
+                    keyword = (self.wake_detector.feed(data)
+                               if self.wake_detector and not self.playback_active and self.clock() >= self.muted_until else None)
                     self.speech_signal = getattr(self.wake_detector,'speech',lambda:None)()
                     if (keyword and self.clock() >= self.muted_until and self.clock()-self.activated_at >= 1.2
                             and (self.busy or self.clock() >= self.active_until)):
@@ -649,22 +698,33 @@ class MacVoice:
                         # audio captured before local activation.
                         cloud = hasattr(self.portal, 'root') and doubao_speech.selected(self.portal.root) == 'doubao'
                         self.activate(() if cloud else tuple(self.pre_roll),keyword=keyword)
-                    if self.clock() >= self.muted_until:
+                    if not self.playback_active and self.clock() >= self.muted_until:
                         self.pre_roll.append(data)
                     else:
                         self.pre_roll.clear()
-                    if self.busy or self.clock() < self.muted_until:
+                    if self.busy or self.playback_active or self.clock() < self.muted_until:
                         # Measure rather than blocking the pipe. During speaker
                         # playback, voice interruption is deliberately disabled
                         # until reference-aware echo handling is verified.
                         samples = array('h', data)
                         self.segmenter.rms = math.sqrt(sum(n*n for n in samples)/len(samples))
                         self.recent = max(self.segmenter.rms, self.recent*.996)
-                        if self.busy and self.clock() >= self.muted_until:
+                        if self.busy and not self.playback_active and self.clock() >= self.muted_until:
                             self.processing_frame(device, data)
                         continue
                     active = self.clock() < self.active_until
                     if not active:
+                        if self.clock() < self.followup_until:
+                            self.segmenter.push(data, voiced=self.speech_signal)
+                            self.recent = max(self.segmenter.rms, self.recent*.996)
+                            if self.segmenter.speech is not None:
+                                frames = bytes(self.segmenter.speech)
+                                keyword = (self.last_result or {}).get('transcript','')
+                                self.activate(tuple(frames[i:i+640] for i in range(0,len(frames),640)),
+                                              keyword=keyword, followup=True)
+                            else:
+                                self.followup_status()
+                            continue
                         self.segmenter.push(data,voiced=self.speech_signal); self.segmenter.reset()
                         self.recent = max(self.segmenter.rms, self.recent*.996)
                         self.stage = 'idle'
@@ -788,6 +848,9 @@ class MacVoice:
                                   stage='listening' if result.get('partial') or result.get('sessionSeconds',0)>0 else 'answered')
                     if not preview and not result.get('partial'):
                         self.last_result = dict(result)
+                        if result.get('heard') and self.conversation_version >= 2:
+                            self.segmenter.reset()
+                            self.followup_until = self.clock()+FOLLOWUP_SECONDS
                     self.events.append(result)
                     # Keep the caller's context until it receives the reply.
                     # Mutating it here makes the next old-context heartbeat
@@ -822,9 +885,12 @@ class MacVoice:
                     self.pending_audio = self.continuation = None
                     self.answer_gate.set()
                     self.stage = 'listening' if self.clock()<self.active_until else 'idle'
+                    if self.clock()<self.followup_until:
+                        self.followup_status()
                 if self.owner == device:
                     self.status = ('Checking your project history · say Hey Motchi to change it' if self.busy
                                    else "I'm listening · Mac microphone" if self.clock()<self.active_until
+                                   else self.status if self.clock()<self.followup_until
                                    else 'Listening for Hey Motchi · Mac microphone')
 
     def audio_ready(self, device, epoch, result):
@@ -835,6 +901,8 @@ class MacVoice:
                 raise ValueError('The waiting notice is no longer needed.')
             # A text answer is already visible. This event only starts playback.
             self.events.append({**result, 'wake': True, 'audioOnly': True, 'spokenReply': True})
+            self.playback_ticket = (result.get('turnId'), result.get('operationId'))
+            self.playback_active = self.playback_done = False
             self.muted_until = self.clock()+4
 
     def stop(self):
