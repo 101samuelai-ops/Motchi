@@ -70,7 +70,7 @@ This requirement supersedes dog-only presentation. The proposed build sequence i
 
 - [x] **CHAT-07: Give concise natural project assessments** — Done when: Paired typed/voice answers lead with a short practical summary, offer separate explanation/evidence, keep material uncertainty visible, validate exact source references and project identity, and verify a live contradictory-history case and the bundled UI.
 
-- [ ] **CHAT-08: Converse and prepare Codex work in the main section** — Done when: Answer ordinary/project questions naturally, retain relevant discussion context, prepare editable exact-project/chat work drafts, require explicit submission, show truthful delivery capability/receipts, prevent duplicate or uncertain replay, and verify the installed Mac preview.
+- [x] **CHAT-08: Converse and prepare Codex work in the main section** — Done when: Answer ordinary/project questions naturally, retain relevant discussion context, prepare editable exact-project/chat work drafts, require explicit submission, show truthful delivery capability/receipts, prevent duplicate or uncertain replay, and verify the installed Mac preview.
 
 ## P3 — Returning to work and managing multiple projects
 
@@ -147,3 +147,8 @@ The 2026-11-03 reply-responsiveness increment adds bilingual feedback every four
 The 2026-11-04 Mac correction adds a bounded 20-second follow-up window after an answer and exact playback-end receipts, so the second question can start a fresh turn without another wake name. Twenty-eight consecutive bilingual fixture checks and nine shipped-player checks pass, including project retention, playback failure, expiry and stale receipts. The user has explicitly enabled the Mac microphone, superseding the previous global pause. Human consecutive-question acceptance and calendar rollout remain pending; AND-10 stays unchecked.
 
 On 2026-11-05 the user requested immediate post-answer listening. Exact playback completion now accepts the next audio frame without an added mute tail, and the browser sends completion without waiting for its start acknowledgement. Thirty controller and ten shipped-player checks pass, including immediately resumed speech and reordered receipts. The existing 20-second window is an opportunity to start a follow-up, not a delay. New installation/human acceptance is recorded in LOCAL_CONVERSATION.md; AND-10 remains unchecked.
+
+
+## Main conversation and Codex draft verification — 2026-11-05
+
+CHAT-08 is complete on the Mac preview: live Chinese explanation and contextual follow-up, correct project/change draft, editable text surviving reload, truthful tracked-chat/new-chat action, cancelled confirmation without work submission, and source-matched installed modules. Sixty-seven discussion checks, sixteen latency cases, authenticated transport and actual JSON-RPC fixture checks cover isolation, exact active/idle steering, duplicate and uncertain delivery. The broader intent lifecycle, roadmap memory and voice/field acceptance criteria remain open. See [discussion verification](docs/PROJECT_DISCUSSION.md).

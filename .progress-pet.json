@@ -671,17 +671,17 @@
     {
       "id": "CHAT-08",
       "title": "Converse and prepare Codex work in the main section",
-      "done": false,
+      "done": true,
       "phase": "P2",
       "milestone": "Natural project discussion and changes",
       "acceptance": "Answer ordinary/project questions naturally, retain relevant discussion context, prepare editable exact-project/chat work drafts, require explicit submission, show truthful delivery capability/receipts, prevent duplicate or uncertain replay, and verify the installed Mac preview.",
       "evidence": {
-        "kind": "Implemented; live verification pending",
-        "quote": "Question-specific framing, semantic inert drafts, exact destinations and no-replay receipts pass source checks; installed Mac preview verification remains.",
+        "kind": "Source checks and installed Mac live verification",
+        "quote": "Live Chinese explanation/follow-up and correct-project editable draft verified; edits survived reload and cancelled confirmation sent no work. Exact capability wording, authenticated routing, active/idle steering, duplicate and uncertain delivery checks pass. See docs/PROJECT_DISCUSSION.md.",
         "at": "2026-11-05"
       },
       "manualOverride": true
     }
   ],
-  "revision": 20
+  "revision": 21
 }
