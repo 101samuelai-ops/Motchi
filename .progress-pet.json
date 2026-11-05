@@ -709,7 +709,21 @@
         "reason": "Installed native wake popup, captions and state animations verified; broader voice accuracy remains AND-10."
       },
       "manualOverride": true
+    },
+    {
+      "id": "UI-03",
+      "title": "Combine desktop interaction into one clean chat",
+      "done": true,
+      "phase": "Mac",
+      "milestone": "Desktop interaction",
+      "acceptance": "Voice and typed turns, processing feedback and actionable requests share one conversation; project details collapse, controls remain usable, and the source UI and installed Mac update are verified.",
+      "evidence": {
+        "kind": "Source UI and installed Mac verification",
+        "quote": "18 shipped-function checks, browser layout/voice/typed/inline-approval fixtures, source-equal signed Mac installation and fresh live PCM. See docs/DESKTOP_INTERACTION.md.",
+        "at": "2026-11-05"
+      },
+      "manualOverride": true
     }
   ],
-  "revision": 21
+  "revision": 23
 }

@@ -18,7 +18,7 @@ The local desktop control route still requires authentication and a connection o
 
 ## Verification
 
-Source checks pass: 20 desktop lifecycle/recovery/pause/event-isolation checks; 27 Mac voice, 30 follow-up, 56 local conversation, 48 preview, 16 microphone policy, 45 authenticated portal, 10 actual preview playback, 24 appearance, six native-caption UI and 21 Swift checks. Bilingual bubble-feedback cadence/cancellation checks, Python/JavaScript syntax and diff checks also pass.
+Source checks pass: 20 desktop lifecycle/recovery/pause/event-isolation checks; 27 Mac voice, 30 follow-up, 56 local conversation, 48 preview, 16 microphone policy, 45 authenticated portal, 10 actual preview playback, 24 appearance, 18 native conversation UI and 21 Swift checks. Bilingual bubble-feedback cadence/cancellation checks, Python/JavaScript syntax and diff checks also pass.
 
 The update is backed up, installed and signed under the existing app identity. After the user allowed microphone access, the installed service delivered fresh PCM with the local keyword detector ready. The final Resume check measured first PCM in 528 ms and an audio age of 53 ms; these are capture observations, not speech recognition or answer latency claims.
 
@@ -31,3 +31,11 @@ Capture remained active for 30 seconds with the preview server closed; four auth
 With the configured Mac companion running, use `android/preview.py --live --desktop-voice --work-controls`. Preview credentials stay server-side and are revoked on normal close. The ordinary live/scoped-test preview retains its previous microphone lifecycle.
 
 The failed human trial also prompted a native thread sample: repeated scans of an accumulating project snapshot occupied most UI-thread samples. JSON line framing now scans only each new chunk and decodes on a serial background queue. A fragmented 2 MB fixture plus the following voice event decoded in 94 ms, and a subsequent native thread sample no longer showed the scanning stall. This removes that measured UI bottleneck; it does not prove acoustic wake recognition.
+
+## One desktop conversation
+
+After confirming the native meter and words appear, the user asked for one clean chat box. The Mac popup now has one enclosing surface, one scrolling conversation and one composer. Voice captions appear as the current user turn; completed voice replies join typed messages in that same project conversation. Interim processing remains Motchi’s own live message and is removed when the final reply is recorded, avoiding a duplicate answer panel. In-memory voice replay/corrections retain one pair per turn, with exact-project routing and no forced scroll while reading older messages.
+
+The project selector stays visible. Progress, checklist, sources and Codex work controls are inside the collapsed Project & checklist section. Pending real question/approval controls appear inline in the conversation; this layout does not create new approval capabilities. Talk and Pause remain accessible; Finish appears only during an active question. The dog entrance, dismissal and transparent native canvas are preserved.
+
+Verified with 18 shipped-function cases and an isolated browser fixture at the native 570 × 590 size: Chinese live captions, completed voice history, a typed question with in-thread processing, final answer without duplication, inline permission discussion and expandable project tools. Fixture permissions/messages were simulated and caused no real approval or work submission. The signed Mac dialog matches source; after restart the local microphone was running with 103 ms audio age and the keyword detector ready. A follow-up runtime check loaded all nine project groups with 89 ms audio age and no capture issue; the live dashboard reconnected. The calendar was not updated. These layout checks do not claim new real-speech accuracy or answer latency acceptance.

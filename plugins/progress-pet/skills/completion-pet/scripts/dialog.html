@@ -34,6 +34,13 @@ body.checklist-open .metric{display:none}body.checklist-open .chips{display:none
 @media(prefers-reduced-motion:reduce){.pet-head,.pet-eyes,.tail,.pet-mouth,.companion-dog[data-react]{animation:none!important;transition:none!important}}
 
 .voice-caption{font-size:11px;color:#c8dabf;line-height:1.5;margin:8px 0 0;white-space:pre-wrap}.voice-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:10px}.voice-controls button{border:0;border-radius:10px;padding:6px 9px;background:#bbd99f;color:#233c28}.voice-input{display:flex;align-items:center;gap:8px;font-size:10px;color:#c8dabf;margin-top:8px}.voice-input meter{width:70px;height:10px;accent-color:#bbd99f}.speech #greeting{max-height:190px;overflow:auto;white-space:pre-wrap;line-height:1.55}body[data-pet-state="thinking"] .metric,body.voice-conversation .metric{display:none}
+
+/* One surface, one conversation and one composer. */
+.shell{gap:0!important;overflow:hidden;background:rgba(24,44,36,.97);border-radius:22px;box-shadow:0 14px 35px #071b2226}
+.head{padding:14px 15px!important;border-bottom:1px solid #b1d4b818;gap:8px}.head strong{font-size:14px;letter-spacing:.2px}.head .logo{font-size:16px}.header-status{font-size:9px;color:#adc6b3;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:auto}.close{margin-left:0;flex-shrink:0}
+.picker{padding:8px 12px}.picker select{font-size:11px}.project-details{flex-shrink:0;border-bottom:1px solid #b1d4b81c;padding:0 15px 9px;max-height:44%;overflow:auto}.project-details>summary{font-size:10px;color:#b1c8b7;cursor:pointer}.project-details>summary span{float:right;color:#c2dfa9}.project-tools{padding:8px 0 0}.project-tools .metric{display:flex!important;margin-bottom:7px}.project-tools .status{padding:3px 0 7px;line-height:1.5}.checklist-panel{padding:7px 0!important;border-top:1px solid #b1d4b818}.project-tools .task-actions{padding-top:6px}.codex-link{border:0;background:none;color:#bdd7b6;font-size:10px;padding:10px 0 2px}
+.thread-scroll{flex:1;min-height:80px;overflow:auto;padding:17px 14px 7px;scrollbar-width:thin;scrollbar-color:#67846e transparent;overflow-anchor:none}.msg{font-size:12px;line-height:1.65;margin:0 0 12px;padding:10px 12px;background:#c1dec00c;max-width:96%;border-radius:4px 14px 14px 14px}.msg.user{background:#aecb971a;border-radius:14px 4px 14px 14px;max-width:90%;color:#d9e8d4}.who{font-size:9px;letter-spacing:.2px;text-transform:none;color:#b6cdab;margin-bottom:4px}.speech{position:static;flex-shrink:initial}.speech:before{display:none}.speech #greeting{font-size:12px;max-height:none;overflow:visible;line-height:1.65}.voice-caption{font-size:12px!important;white-space:pre-wrap}.attention{margin:6px 0 10px;padding:12px;border:1px solid #d7c08d42;border-radius:14px;max-height:none!important;overflow:visible}.approval-card .actions{position:static}.chips{padding:0 14px 10px}.chips button{background:transparent;border-color:#b4d4b326;font-size:10px}.voice-input{margin:0;padding:3px 15px 9px;min-height:25px}.voice-input meter{width:48px}.voice-input span{flex:1}.voice-input button{font-size:10px;background:transparent;color:#cee4bb;border:1px solid #b4d4b33b;border-radius:10px;padding:3px 7px}.composer{margin:0 11px;padding:9px 10px!important;background:#e4f0dc0a;border:1px solid #b4d4b32b;border-radius:14px;align-items:center}.composer textarea{font-size:12px;max-height:76px;min-height:24px}.composer button{align-self:center;padding:7px 10px}.composer #desktopTalk{background:transparent;color:#c4dfa9;padding:5px;font-size:21px;font-weight:400}.foot{padding:9px 15px 12px;font-size:9px;color:#a0b8a6;text-shadow:none;align-items:center}.foot button{font-size:9px;text-decoration:underline;text-underline-offset:3px}.task-hint,.request-mode{padding:0 15px 8px;line-height:1.5}.dog{top:48px}
+@media(max-height:520px){.head{padding:10px 13px!important}.thread-scroll{min-height:55px;padding-top:10px}.foot{padding-bottom:8px}.project-details{max-height:38%}.chips{display:none}}
 </style></head><body class="intro"><main class="stage" aria-label="Motchi project dialog">
 <div class="ground" aria-hidden="true"></div><div class="dog" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210" role="img" aria-label="Motchi, an anime puppy with floppy brown ears and a green scarf">
 <ellipse class="pet-shadow" cx="120" cy="193" rx="65" ry="8" fill="#cfddd1"/>
@@ -60,22 +67,31 @@ body.checklist-open .metric{display:none}body.checklist-open .chips{display:none
 </svg>
 </div>
 <div class="tracking-note glass" role="status"><b>ON IT · MOTCHI</b><span id="trackingText">I’m tracking the progress.</span></div>
-<section class="shell" aria-label="Motchi chat">
-<header class="head glass"><span class="logo">🐾</span><div><strong>MOTCHI</strong><div class="sub">Your little window into Codex.</div></div><button class="close" id="close" aria-label="Dismiss dialog">×</button></header>
-<div class="picker glass"><label for="project">Looking at</label><select id="project" aria-label="Choose project"><option>Connecting to your projects…</option></select><button class="follow" id="follow" aria-label="Follow working chat automatically" aria-pressed="true">Auto ✓</button><button class="refresh" id="refresh" aria-label="Refresh projects">↻</button></div>
-<section class="speech glass" aria-label="Dog says"><p id="greeting">Hi! I’m finding your projects.</p><p id="voiceCaption" class="voice-caption" aria-live="polite" hidden></p><div id="voiceInput" class="voice-input" hidden><span id="voiceInputLabel">I’m listening.</span><meter id="voiceLevel" min="0" max="1" value="0" aria-label="Microphone sound level"></meter></div><div class="metric"><div class="ring" id="ring"><span id="percent">—</span></div><div class="counts"><b id="count">Getting ready</b><span id="remaining">Let’s see what’s next.</span></div></div></section>
+<section class="shell glass" aria-label="Motchi chat">
+<header class="head"><span class="logo">🐾</span><strong>Motchi</strong><span class="header-status" id="desktopMicState">Microphone paused</span><button class="close" id="close" aria-label="Dismiss dialog">×</button></header>
+<div class="picker"><select id="project" aria-label="Choose project"><option>Connecting to your projects…</option></select><button class="follow" id="follow" aria-label="Follow working chat automatically" aria-pressed="true">Auto ✓</button><button class="refresh" id="refresh" aria-label="Refresh projects">↻</button></div>
+<details class="project-details" id="projectDetails"><summary>Project &amp; checklist <span id="compactProgress">Progress unknown</span></summary><div class="project-tools">
+<div class="metric"><div class="ring" id="ring"><span id="percent">—</span></div><div class="counts"><b id="count">Getting ready</b><span id="remaining">Let’s see what’s next.</span></div></div>
 <div class="status"><span class="dot"></span><span id="status">Connecting to Codex…</span></div>
-<aside class="attention glass" id="attention" hidden aria-live="polite"><b id="attentionTitle">Codex needs you</b><p id="attentionText"></p><div class="options" id="options"></div><button id="review">Open Codex to reply ↗</button></aside>
-<details class="checklist-panel glass" id="checklistPanel"><summary>Project checklist <span id="checklistCount">0 tasks</span></summary><div id="checklistList" class="checklist-list"></div><div id="checklistNote" class="checklist-note" aria-live="polite"></div><details><summary>Recent automatic changes</summary><div id="checklistChanges" class="checklist-list"></div></details><div id="savedWork"></div><button id="addChecklist" type="button">＋ Checklist task</button></details>
-<section class="conversation glass" id="messages" aria-label="Conversation" aria-live="polite"><div class="empty">Ask me about this project. I’m all ears.</div></section>
+<details class="checklist-panel" id="checklistPanel"><summary>Checklist <span id="checklistCount">0 tasks</span></summary><div id="checklistList" class="checklist-list"></div><div id="checklistNote" class="checklist-note" aria-live="polite"></div><details><summary>Recent automatic changes</summary><div id="checklistChanges" class="checklist-list"></div></details><div id="savedWork"></div><button id="addChecklist" type="button">＋ Checklist task</button></details>
+<div class="task-actions"><button id="newTask" type="button">Start Codex task</button><button id="continueTask" type="button" hidden>Add work to Codex</button><button id="askMode" type="button" hidden>Ask Motchi</button><button id="stopTask" type="button" hidden>Stop task</button></div><button class="codex-link" id="open">Open in Codex ↗</button>
+</div></details>
+<div class="thread-scroll" id="chatScroll" aria-label="Conversation">
+<div id="messages"></div>
+<div id="liveSpeech" aria-live="polite"><p id="voiceCaption" class="msg user voice-caption" hidden></p><section class="speech msg mochi" id="petReply" aria-label="Motchi says"><span class="who">Motchi</span><p id="greeting">Hi! I’m finding your projects.</p></section></div>
+<aside class="attention" id="attention" hidden aria-live="polite"><b id="attentionTitle">Codex needs you</b><p id="attentionText"></p><div class="options" id="options"></div><button id="review">Open Codex to reply ↗</button></aside>
+</div>
 <div class="chips"><button data-question="progress">Progress</button><button data-question="what's left?">What’s left?</button><button data-question="What happened recently in this project?">Catch me up</button></div>
-<div class="task-actions"><button id="newTask" type="button">Start Codex task</button><button id="continueTask" type="button" hidden>Add work to Codex</button><button id="askMode" type="button" hidden>Ask Motchi</button><button id="stopTask" type="button" hidden>Stop task</button></div><div id="taskHint" class="task-hint" hidden></div><div id="requestMode" class="request-mode" hidden></div><form class="composer glass" id="composer"><textarea id="question" aria-label="Ask Motchi a question" placeholder="Ask Motchi about this project…" rows="2" maxlength="3000"></textarea><button id="send" type="submit">Ask ↑</button></form>
-<div class="voice-controls"><button id="desktopMic">Enable microphone</button><button id="desktopTalk">Talk</button><button id="desktopFinish" hidden>Finish question</button><span id="desktopMicState">Microphone paused</span></div><footer class="foot"><span>Click outside to tuck me away · Esc closes</span><button id="open">Open in Codex ↗</button></footer>
+<div id="taskHint" class="task-hint" hidden></div><div id="requestMode" class="request-mode" hidden></div>
+<div id="voiceInput" class="voice-input" hidden><meter id="voiceLevel" min="0" max="1" value="0" aria-label="Microphone sound level"></meter><span id="voiceInputLabel">I’m listening.</span><button id="desktopFinish" type="button" hidden>Finish</button></div>
+<form class="composer" id="composer"><textarea id="question" aria-label="Ask Motchi a question" placeholder="Ask or tell Motchi something…" rows="1" maxlength="3000"></textarea><button id="desktopTalk" type="button" aria-label="Talk to Motchi" title="Talk to Motchi">◉</button><button id="send" type="submit">Ask ↑</button></form>
+<footer class="foot"><span>Voice and text, one conversation</span><button id="desktopMic">Enable microphone</button></footer>
 </section><button class="replay" id="replay">Replay entrance</button><button class="tracking-demo" id="trackingDemo">Preview tracking</button></main><script>
 
 const $=id=>document.getElementById(id);
 let items=[],selected='',autoFollow=true,conversations=new Map(),drafts=new Map(),pending=new Map(),nextId=0,introTimer=null,departureTimer=null,entranceOrigin={},presentSequence=0,focusId='',focusTaskKey='',recommendationKey='',knownTasks=new Set(),approvalFocus=new Map(),composeMode='ask',controlBusy=new Set();
-let desktopVoiceState={},desktopVoiceEvent=null,processingSince=0;
+let desktopVoiceState={},desktopVoiceEvent=null,processingSince=0,voiceSelection="",voiceTurn="";
+const savedVoiceTurns=new Map();
 const native=!!window.webkit?.messageHandlers?.dog;
 document.body.classList.add(native?'native':'preview');
 window.presentMochi=function(origin={}){
@@ -160,16 +176,48 @@ function busy(){return [...pending.values()].some(p=>p.selection===selected)}
 function editing(){return !!$('question').value.trim()||busy()}
 function syncEditing(){send({action:'editing',editing:editing()})}
 function selectProject(id){
- if(id!==selected){drafts.set(selected,$('question').value);selected=id;composeMode='ask';$('question').value=drafts.get(id)||'';syncEditing()}
+ if(id!==selected){drafts.set(selected,$('question').value);selected=id;composeMode='ask';$('question').value=drafts.get(id)||'';$('chatScroll').dataset.reading='false';syncEditing()}
  $('project').value=selected;
 }
+function keepChatBottom(){
+ const scroll=$('chatScroll');
+ if(scroll.dataset.reading!=='true')scroll.scrollTop=scroll.scrollHeight;
+}
 function redrawMessages(){
- const list=[...(conversations.get(selected)||[]),...(current()?.managedCodex?(current().activity?.notes||[]).map(text=>({role:'codex',text})):[])];$('messages').replaceChildren();
- if(!list.length){const d=document.createElement('div');d.className='empty';d.textContent=directQuestion()?(directQuestion().source==='checklist'?'Choose whether this is the same task or new work.':'Codex is waiting. Your reply below goes back to the run that asked.'):'Ask what’s been done — I can answer from the latest project updates.';$('messages').append(d)}
- for(const item of list){const d=document.createElement('div');d.className='msg '+(item.role==='user'?'user':'mochi');const label=document.createElement('span');label.className='who';label.textContent=item.role==='user'?'You':item.role==='codex'?'Codex connection':'Motchi';d.append(label,document.createTextNode(item.text));$('messages').append(d)}
+ const list=[...(conversations.get(selected)||[]),...(current()?.managedCodex?(current().activity?.notes||[]).map(text=>({role:'codex',text})):[])];
+ const key=JSON.stringify([selected,list]);
+ if($('messages').dataset.state!==key){
+  $('messages').dataset.state=key;$('messages').replaceChildren();
+  for(const item of list){const d=document.createElement('div');d.className='msg '+(item.role==='user'?'user':'mochi');const label=document.createElement('span');label.className='who';label.textContent=item.role==='user'?'You':item.role==='codex'?'Codex connection':'Motchi';d.append(label,document.createTextNode(item.text));$('messages').append(d)}
+  keepChatBottom();
+ }
  $('send').disabled=busy();
-
- $('messages').scrollTop=$('messages').scrollHeight;
+}
+function receiveVoice(event){
+ if(event.audioOnly)return;
+ if(event.turnId&&event.turnId!==voiceTurn){voiceTurn=event.turnId;voiceSelection=selected;}
+ desktopVoiceEvent=event;
+ // Interim captions stay in the live turn. Store only completed replies, once.
+ if(event.partial||event.processing||!event.text||!(event.heard||event.failed))return;
+ const target=event.selection||event.routedSelection||voiceSelection;
+ if(!items.some(item=>item.id===target))return;
+ const identity=event.turnId||event.operationId;
+ if(!identity)return;
+ const prior=savedVoiceTurns.get(identity);
+ if(prior){
+  if(prior.text===event.text)return;
+  const previous=conversations.get(prior.selection)||[];
+  conversations.set(prior.selection,previous.filter(item=>item.voiceTurn!==identity));
+ }
+ const list=conversations.get(target)||[];
+ const question=event.heard||event.transcript;
+ if(question)list.push({role:'user',text:question,voiceTurn:identity});
+ list.push({role:'mochi',text:event.text,voiceTurn:identity});conversations.set(target,list);
+ savedVoiceTurns.set(identity,{selection:target,text:event.text});voiceSelection=target;
+ if(target!==selected&&!editing()&&!current()?.questions?.length&&!current()?.approvals?.length){
+  selectProject(target);send({action:'select',selection:target,autoFollow,keepConversation:true});
+ }
+ redrawMessages();
 }
 function renderChecklist(item){
  const c=item.checklist||{},tasks=c.tasks||[];
@@ -202,12 +250,13 @@ function renderChecklist(item){
 }
 function renderPetSpeech(){
  const attention=(current()?.questions?.length||current()?.approvals?.length);
- const v=desktopVoiceState,e=desktopVoiceEvent,thinking=busy()||v.stage==='processing';
+ const v=desktopVoiceState,e=voiceSelection&&voiceSelection!==selected?null:desktopVoiceEvent,thinking=busy()||(v.stage==='processing'&&(!voiceSelection||voiceSelection===selected));
  const state=v.speaking?'speaking':thinking?'thinking':['listening','possible-end','follow-up'].includes(v.stage)?'listening':'idle';
  document.body.dataset.petState=state;
  $('desktopMic').textContent=v.enabled?'Pause microphone':'Enable microphone';
- $('desktopMicState').textContent=v.issue||(v.enabled?'Microphone on · say Motchi / 莫奇':'Microphone paused');
- const listening=v.enabled&&['listening','possible-end'].includes(v.stage),caption=e?.transcript||e?.heard||'';
+ $('desktopMicState').textContent=v.issue?'Microphone needs attention':v.enabled?'Listening · Motchi / 莫奇':'Microphone paused';
+ $('desktopMicState').title=v.issue||'';
+ const listening=v.enabled&&['listening','possible-end'].includes(v.stage)&&(!voiceSelection||voiceSelection===selected),saved=e&&savedVoiceTurns.has(e.turnId||e.operationId),caption=saved?'':e?.transcript||e?.heard||'';
  $('desktopFinish').hidden=!listening;
  $('voiceInput').hidden=!listening||!v.running||v.speaking;
  $('voiceLevel').value=Math.min(1,Math.max(0,Number(v.rms)||0)/1800);
@@ -216,13 +265,17 @@ function renderPetSpeech(){
  $('voiceCaption').textContent=caption?'You · '+caption:'';
  // Keep request/approval controls in their card, but never hide an active
  // voice conversation or its captions because a project needs attention.
- if(attention&&!e&&!thinking)return;
+ const history=conversations.get(selected)||[];
+ $('liveSpeech').hidden=!thinking&&!listening&&(saved||(!e&&!!history.length));
+ document.querySelector('.chips').hidden=!!history.length||!!attention||listening||thinking;
+ if(attention&&!e&&!thinking){$('liveSpeech').hidden=true;return;}
  if(thinking){
   if(!processingSince)processingSince=Date.now();
   const zh=/[\u3400-\u9fff]/.test(e?.transcript||e?.text||''),phase=Math.floor((Date.now()-processingSince)/4000)%3;
   $('greeting').textContent=(zh?['让我想一想，马上回答你。','我还在认真整理，稍等一下。','我在把重点说清楚，很快就好。']:['Let me think that through for you.','I’m still working through it. Stay with me.','I’m putting the important parts together.'])[phase];
- }else{processingSince=0;if(e?.text)$('greeting').textContent=e.text;}
+ }else{processingSince=0;if(e?.partial&&listening)$('greeting').textContent=/[\u3400-\u9fff]/.test(caption)?'我在听，你说。':'I’m listening. Go ahead.';else if(e?.text)$('greeting').textContent=e.text;}
  document.body.classList.toggle('voice-conversation',!!e);
+ keepChatBottom();
 }
 $('desktopMic').onclick=()=>send({action:'desktopVoice',enabled:!desktopVoiceState.enabled});
 $('desktopTalk').onclick=()=>send({action:'desktopVoice',enabled:true,activate:true});
@@ -234,6 +287,7 @@ function render(){
  renderChecklist(item);
  $('greeting').textContent=q?.source==='checklist'?'Is this the same task, or something new?':questions.length?'Codex has a question for you.':approvals.length?'Codex needs your approval.':p.source==='plan'?'I’m following Codex’s current task plan.':item.status==='active'?'I’m tracking the progress.':p.total&&p.completed===p.total?'All paws up — your checklist is finished!':p.issue?'I’m watching the latest project updates.':'One paw at a time. Here’s our progress.';
  $('percent').textContent=p.percent==null?'—':p.percent+'%';$('ring').style.setProperty('--sweep',((p.percent||0)*3.6)+'deg');
+ $('compactProgress').textContent=p.percent==null?'Progress unknown':`${p.percent}% · ${p.completed}/${p.total}`;
  $('count').textContent=p.issue?'Activity tracking':`${p.completed} of ${p.total} tasks complete`;
  $('remaining').textContent=p.issue?'A percentage appears when Codex records a task plan':p.source==='plan'?'Current task plan · '+(p.total-p.completed)+' remaining':p.total?`${p.total-p.completed} remaining`:'No tasks yet';
  const activity=questions.length?'Waiting for your reply':item.status==='active'?'Working now':item.status==='waitingOnApproval'?'Approval requested':item.status==='idle'?'Latest turn finished':'Recent project';
@@ -262,10 +316,10 @@ function render(){
  $('askMode').hidden=composeMode==='ask'&&!a;
  $('taskHint').hidden=composeMode==='ask';$('taskHint').textContent=composeMode==='startTask'?'Starts a separate Codex chat in this project. Its approvals return here.':composeMode==='addChecklist'?'Adds an item to this project checklist. Similar tasks need your choice.':'Adds a checklist item and sends your instructions to this Codex chat. Answer pending questions or permissions first.';
  if(q){for(const option of q.options||[]){const b=document.createElement('button');b.type='button';b.textContent=option;b.onclick=()=>submit(option);$('options').append(b)}}
- $('question').placeholder=a?'Ask why this access is needed…':q?(q.source==='checklist'?'Choose Same task or Different task above…':'Reply to Codex…'):composeMode==='startTask'?'Describe the task for Codex…':composeMode==='addWork'?'Describe the additional work…':composeMode==='addChecklist'?'What needs to be done?':'Ask Motchi about this project…';$('question').setAttribute('aria-label',q?(q.source==='checklist'?'Reply to Motchi':'Reply to Codex'):'Ask Motchi a question');$('send').textContent=a?'Ask ↑':q?'Reply ↑':composeMode==='startTask'?'Start task ↑':composeMode==='addWork'?'Add work ↑':composeMode==='addChecklist'?'Add task ↑':'Ask ↑';$('open').disabled=!item.threadId;document.querySelector('.chips').hidden=!!q;redrawMessages();renderPetSpeech();
+ $('question').placeholder=a?'Ask why this access is needed…':q?(q.source==='checklist'?'Choose Same task or Different task above…':'Reply to Codex…'):composeMode==='startTask'?'Describe the task for Codex…':composeMode==='addWork'?'Describe the additional work…':composeMode==='addChecklist'?'What needs to be done?':'Ask or tell Motchi something…';$('question').setAttribute('aria-label',q?(q.source==='checklist'?'Reply to Motchi':'Reply to Codex'):'Ask Motchi a question');$('send').textContent=a?'Ask ↑':q?'Reply ↑':composeMode==='startTask'?'Start task ↑':composeMode==='addWork'?'Add work ↑':composeMode==='addChecklist'?'Add task ↑':'Ask ↑';$('open').disabled=!item.threadId;document.querySelector('.chips').hidden=!!q;redrawMessages();renderPetSpeech();
 }
 window.receive=function(data){
- if(data.type==='desktopVoice'){desktopVoiceState=data.state||{};for(const event of data.events||[]){if(!event.audioOnly)desktopVoiceEvent=event;}if(!desktopVoiceState.enabled){desktopVoiceEvent=null;document.body.classList.remove('voice-conversation');}renderPetSpeech();return;}
+ if(data.type==='desktopVoice'){desktopVoiceState=data.state||{};for(const event of data.events||[])receiveVoice(event);if(!desktopVoiceState.enabled){desktopVoiceEvent=null;document.body.classList.remove('voice-conversation');}renderPetSpeech();return;}
  if(data.type==='snapshot'){
  items=data.items||[];if(typeof data.autoFollow==='boolean')autoFollow=data.autoFollow;
  const recommendation=items.find(i=>i.id===(data.autoSelection||data.selection));recommendationKey=recommendation?.trackingKey||recommendation?.id||'';
@@ -288,17 +342,17 @@ window.receive=function(data){
  if(entry&&!entry.control&&key!==entry.selection){const old=conversations.get(entry.selection)||[];const idx=old.findLastIndex?old.findLastIndex(x=>x.role==='user'&&x.text===entry.text):-1;if(idx>=0)old.splice(idx,1);list.push({role:'user',text:entry.text})}
  list.push({role:entry?.direct&&!['addChecklist','setChecklistDone','undoChecklistChange','replyQuestion'].includes(entry?.action)?'codex':'mochi',text:data.error||data.text||'I couldn’t get a reply.'});conversations.set(key,list)}
  if(key&&data.routedSelection&&selected===entry?.selection&&!$('question').value.trim()){selectProject(key);if(autoFollow&&!entry.direct){focusId=key;focusTaskKey=recommendationKey}send({action:'select',selection:key,autoFollow,keepConversation:!entry.direct});}
- if(key===selected&&entry&&!entry.direct)desktopVoiceEvent={text:data.error||data.text||'I couldn’t get a reply.'};
+ if(key===selected&&entry&&!entry.direct)desktopVoiceEvent=null;
  render();syncEditing();
  if(returnWhenReady&&entry&&!entry.direct&&key)revealAnswer(key);
  }else if(data.type==='error'){$('status').textContent=data.error}
 };
 function submit(text,forceAsk=false){
- if(!selected||busy()||!text.trim())return;desktopVoiceEvent=null;
+ if(!selected||busy()||!text.trim())return;desktopVoiceEvent=null;$('chatScroll').dataset.reading='false';
  const a=forceAsk?null:focusedApproval();
  if(!forceAsk&&!a&&composeMode!=='ask'&&!directQuestion()){const taskText=text.trim();$('question').value='';drafts.set(selected,'');control(composeMode,{text:taskText});return}
  const id=String(++nextId),list=conversations.get(selected)||[],q=forceAsk||a?null:directQuestion();
- list.push({role:'user',text:text.trim()});conversations.set(selected,list);pending.set(id,{selection:selected,direct:!!q,text:text.trim()});$('question').value='';drafts.set(selected,'');redrawMessages();syncEditing();
+ list.push({role:'user',text:text.trim()});conversations.set(selected,list);pending.set(id,{selection:selected,direct:!!q,text:text.trim()});$('question').value='';drafts.set(selected,'');redrawMessages();renderPetSpeech();syncEditing();
  send({action:a?'askApproval':q?'replyQuestion':'ask',selection:selected,autoFollow,approvalId:a?.id,questionId:q?.id,text:text.trim(),requestId:id});
 }
 $('newTask').onclick=()=>{composeMode='startTask';approvalFocus.delete(selected);render();$('question').focus()};
@@ -308,14 +362,15 @@ $('addChecklist').onclick=()=>{composeMode='addChecklist';approvalFocus.delete(s
 $('askMode').onclick=()=>{composeMode='ask';approvalFocus.delete(selected);render()};
 $('stopTask').onclick=()=>control('stopTask');
 $('composer').addEventListener('submit',e=>{e.preventDefault();submit($('question').value)});
-$('question').addEventListener('input',syncEditing);
+$('chatScroll').addEventListener('scroll',()=>{const el=$('chatScroll');el.dataset.reading=String(el.scrollHeight-el.scrollTop-el.clientHeight>45)});
+$('question').addEventListener('input',()=>{syncEditing();$('question').style.height='auto';$('question').style.height=Math.min(76,$('question').scrollHeight)+'px'});
 $('question').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();submit($('question').value)}});
 document.querySelectorAll('[data-question]').forEach(b=>b.addEventListener('click',()=>submit(b.dataset.question,true)));
 $('project').addEventListener('change',()=>{autoFollow=false;focusId='';focusTaskKey='';selectProject($('project').value);send({action:'select',selection:selected,autoFollow});syncEditing();render()});
 $('follow').onclick=()=>{autoFollow=!autoFollow;focusId='';focusTaskKey='';send({action:'follow',autoFollow});send({action:'snapshot'});render()};
 $('refresh').onclick=()=>send({action:'refresh'});$('close').onclick=dismiss;
 document.addEventListener('keydown',e=>{if(e.key==='Escape')dismiss()});
-document.addEventListener('pointerdown',e=>{if(!e.target.closest('button,input,label,summary,select,textarea,a,.conversation,.speech,.attention,.picker,.checklist-panel'))dismiss()});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('button,input,label,summary,select,textarea,a,.shell'))dismiss()});
 function openThread(){const item=current();if(item?.threadId)send({action:'openThread',threadId:item.threadId})}
 $('open').onclick=openThread;$('review').onclick=openThread;$('replay').onclick=()=>presentMochi();
 $('trackingDemo').onclick=()=>{presentMochi({mode:'tracking',placement:'topRight',projectTitle:current()?.title});const sequence=presentSequence;departureTimer=setTimeout(()=>{if(sequence===presentSequence){departMochi();departureTimer=setTimeout(()=>{if(sequence===presentSequence)document.body.classList.add('dismissed')},200)}},1300)};

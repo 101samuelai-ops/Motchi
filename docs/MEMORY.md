@@ -4,6 +4,12 @@ Updated: 2026-11-05. This file is durable project memory for future development 
 
 
 
+## Unified desktop conversation — 2026-11-05
+
+The user confirmed both the popup microphone meter and recognized words appear, then requested combining everything into a clean single chat box. The Mac popup now merges voice and typed turns, transient processing feedback and inline actionable requests into one scrollable conversation with one composer. Progress/checklist/source and Codex work controls collapse under Project & checklist. Pause remains visible, Talk sits beside typing, and Finish appears during active intake. Completed voice turns are deduplicated and scoped to their exact project; older messages remain readable without forced scrolling. Conversation history retains the existing in-process lifetime.
+
+Eighteen shipped-function checks and isolated browser voice/typing/approval/layout fixtures pass. The update is signed and installed, its dialog bytes match source and fresh live PCM was observed after restart. The fixtures did not grant real permission or send work. UI-02 and UI-03 are complete for their scoped interaction criteria; AND-10 remains open for broader voice/field acceptance. No calendar rollout. See DESKTOP_INTERACTION.md.
+
 ## Desktop interaction and app-owned microphone — 2026-11-05
 
 The user requests dog interaction animation, first-person processing feedback in the main bubble, saying Motchi to open the existing double-right-click popup, and continuous microphone use while Motchi runs. App-owned listening is enabled on this Mac with explicit user authorization. Closing the preview does not stop capture; native/local Pause persists and blocks paired-device reactivation, while explicit Resume restores capture. New installations remain opt-in and calendar rollout remains deferred.
