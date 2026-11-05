@@ -44,7 +44,7 @@ def status(body,headers):
     except urllib.error.HTTPError as error:return error.code
 try:
     page,headers=http()
-    check(b'live Mac test' in page and b'motchi-preview' in page,'The page labels live data and carries a same-origin request nonce')
+    check(b'live Mac' in page and b'motchi-preview' in page,'The page labels live data and carries a same-origin request nonce')
     check(connection.token.encode() not in page and connection.token.encode() not in http('/native.js')[0],
           'Pairing credentials are absent from browser assets')
     check(b"connect-src 'self'" in page and b"media-src 'self' blob:" in page,
@@ -107,6 +107,32 @@ try:
 finally:
     preview.server.shutdown();preview.close();thread.join(timeout=2)
 check(connection.closed,'Closing the preview revokes its temporary connection')
+
+connection=Connection();preview=LivePreview(connection,work_controls=True)
+thread=threading.Thread(target=preview.server.serve_forever,daemon=True);thread.start()
+try:
+    check(call('info')['data']['workControls'] and b'Explicit Codex work controls enabled' in http()[0],
+          'Opted-in preview truthfully exposes work capability')
+    request={'action':'send','text':'Add a fixture button','operationId':'work-operation-1','projectId':'exact-project','selection':'exact-chat','_permitted':'injected'}
+    call('submit',request=request)
+    forwarded=connection.calls[-1]
+    check(forwarded[0]=='/v1/operations' and forwarded[1]=={k:v for k,v in request.items() if k!='_permitted'},
+          'Explicit work preserves exact project, chat, text and stable operation ID while discarding private fields')
+    call('submit',request=request)
+    check(connection.calls[-1]==forwarded,'Retry transport preserves the same operation ID for server deduplication')
+    before=len(connection.calls)
+    check(status({'action':'submit','request':dict(request,action='start')},{})==400,
+          'A tracked chat cannot start connected work without explicit confirmation')
+    check(status({'action':'submit','request':dict(request,selection='')},{})==400,
+          'Work without an exact chat is rejected before forwarding')
+    for action in ('approve','toggle','undo'):
+        check(status({'action':'submit','request':dict(request,action=action)},{})==400,
+              'Work preview does not expand into '+action)
+    check(len(connection.calls)==before,'Rejected work never reaches the companion')
+    call('submit',request=dict(request,action='start',confirmed=True))
+    check(connection.calls[-1][1]['confirmed'] is True,'Confirmed new-chat intent is forwarded intact')
+finally:
+    preview.server.shutdown();preview.close();thread.join(timeout=2)
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'skills/completion-pet/scripts'))
 import microphone_policy as policy

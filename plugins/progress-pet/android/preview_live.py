@@ -87,11 +87,12 @@ class MacConnection:
 
 
 class LivePreview:
-    def __init__(self, connection, port=0, voice_test=False):
+    def __init__(self, connection, port=0, voice_test=False, work_controls=False):
         self.connection = connection
         self.lock = threading.RLock()
         self.enabled = False
         self.voice_test = voice_test
+        self.work_controls = work_controls
         self.test_started = False
         self.context = {'projectId': None, 'selection': None}
         self.language = 'auto'
@@ -124,9 +125,11 @@ class LivePreview:
                 if name == 'index.html':
                     content = content.replace(b'<head>', ('<head><meta name="motchi-preview" content="'+preview.csrf+'">').encode())
                     content = content.replace(b"connect-src 'none'", b"connect-src 'self'; media-src 'self' blob:")
-                    content = content.replace(b'<body>', '<body class="preview-read-only"><div class="preview-banner">Motchi 0.18 live Mac test &middot; Real projects &middot; Work submissions disabled &nbsp; <span>Enable listening, then say Motchi / 莫奇 · English + 中文.</span></div>'.encode())
+                    mode = 'Explicit Codex work controls enabled' if preview.work_controls else 'Work submissions disabled'
+                    body_class = 'preview-work-controls' if preview.work_controls else 'preview-read-only'
+                    content = content.replace(b'<body>', ('<body class="'+body_class+'"><div class="preview-banner">Motchi live Mac &middot; Real projects &middot; '+mode+' &nbsp; <span>Say Motchi / 莫奇 · English + 中文.</span></div>').encode())
                 if name == 'app.css':
-                    content += b'\n.preview-banner{padding:12px 24px;background:#203b39;color:white;font:14px system-ui;display:flex;gap:12px;flex-wrap:wrap}.preview-banner span{opacity:.8}.preview-read-only #comment,.preview-read-only #send,.preview-read-only #changes button{display:none}.preview-read-only #checklist input{pointer-events:none}\n'
+                    content += b'\n.preview-banner{padding:12px 24px;background:#203b39;color:white;font:14px system-ui;display:flex;gap:12px;flex-wrap:wrap}.preview-banner span{opacity:.8}.preview-read-only #comment,.preview-read-only #send{display:none}.preview-read-only #changes button,.preview-work-controls #changes button{display:none}.preview-read-only #checklist input,.preview-work-controls #checklist input{pointer-events:none}\n'
                 mime = 'text/html' if name.endswith('.html') else 'text/css' if name.endswith('.css') else 'image/svg+xml' if name.endswith('.svg') else 'application/javascript'
                 self.respond(200, content, mime)
             def do_POST(self):
@@ -189,10 +192,16 @@ class LivePreview:
             return self.connection.request('/v1/'+('operations/' if action == 'job' else 'voice-audio/')+identity)
         if action == 'submit':
             request = body.get('request', {})
-            if not isinstance(request, dict) or request.get('action') not in ('ask', 'discuss'): raise ValueError('Questions only in this preview.')
-            return self.connection.request('/v1/operations', {k: request.get(k) for k in ('action', 'text', 'operationId', 'projectId', 'selection')})
+            actions = ('ask', 'discuss', 'send', 'start', 'comment') if self.work_controls else ('ask', 'discuss')
+            if not isinstance(request, dict) or request.get('action') not in actions: raise ValueError('This action is disabled in this preview.')
+            if request['action'] in ('send','start','comment'):
+                if not all(isinstance(request.get(k), str) and request[k] for k in ('projectId','selection')):
+                    raise ValueError('Choose the exact project and chat before sending.')
+                if request['action']=='start' and request.get('confirmed') is not True:
+                    raise ValueError('Confirm starting a new connected Codex chat.')
+            return self.connection.request('/v1/operations', {k: request[k] for k in ('action', 'text', 'operationId', 'projectId', 'selection', 'confirmed') if k in request})
         with self.lock:
-            if action == 'info': return {'paired': True}
+            if action == 'info': return {'paired': True, 'workControls': self.work_controls}
             if action == 'voiceContext':
                 self.context = {k: body.get(k) or None for k in ('projectId', 'selection')}
                 return {'saved': True}
@@ -231,14 +240,14 @@ class LivePreview:
                 finally: self.server.server_close()
 
 
-def run(root, port=0, endpoint=None, voice_test=False):
+def run(root, port=0, endpoint=None, voice_test=False, work_controls=False):
     connection = MacConnection(root, endpoint)
     from microphone_policy import read, finish_test
     try:
         if voice_test:
             if not read(root)['paused']:
                 raise ValueError('Pause Motchi microphones before starting a scoped voice test.')
-        preview = LivePreview(connection, port, voice_test=voice_test)
+        preview = LivePreview(connection, port, voice_test=voice_test, work_controls=work_controls)
     except BaseException:
         if voice_test:
             finish_test(root, connection.device_id)

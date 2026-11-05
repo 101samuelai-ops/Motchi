@@ -23,6 +23,21 @@ with tempfile.TemporaryDirectory() as temp:
        {'id':'a-review','cwd':str(alpha),'title':'Alpha review','status':'idle','progress':checklist(alpha)},
        {'id':'b-chat','cwd':str(beta),'title':'Beta build','status':'idle','progress':checklist(beta)}]
  projects=D.grouped(rows)
+ for text in ('Please add dark mode.', 'Can you fix the layout?', 'Motchi, add tablet support.', '请帮我修复语音延迟', '莫奇，把按钮改成绿色'):
+  check(D.work_request(text)==text,'Explicit instruction retains original editable words: '+text)
+ for text in ('How do I add dark mode?', 'What if we fix this and add voice?', 'Do not add dark mode.', 'Explain this example: "add logging and fix export"', 'Could this idea work?', '如果添加语音会怎样？', '先不要修改布局'):
+  check(D.work_request(text) is None,'Discussion does not create an automatic commitment: '+text)
+ check(D.route('What can you help me with?',projects,projects[0]['id'])['scope']=='general','Capabilities questions escape the status-report route')
+ check(D.route('Please add dark mode',projects)['scope']=='choice','A work request without an exact project requires a choice')
+ check(D.route('Please add dark mode',projects,projects[0]['id'])['projects'][0]['id']==projects[0]['id'],'A work draft retains the selected project')
+ check(D.route('Explain our architecture',projects,projects[0]['id'])['projects'][0]['id']==projects[0]['id'],'Explanations can retain current project context')
+ check(D.route('Why?',projects,projects[0]['id'])['projects'][0]['id']==projects[0]['id'],'A short why follow-up retains the current discussion')
+ proposal=D.work_proposal('Please add dark mode',projects[0],'a-chat')
+ check(proposal['selection']=='a-chat' and proposal['requiresSend'] and not proposal['canSend'],'Tracked chat drafts are inert and disclose their capability')
+ check(D.work_proposal('Make this easier to read',projects[0],'a-chat','draftWork')['text']=='Make this easier to read',
+       'Semantic model intent can prepare natural wording without an imperative keyword')
+ check(D.work_proposal('What if we make this easier?',projects[0],'a-chat','draftWork') is None,
+       'Even a wrong model draft intent cannot turn a hypothetical into a commitment')
  check(len(projects)==2 and projects[0]['progress']['total']==1,'Duplicate project chats share one checklist count')
  many={'total':200,'completed':199,'tasks':[{'id':str(n),'title':'Old finished layout '+str(n),'done':True} for n in range(199)]+[
      {'id':'pending','title':'Repair voice endpoint handling','done':False,'manualOverride':True,'acceptance':'English and Chinese pauses work.'}]}
@@ -90,6 +105,23 @@ with tempfile.TemporaryDirectory() as temp:
  bridge.ask=lambda *a,**k:json.dumps({'scope':'general','projectId':None,'text':'Hello! What shall we discuss?','details':'','nextStep':'','caveat':'','evidence':[]})
  result=bridge.discuss_result({'text':'Hello'})
  check(not result['sources'] and not result.get('summaryUnavailable'),'General conversation shows no unrelated project coverage')
+ bridge.handle_action=lambda *_:(_ for _ in ()).throw(AssertionError('Discussion must never send work'))
+ def conversational_answer(target,question,**options):
+  captured.append((target,question,options));ctx=options['discussion_context']
+  return json.dumps({'scope':ctx['scope'],'projectId':ctx['projects'][0]['id'] if ctx['scope']=='project' else None,
+                    'text':'A cache stores reusable data so repeated requests can be faster.','details':'For example, reuse a recent result until it becomes stale.','nextStep':'','caveat':'','evidence':[]})
+ bridge.ask=conversational_answer
+ result=bridge.discuss_result({'text':'Explain what a cache is'})
+ general_key=captured[-1][2]['discussion_context']['historyKey']
+ check('reusable data' in result['text'] and not result['sources'] and not captured[-1][2]['discussion_context']['projects'],
+       'Ordinary explanations answer the question without unrelated project history or counts')
+ bridge.discuss_result({'text':'Can we discuss another idea?'})
+ check(captured[-1][2]['discussion_context']['historyKey']==general_key,'General follow-ups keep the same conversation despite changing retrieval needs')
+ result=bridge.discuss_result({'text':'Please add dark mode','projectId':projects[0]['id'],'selection':'a-review'})
+ check(result['workProposal']['selection']=='a-review' and result['workProposal']['text']=='Please add dark mode',
+       'Read-only discussion returns an exact-chat draft without invoking execution')
+ unavailable=D.presentation('unavailable',{'projects':[{'id':projects[0]['id'],'name':'Alpha','checklist':{'total':3,'completed':2}}]}, {projects[0]['id']},'Why use a cache?')
+ check('2 of 3' not in unavailable['text'] and unavailable['summaryUnavailable'],'Failed explanations do not substitute an unrelated progress report')
  pid=projects[0]['id'];context={'projects':[{'id':pid,'name':'Alpha','checklist':{'completed':1,'total':2},'history':{'messages':[
      {'id':'older','chat':'a-chat','role':'assistant','text':'Export is implemented and tested.','at':1},
      {'id':'newer','chat':'a-chat','role':'user','text':'The export still fails on my device.','at':2}]}}]}

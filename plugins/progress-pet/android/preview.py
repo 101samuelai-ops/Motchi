@@ -29,7 +29,7 @@ TRANSPORT = r'''
  window.previewCompletion=function(){var p=projects[0],t=p.progress.tasks[2];if(t.done||t.manualOverride)return;p.checklist.syncing=true;setTimeout(function(){t.done=true;t.evidence={kind:'Sample chat update',quote:'Automatic check-off is implemented and its checks passed.',at:Date.now()/1000,chat:p.selection};p.checklist.syncing=false;p.checklist.lastLiveReviewedAt=Date.now()/1000;p.checklist.changes.unshift({id:'sample-complete',kind:'complete',title:t.title,taskId:t.id,reason:'The sample assistant update confirms completion.',evidence:t.evidence,canUndo:true});p.checklist.matches=[{title:'Recognize finished tasks',decision:'same',reason:'Same completion outcome as the existing task.',evidence:t.evidence}];update(p);},1800);};
  document.getElementById('preview-completion').addEventListener('click',window.previewCompletion);
  window.callNative=function(action,extra){extra=extra||{};
-  if(action==='info')return Promise.resolve({paired:true});
+  if(action==='info')return Promise.resolve({paired:true,workControls:false});
   if(action==='snapshot')return Promise.resolve(JSON.parse(JSON.stringify({projects:projects,updatedAt:Date.now()/1000,speechAvailable:false})));
   if(action==='job')return Promise.resolve(jobs[extra.id]||{status:'failed',result:{error:'No sample receipt.'}});
   if(action==='quickAccessInfo')return Promise.resolve({enabled:false,visible:false,canPinShortcut:false});
@@ -56,13 +56,15 @@ def main():
     p.add_argument('--apk',type=Path)
     p.add_argument('--live',action='store_true',help='Test the running Mac companion with real projects and its microphone')
     p.add_argument('--voice-test',action='store_true',help='Allow only this preview microphone for five minutes while local pause remains enabled')
+    p.add_argument('--work-controls',action='store_true',help='Enable explicit, authenticated Codex work submissions in the live local preview')
     p.add_argument('--root',type=Path,default=Path.home()/'Library/Application Support/Mochi/android')
     p.add_argument('--bridge-url',help='Private HTTPS address of the running Mac companion')
     args=p.parse_args()
     if args.voice_test and not args.live:p.error('--voice-test requires --live')
+    if args.work_controls and not args.live:p.error('--work-controls requires --live')
     if args.live:
         from preview_live import run
-        run(args.root,args.port,args.bridge_url,args.voice_test)
+        run(args.root,args.port,args.bridge_url,args.voice_test,args.work_controls)
         return
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):

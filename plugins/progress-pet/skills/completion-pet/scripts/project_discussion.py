@@ -8,9 +8,14 @@ import re
 STOP = set('a an the is are was were be been to of on in for with and or my our your me it this that how what which project projects task tasks progress status done doing complete completed work working please can could tell about next remaining still has have do does i you'.split())
 
 SUMMARY_STYLE = (
-    "Synthesize an assessment for the user, rather than narrating the AI's activity log. "
+    "Answer the actual question. Do not turn every conversation into a progress report. "
     "Return text as a natural, plain-language answer: normally 2-3 short sentences, at most 70 English words or 160 Chinese characters. "
-    "Lead with the practical outcome: what works now, the most important remaining issue, and what this means for the user. "
+    "For progress questions, lead with what works, the important remaining issue and its practical meaning. "
+    "For explanations, answer directly using useful examples; for ideas, discuss options and tradeoffs. "
+    "For recommendations, make a clear recommendation and explain the practical reason, rather than repeating the activity log. "
+    "Use the recent conversation to resolve follow-up words like it, that and next. Ask one focused clarification only when it would materially change the answer. "
+    "Use general knowledge for ordinary questions and distinguish it from verified project facts. Do not claim live web access. "
+    "For a requested change, discuss the request and explain that the editable work draft needs the user's explicit Send to Codex action. "
     "Answer the actual question; greetings and ordinary chat need no project report. Match the user's language. "
     "For an overview, prioritize the few projects needing attention instead of listing every event. "
     "Put a short supporting explanation in details, one useful suggested next step in nextStep, and a material uncertainty in caveat. "
@@ -26,9 +31,55 @@ SUMMARY_STYLE = (
 )
 
 
+def discussion_only(text):
+    return bool(re.search(r"\b(?:don't|do not|never|what if|suppose|imagine|for example|example of|how (?:do|can|would|should))\b|不要|先不|别再|如果|假如|例如|比如|怎么|如何",text,re.I))
+
+
+def work_request(text):
+    """Prepare the user's own instruction; never authorize or execute it.
+
+    Deliberately conservative: ideas, quotes, negatives and how-to questions
+    remain discussion. The editable proposal always needs explicit submission.
+    """
+    text = str(text).strip()
+    if not text or len(text)>3000:return None
+    # A proposal is inert, but speculative/quoted/rejected ideas should not
+    # clutter the conversation with an apparent commitment either.
+    if discussion_only(text):return None
+    candidate=re.sub(r'"[^"\n]*"|“[^”\n]*”|「[^」\n]*」|‘[^’\n]*’', '', text)
+    candidate=re.sub(r'^\s*(?:(?:hey|hi|hello|你好|您好|嘿|嗨)[\s,，!！]*)?(?:motchi|mochi|莫奇|摩奇|莫琪)[\s,，:：!！]+','',candidate,flags=re.I)
+    english = (r"(?:^|[.!?;]\s*|\balso\s+|\band\s+)"
+        r"(?:(?:please|can you|could you|I want you to|I'd like you to|let's|lets|we need to)\s+)*"
+        r"(?:add|implement|fix|change|update|build|create|remove|replace|refactor|prioritize|defer)\s+\S")
+    chinese = r"(?:^|[。！？；]|另外|还有|并且)\s*(?:请|帮我|麻烦你|我想让你|现在|先)*(?:添加|新增|增加|实现|修复|修改|更新|创建|删除|替换|调整|优先处理|推迟|把.{1,60}(?:改成|改为|换成))\S"
+    return text if re.search(english,candidate,re.I) or re.search(chinese,candidate) else None
+
+
+def question_kind(text):
+    if work_request(text):return 'work'
+    if re.search(r"what can you (?:do|help)|how can you help|your capabilities|你(?:能|可以)(?:做|帮)|你有什么功能",text,re.I):return 'capabilities'
+    if re.search(r"\b(progress|status|finished|remaining|blocker|checklist|what.{0,20}(?:done|attention|next)|how.{0,25}(?:doing|going))\b|进度|完成了|剩余|还有什么|下一步|清单",text,re.I):return 'status'
+    if re.search(r"\b(explain|what is|what are|how (?:does|do))\b|解释|是什么|什么是|原理",text,re.I):return 'explanation'
+    return 'discussion'
+
+
+def work_proposal(text, project=None, selection=None, model_intent=None):
+    instruction=work_request(text)
+    if instruction is None and model_intent=='draftWork' and not discussion_only(text):
+        # Model intent may offer an editable draft for natural phrasing beyond
+        # imperative patterns. It is never an execution/delivery authorization.
+        instruction=str(text).strip()
+    if instruction is None:return None
+    item=next((i for i in project['items'] if i['id']==selection),None) if project else None
+    return {'text':instruction,'projectId':project['id'] if project else None,
+            'selection':item['id'] if item else None,'requiresSend':True,
+            'canSend':bool(item and item.get('managedCodex'))}
+
+
 def answer_schema():
     fields = {key: {'type': 'string'} for key in ('text', 'details', 'nextStep', 'caveat')}
     fields.update(scope={'type': 'string', 'enum': ['project', 'overview', 'general']},
+                  intent={'type':'string','enum':['answer','brainstorm','recommend','draftWork','clarify']},
                   projectId={'type': ['string', 'null']},
                   evidence={'type': 'array', 'items': {'type': 'object',
                       'properties': {key: {'type': 'string'} for key in ('projectId', 'chat', 'messageId', 'quote')},
@@ -76,11 +127,11 @@ def presentation(raw, context, project_ids, question=''):
             counts.append(p['name'] + ('：' if chinese else ': ') + (
                 (f"清单已勾选 {c['completed']}/{c['total']} 项" if chinese else f"{c['completed']} of {c['total']} checklist tasks checked")
                 if c.get('total') else ('进度未知' if chinese else 'progress unknown')))
-        text = ('；' if chinese else '; ').join(counts)
-        if len(projects) > 3: text += (f'；另有 {len(projects)-3} 个项目' if chinese else f'; plus {len(projects)-3} other projects')
+        text = ('；' if chinese else '; ').join(counts) if question_kind(question)=='status' or not question else ''
+        if text and len(projects) > 3: text += (f'；另有 {len(projects)-3} 个项目' if chinese else f'; plus {len(projects)-3} other projects')
         if not text: text = '暂时无法生成可靠的回答，请再试一次。' if chinese else 'I could not produce a reliable answer. Please try again.'
         caveat = ('实时总结暂不可用。这些是记录的清单数量，不能确认项目已可交付。' if chinese else
-                  'The live summary is unavailable. Recorded checklist counts do not confirm readiness.') if projects else (
+                  'The live summary is unavailable. Recorded checklist counts do not confirm readiness.') if projects and question_kind(question)=='status' else (
                   '回答服务暂不可用，或返回的内容未通过核实。' if chinese else 'The answer service is unavailable or its response could not be verified.')
         return {'text': text, 'details': '', 'nextStep': '', 'evidence': [], 'summaryUnavailable': True, 'caveat': caveat}
 
@@ -156,17 +207,24 @@ def route(text, projects, selected=None):
     text=re.sub(r'^\s*(?:(?:hey|hi|hello|你好|您好|嘿|嗨)[\s,，!！]*(?:motchi|mochi|莫奇|摩奇|莫琪|莫起)|(?:motchi|mochi|莫奇|摩奇)[,，:：])\s*[,，!！:：]?\s*','',text,flags=re.I)
     if not text.strip(' .!?。？！'):
         return {'scope':'general','projects':[],'reason':'You greeted Motchi without naming a project question.'}
+    if question_kind(text)=='capabilities':
+        return {'scope':'general','projects':[],'reason':'You asked how Motchi can help, not for a status report.'}
     matches = named(text,projects)
     macro = bool(re.search(r'\b(all (?:my |our )?projects|across (?:my |our )?projects|overall|big picture|everything|macro|compare)\b|所有项目|全部项目|整体|全局|总览|比较',text,re.I))
     if macro or (len(matches)>1 and re.search(r'\band\b|和|与',text,re.I)):
         return {'scope':'overview','projects':matches if len(matches)>1 else projects,'reason':'You asked for a view across projects.'}
     if len(matches)>1:return {'scope':'choice','projects':matches,'reason':'The project name matches more than one project.'}
     if len(matches)==1:return {'scope':'project','projects':matches,'reason':'Matched the project named in your question.'}
+    if work_request(text):
+        current=next((p for p in projects if p['id']==selected),None)
+        return {'scope':'project' if current else 'choice','projects':[current] if current else projects,
+                'reason':'Prepare an editable work draft for the selected project; nothing is sent yet.'}
     # An open project's progress follow-up stays there. Topic overlap from an
     # ASR misspelling must not replace an explicit UI selection with a choice.
     if selected:
         current=next((p for p in projects if p['id']==selected),None)
-        if current and re.search(r'\b(it|this|that|remain(?:s|ing)?|left|progress(?:ing)?|status|finished|attention|next|blocker|task|checklist)\b|进度|剩|任务|完成|这个|下一步',text,re.I):
+        if current and (re.search(r'\b(it|this|that|our|we|architecture|implementation|decision|tradeoffs?|remain(?:s|ing)?|left|progress(?:ing)?|status|finished|attention|next|blocker|task|checklist)\b|进度|剩|任务|完成|这个|下一步|我们|架构|设计方案|为什么选',text,re.I) or
+                        re.fullmatch(r'\s*(?:why|tell me more|can you explain|为什么|详细说说|再解释一下)[?？.!。！\s]*',text,re.I)):
             return {'scope':'project','projects':[current],'reason':'Continued the selected project discussion.'}
     # Search task topics by distinctive terms; two meaningful terms and a clear
     # margin are required. Similar topics must produce a choice, not a guess.

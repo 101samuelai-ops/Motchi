@@ -667,7 +667,21 @@
         "quote": "20 Python suites; 34 discussion checks; Android UI checks/build/lint/Kotlin tests. Live configured provider preserves a later user failure over an earlier AI success claim with matching evidence. Browser verifies concise summary and collapsed explanation.",
         "at": "2026-10-29"
       }
+    },
+    {
+      "id": "CHAT-08",
+      "title": "Converse and prepare Codex work in the main section",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "Answer ordinary/project questions naturally, retain relevant discussion context, prepare editable exact-project/chat work drafts, require explicit submission, show truthful delivery capability/receipts, prevent duplicate or uncertain replay, and verify the installed Mac preview.",
+      "evidence": {
+        "kind": "Implemented; live verification pending",
+        "quote": "Question-specific framing, semantic inert drafts, exact destinations and no-replay receipts pass source checks; installed Mac preview verification remains.",
+        "at": "2026-11-05"
+      },
+      "manualOverride": true
     }
   ],
-  "revision": 19
+  "revision": 20
 }

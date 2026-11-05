@@ -34,7 +34,7 @@ assert args[args.index('--ask-for-approval')+1]=='never'
 prompt=sys.stdin.read()
 context=json.loads(prompt.split('DISCUSSION_CONTEXT_JSON:\\n')[1].split('\\nUSER_QUESTION:')[0])
 assert context['projects'][0]['history']['messages'][0]['text']=='The export still needs a device check.'
-answer=json.dumps({'scope':'project','projectId':'alpha','text':'Export needs its device check.','details':'','nextStep':'','caveat':'','evidence':[]})
+answer=json.dumps({'intent':'answer','scope':'project','projectId':'alpha','text':'Export needs its device check.','details':'','nextStep':'','caveat':'','evidence':[]})
 print(json.dumps({'type':'item.completed','item':{'type':'agent_message','text':answer}}),flush=True)
 print(json.dumps({'type':'turn.completed'}),flush=True)
 ''')

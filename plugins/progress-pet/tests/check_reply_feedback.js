@@ -7,6 +7,7 @@ function node(id){if(!elements.has(id))elements.set(id,{textContent:'',hidden:tr
  querySelector(){return node(id+'-summary');}});return elements.get(id);}
 const context={console,Date:{now:()=>now},wakeState:{language:'auto'},pendingReply:null,replyTimer:null,
  voiceReplyPending:false,wakeUntil:0,waveFrame:null,microphoneLevel:0,waveLevel:0,
+ state:{},selected:null,selection:null,renderWorkDraft(){},prepareWork(){},
  document:{querySelector:()=>node('companion'),querySelectorAll:()=>[]},$:node,
  setInterval(fn){const id=next++;timers.set(id,fn);return id;},clearInterval:id=>timers.delete(id),
  cancelAnimationFrame(){},clear:n=>{n.textContent='';return n;}};

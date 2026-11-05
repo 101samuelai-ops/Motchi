@@ -2,6 +2,13 @@
 
 Updated: 2026-11-05. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
+
+## Conversational intelligence and project steering — 2026-11-05
+
+The user confirms both consecutive voice questions are answered, then asks for better answer framing and intelligence. This confirms that specific Mac follow-up trial, not universal accuracy, speaker identity or full duplex. Keep AND-10 open and calendar rollout deferred.
+
+The user wants the main character conversation to answer broader questions and discuss/steer/add work with a strong Codex connection. Source now uses question-specific framing, recent conversational context and model intent, keeping general Q&A separate from status counts. Concrete work becomes an editable main-section draft with the exact project/chat and an explicit Send action. Controlled chats can be steered; tracked chats require a confirmed new connected chat. Drafts and delivery receipts persist; uncertain instructions never replay automatically. Implementation checks are documented in PROJECT_DISCUSSION.md; deployment and live evidence must remain separate from source tests.
+
 ## Microphone preference — 2026-11-04
 
 The user explicitly requests enabling Motchi's microphone in the Mac preview. This supersedes the earlier instruction to keep Motchi recording globally paused; use the existing local resume and wake-listening controls. Local resume completed and the connected preview reached “Microphone ready” with “Pause microphone” enabled. This request does not authorize a calendar rollout or establish human voice accuracy/turn-taking acceptance. AND-10 remains open.
