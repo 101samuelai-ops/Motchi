@@ -16,7 +16,7 @@ const context={console,Date,Promise,Object,String,Number,C:{identity:()=>`operat
  finishJob(o,job){o.status=job.status;o.result=job.result||{};},poll(o){return Promise.resolve(o);}
 };
 vm.createContext(context);
-for(const name of ['prepareWork','renderWorkDraft','sendWorkDraft','submit']){
+for(const name of ['prepareWork','syncWorkControls','renderWorkDraft','sendWorkDraft','submit']){
  const start=source.indexOf(' function '+name+'('),end=source.indexOf('\n function ',start+2);
  assert(start>=0&&end>start);vm.runInContext(source.slice(start,end),context);
 }
@@ -42,6 +42,8 @@ function text(n){return n.textContent+' '+n.children.map(text).join(' ');}
  context.prepareWork({text:'Add export',projectId:'alpha',selection:'a-chat'});context.workControls=false;context.sendWorkDraft();
  assert.equal(sent.length,2,'Read-only preview cannot send even through a direct handler call');
  context.workControls=true;context.online=false;context.sendWorkDraft();assert.equal(sent.length,2,'Offline work remains an editable draft');
+ context.syncWorkControls();assert($('work-send').disabled);
+ context.online=true;context.syncWorkControls();assert(!$('work-send').disabled,'Reconnecting enables a restored draft without replacing edited input');
  context.online=true;context.prepareWork({text:'Add export',projectId:'alpha',selection:'missing'});context.sendWorkDraft();
  assert.equal(sent.length,2,'Missing or stale chat never silently changes destination');
  context.prepareWork({text:'Fix duplicate submission',projectId:'alpha',selection:'a-chat'});context.sendWorkDraft();await Promise.resolve();

@@ -15,7 +15,7 @@ SUMMARY_STYLE = (
     "For recommendations, make a clear recommendation and explain the practical reason, rather than repeating the activity log. "
     "Use the recent conversation to resolve follow-up words like it, that and next. Ask one focused clarification only when it would materially change the answer. "
     "Use general knowledge for ordinary questions and distinguish it from verified project facts. Do not claim live web access. "
-    "For a requested change, discuss the request and explain that the editable work draft needs the user's explicit Send to Codex action. "
+    "For a requested change, discuss the request and explain that the editable work draft needs the user's explicit action named in workDestination; if no target is chosen, ask them to choose the project first. "
     "Answer the actual question; greetings and ordinary chat need no project report. Match the user's language. "
     "For an overview, prioritize the few projects needing attention instead of listing every event. "
     "Put a short supporting explanation in details, one useful suggested next step in nextStep, and a material uncertainty in caveat. "

@@ -120,6 +120,14 @@ with tempfile.TemporaryDirectory() as temp:
  result=bridge.discuss_result({'text':'Please add dark mode','projectId':projects[0]['id'],'selection':'a-review'})
  check(result['workProposal']['selection']=='a-review' and result['workProposal']['text']=='Please add dark mode',
        'Read-only discussion returns an exact-chat draft without invoking execution')
+ destination=captured[-1][2]['discussion_context']['workDestination']
+ check(destination['chatId']=='a-review' and destination['action']=='Start connected chat' and not destination['connected'],
+       'The answer model gets the tracked chat’s real action instead of promising direct delivery')
+ rows[1]['managedCodex']=True
+ bridge.discuss_result({'text':'Please add dark mode','projectId':projects[0]['id'],'selection':'a-review'})
+ check(captured[-1][2]['discussion_context']['workDestination']['action']=='Send to Codex',
+       'A controlled chat advertises its actual direct-send action')
+ rows[1].pop('managedCodex')
  unavailable=D.presentation('unavailable',{'projects':[{'id':projects[0]['id'],'name':'Alpha','checklist':{'total':3,'completed':2}}]}, {projects[0]['id']},'Why use a cache?')
  check('2 of 3' not in unavailable['text'] and unavailable['summaryUnavailable'],'Failed explanations do not substitute an unrelated progress report')
  pid=projects[0]['id'];context={'projects':[{'id':pid,'name':'Alpha','checklist':{'completed':1,'total':2},'history':{'messages':[

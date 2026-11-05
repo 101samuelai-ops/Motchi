@@ -35,6 +35,12 @@
  function showVoice(){ $('voice-live').hidden=false;updateVoice(wakeState); }
  function resetAssessment(){['answer-next','answer-caveat','answer-explanation','answer-sources','work-draft'].forEach(function(id){$(id).hidden=true;});$('answer-explanation').open=false;clear($('answer-details'));clear($('answer-evidence'));}
  function prepareWork(proposal){state.workDraft={text:String(proposal.text||'').slice(0,3000),projectId:proposal.projectId||'',selection:proposal.selection||'',operationId:null};save();renderWorkDraft();}
+ function syncWorkControls(){
+  var draft=state.workDraft,send=$('work-send'),hint=$('work-capability');if(!draft||draft.operationId||!send)return;
+  var p=snapshot.projects.find(function(p){return p.id===draft.projectId;}),target=p&&(p.chats||[]).find(function(c){return c.id===draft.selection;});
+  send.disabled=!workControls||!online||!target||!draft.text.trim();send.textContent=target&&target.canSend?'Send to Codex ↗':'Start connected chat…';
+  if(hint)hint.textContent=!target?'Choose a current project and chat.':target.canSend?(target.status==='active'?'Sends to this connected chat’s ongoing task.':'Adds a new turn in this connected chat.'):'This chat is tracked only. Sending requires confirmation of a new connected chat in this project.';
+ }
  function renderWorkDraft(){
   var box=clear($('work-draft')),draft=state.workDraft;box.hidden=false;
   if(!draft){if(!workOffer){box.hidden=true;return;}box.appendChild(button('Draft work for Codex',function(){prepareWork(workOffer);},'quiet-button'));return;}
@@ -57,15 +63,16 @@
   var p=snapshot.projects.find(function(p){return p.id===draft.projectId;}),chat=field('Codex chat','work-chat',el('select'));
   if(p){if(!draft.selection)draft.selection=p.selection;(p.chats||[]).forEach(function(c){var option=el('option',c.title+' · '+(c.canSend?'connected':'tracked only'));option.value=c.id;chat.appendChild(option);});}chat.value=draft.selection;
   var target=p&&(p.chats||[]).find(function(c){return c.id===draft.selection;});
-  box.appendChild(el('p',!target?'Choose a current project and chat.':target.canSend?(target.status==='active'?'Sends to this connected chat’s ongoing task.':'Adds a new turn in this connected chat.'):'This chat is tracked only. Sending requires confirmation of a new connected chat in this project.','hint'));
+  var capability=el('p',null,'hint');capability.id='work-capability';box.appendChild(capability);
   var input=field('Editable instruction','work-instruction',el('textarea'));input.rows=3;input.maxLength=3000;input.value=draft.text;
   var actions=el('div',null,'composer-actions'),send=button(target&&target.canSend?'Send to Codex ↗':'Start connected chat…',function(){sendWorkDraft();},'primary');
-  send.disabled=!workControls||!target||!draft.text.trim()||!online;actions.appendChild(send);
+  send.id='work-send';actions.appendChild(send);
   actions.appendChild(button('Discard draft',function(){state.workDraft=null;workOffer=null;save();renderWorkDraft();}));
   if(workOffer&&workOffer.text&&workOffer.text!==draft.text)actions.appendChild(button('Use latest request instead',function(){prepareWork(workOffer);}));box.appendChild(actions);
   if(!workControls)box.appendChild(el('p','This preview has work delivery disabled. The draft stays editable.','hint'));
-  input.oninput=function(){draft.text=this.value;save();send.disabled=!workControls||!target||!draft.text.trim()||!online;};
+  input.oninput=function(){draft.text=this.value;save();syncWorkControls();};
   project.onchange=function(){draft.projectId=this.value;draft.selection='';save();renderWorkDraft();};chat.onchange=function(){draft.selection=this.value;save();renderWorkDraft();};
+  syncWorkControls();
  }
  function sendWorkDraft(){
   var draft=state.workDraft;if(!workControls||!draft||draft.operationId||!connected())return;
@@ -165,7 +172,7 @@
   var pair=button('Connect securely',function(){pair.disabled=true;status.textContent='Connecting to your Mac…';callNative('pair',{ticket:input.value}).then(function(){closeModal();snapshot={projects:[]};state={drafts:{},messages:{},operations:[],chats:{}};save();refresh();}).catch(function(e){status.textContent=e.message;pair.disabled=false;});},'primary');box.appendChild(pair);
   box.appendChild(button('Disconnect & erase cached data',function(){confirmAction('Disconnect this calendar?','This revokes this device on the Mac and removes cached project data from this calendar.',function(){callNative('forget').then(function(){localStorage.removeItem(storeKey);window.location.reload();}).catch(function(e){notify(e.message+' Reconnect to revoke the device, or revoke it on the Mac.');});});}));box.appendChild(el('p','Same Wi-Fi only. The Mac must be awake for live questions, transcription and work.','hint'));
  }
- function refresh(){if(refreshing)return Promise.resolve();refreshing=true;$('refresh').disabled=true;return callNative('snapshot').then(function(value){online=true;if(value.updatedAt||!snapshot.updatedAt){snapshot=value;snapshot.projects=snapshot.projects||[];save();}if(value.loading)notify(value.catalogIssue||'Motchi is loading project history on the Mac. It will appear here automatically.');else notify(value.catalogIssue||'');renderHome();if(selected){var project=current();if(project&&project.chats.some(function(c){return c.id===state.chats[selected];}))selection=state.chats[selected];renderProject();}pollAll();}).catch(function(e){online=false;showConnection();notify('Mac unavailable. '+e.message+' Cached progress remains readable.');if(selected)renderProject();}).then(function(){refreshing=false;$('refresh').disabled=false;});}
+ function refresh(){if(refreshing)return Promise.resolve();refreshing=true;$('refresh').disabled=true;return callNative('snapshot').then(function(value){online=true;if(value.updatedAt||!snapshot.updatedAt){snapshot=value;snapshot.projects=snapshot.projects||[];save();}if(value.loading)notify(value.catalogIssue||'Motchi is loading project history on the Mac. It will appear here automatically.');else notify(value.catalogIssue||'');renderHome();syncWorkControls();if(selected){var project=current();if(project&&project.chats.some(function(c){return c.id===state.chats[selected];}))selection=state.chats[selected];renderProject();}pollAll();}).catch(function(e){online=false;showConnection();syncWorkControls();notify('Mac unavailable. '+e.message+' Cached progress remains readable.');if(selected)renderProject();}).then(function(){refreshing=false;$('refresh').disabled=false;});}
  function renderOperations(){var list=state.operations.filter(function(o){return o.projectId===selected;});$('operations-panel').hidden=!list.length;var box=clear($('operations'));list.slice(-12).reverse().forEach(function(o){var row=el('div',null,'operation');row.appendChild(el('strong',o.action+' · '+o.status));row.appendChild(el('div',o.error||o.result&&o.result.text||''));if(o.status==='uncertain'||o.status==='sending'||o.status==='queued'||o.status==='running'||o.status==='receipt unavailable'){row.appendChild(button('Check receipt',function(){poll(o);}));row.appendChild(el('div','This instruction will not be replayed automatically.','hint'));}if(o.status==='receipt unavailable'||o.status==='uncertain')row.appendChild(button('Acknowledge; keep record',function(){o.acknowledged=true;save();renderOperations();}));box.appendChild(row);});}
  function finishJob(o,job){o.status=job.status;o.result=job.result||{};o.error=o.result.error;save();if(job.status==='done'){
   if(o.action==='transcribe'){return;}
