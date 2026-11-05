@@ -14,7 +14,9 @@ The signed installed Mac app and loopback preview are now running after unlocked
 
 The user then requests immediate listening after the spoken answer. Exact completion now removes the former 180 ms mute tail and the browser sends that completion without waiting for its start acknowledgement. Thirty controller and ten actual-player checks pass, including zero-clock-advance speech and a late start receipt. The 20 seconds remains a follow-up opportunity, not a wait. Installation/live acceptance is tracked separately; this does not establish instantaneous captions/model answers or full duplex.
 
-This latest correction is pushed and installed/signed in the existing Mac app, with source byte equality verified. Its normal reopen is waiting on another locked Mac; the stopped preview and microphone still need restoring after unlock. Keep this newer startup limitation distinct from the earlier successful connected preview.
+This latest correction is pushed and installed/signed in the existing Mac app, with source byte equality verified. Its service and loopback preview reopened after unlock. A later reconnect check found both processes alive but the service bound to a former network address that was no longer assigned to the Mac. The live test now needs the scoped service/preview reconnect to the current Wi-Fi address, followed by actual PCM readiness. Do not infer microphone or speaker-recognition failure from this network outage. Keep human immediate-follow-up acceptance open.
+
+The scoped reconnect then succeeded with eight connected project groups. Browser listening is now blocked by another paired device's Mac microphone ownership. Calendar Mirror control timed out; the user was asked to pause the calendar's Motchi microphone for the browser trial. The latest service/transport are connected, but fresh browser audio and human immediate-follow-up acceptance remain pending.
 
 ## Reply responsiveness — 2026-11-03
 
