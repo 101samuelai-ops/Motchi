@@ -681,6 +681,34 @@
         "at": "2026-11-05"
       },
       "manualOverride": true
+    },
+    {
+      "id": "MIC-01",
+      "title": "Keep the microphone active for the running Mac companion",
+      "done": true,
+      "phase": "Mac",
+      "milestone": "Desktop interaction",
+      "acceptance": "Maintain capture independently of the preview, persist explicit Pause against paired restarts, restore it on local Resume, recover a failed helper and verify live capture with the preview closed.",
+      "evidence": {
+        "kind": "Implementation and runtime verification",
+        "quote": "Signed Mac update; UI Pause and Resume verified; fresh PCM continued for 30 seconds with the preview server closed. See docs/DESKTOP_INTERACTION.md.",
+        "at": "2026-11-05"
+      },
+      "manualOverride": true
+    },
+    {
+      "id": "UI-02",
+      "title": "Animate interaction and open the desktop popup by voice",
+      "done": true,
+      "phase": "Mac",
+      "milestone": "Desktop interaction",
+      "acceptance": "Use real listening/thinking/speaking animation with Reduce Motion, show processing inside Motchi’s bubble, and verify a human wake name opens the same native top-right popup as double right-click with visible speech intake.",
+      "evidence": {
+        "kind": "verification",
+        "quote": "User confirmed: both appears now (native sound meter and recognized words).",
+        "reason": "Installed native wake popup, captions and state animations verified; broader voice accuracy remains AND-10."
+      },
+      "manualOverride": true
     }
   ],
   "revision": 21

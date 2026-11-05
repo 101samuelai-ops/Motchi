@@ -3,6 +3,15 @@
 Updated: 2026-11-05. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 
+
+## Desktop interaction and app-owned microphone — 2026-11-05
+
+The user requests dog interaction animation, first-person processing feedback in the main bubble, saying Motchi to open the existing double-right-click popup, and continuous microphone use while Motchi runs. App-owned listening is enabled on this Mac with explicit user authorization. Closing the preview does not stop capture; native/local Pause persists and blocks paired-device reactivation, while explicit Resume restores capture. New installations remain opt-in and calendar rollout remains deferred.
+
+The installed, signed update includes real-state dog animation, Reduce Motion, bilingual rotating bubble feedback, independent native/preview voice queues and native playback receipts. Live checks confirmed Pause, Resume, fresh PCM and 30 seconds of uninterrupted capture without a preview server. A real typed explanation showed processing and its answer in the main bubble. Runtime checks uncovered and corrected dead-helper recovery, remote reactivation after local Pause and repeated large-snapshot scanning on the native UI thread. Fragmented JSON decoding now runs incrementally on a background queue; explicit voice activation reached the native top-right dialog after that fix.
+
+The first wake trial returned “No response.” After the native UI fix, the user confirmed the popup appears but reported no speech intake. Diagnostics showed ongoing PCM, detected speech and 1.8–2.3-second recognition work. A pending Codex request prevented native caption rendering; that gate is corrected, with a live input meter and Talk/Finish controls added and six regression checks passing. The signed correction is running with fresh audio. The user confirmed both the native meter and recognized words appear. MIC-01 and UI-02 are verified; AND-10/PERS-03 remain open. Do not treat one successful popup as universal acoustic wake accuracy. See DESKTOP_INTERACTION.md for checks and limits. Preserve the separately edited short-spoken-reply work; this deployment did not install that concurrent change.
+
 ## Conversational intelligence and project steering — 2026-11-05
 
 The user confirms both consecutive voice questions are answered, then asks for better answer framing and intelligence. This confirms that specific Mac follow-up trial, not universal accuracy, speaker identity or full duplex. Keep AND-10 open and calendar rollout deferred.

@@ -51,6 +51,16 @@ with tempfile.TemporaryDirectory(prefix='motchi-android-test-') as directory:
  check(details['pin']==portal.fingerprint and details['url'].startswith('https://'),'Pairing ticket binds the exact TLS certificate and endpoint')
  paired=http('/v1/pair','POST',{'code':details['code'],'name':'Test calendar'});token=paired['token'];device=paired['deviceId']
  check(portal.store.authenticate(token)==device,'One-time pairing creates an authenticated device')
+ class DesktopFixture:
+  enabled=False
+  def poll(self,client,body=None):return {'enabled':False,'desktopManaged':True,'events':[]}
+  def close(self):pass
+ portal.desktop_voice=DesktopFixture()
+ check(rejects(lambda:http('/v1/desktop-voice')),'Desktop voice still requires an authenticated local preview')
+ check(http('/v1/desktop-voice',token=token)['desktopManaged'],'Authenticated local preview can mirror the desktop microphone')
+ check(rejects(lambda:http('/v1/desktop-voice',token=token,headers={'Origin':'https://other.example'})),'Web origins cannot control the desktop microphone')
+ del portal.desktop_voice
+
  check(rejects(lambda:portal.store.pair(details['code'],'another')),'A consumed pairing code cannot be reused')
  exp=portal.pairing()['ticket'];exp=json.loads(base64.urlsafe_b64decode(exp[8:]+'='*(-len(exp[8:])%4)))
  with portal.store.lock,portal.store.db:portal.store.db.execute('UPDATE pairing SET expires=0')

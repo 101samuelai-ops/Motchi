@@ -1,11 +1,28 @@
 import AppKit
 import QuartzCore
 import WebKit
+import AVFoundation
 import Darwin
 
 struct Task: Decodable { let id: String; let title: String; let done: Bool }
 struct Project: Decodable { let name: String; let tasks: [Task] }
 struct Receipt: Codable { let taskIDs: [String]? }
+final class BridgeLineDecoder {
+    private var pending = Data()
+    func append(_ data: Data) -> [[String: Any]] {
+        var result = [[String: Any]](), start = data.startIndex
+        // Scan only newly received bytes. Rescanning a large partial snapshot
+        // on every pipe read stalled the UI before queued wake events arrived.
+        while let range = data.range(of: Data([10]), in: start..<data.endIndex) {
+            pending.append(data[start..<range.lowerBound])
+            if let value = (try? JSONSerialization.jsonObject(with: pending)) as? [String: Any] { result.append(value) }
+            pending.removeAll(keepingCapacity: true)
+            start = range.upperBound
+        }
+        pending.append(data[start..<data.endIndex])
+        return result
+    }
+}
 enum AnnouncementTiming {
     static let lifetime: TimeInterval = 1.5
     static let fade: TimeInterval = 0.2
@@ -14,6 +31,12 @@ enum AnnouncementTiming {
 func trackingFrame(in area: NSRect) -> NSRect {
     let size = NSSize(width: min(440, area.width), height: min(195, area.height))
     return NSRect(x: area.maxX - size.width, y: area.maxY - size.height, width: size.width, height: size.height)
+}
+func presentsVoice(_ event: [String: Any], attention: Bool, visible: Bool) -> Bool {
+    if event["audioOnly"] as? Bool == true { return false }
+    let wake = event["ready"] as? Bool == true && event["followup"] as? Bool != true
+    let answer = event["partial"] as? Bool != true && event["processing"] as? Bool != true
+    return wake || answer && !visible && !attention
 }
 struct AnswerDelivery {
     struct Request { let selection: String; var dismissed = false }
@@ -177,7 +200,7 @@ final class DogDialogPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
+final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate, AVAudioPlayerDelegate {
     var projectURL: URL
     let initialProjectURL: URL
     var receiptURL: URL { projectURL.appendingPathComponent(".progress-pet-completion.json") }
@@ -222,8 +245,13 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     var bridge: Process?
     var bridgeInput: FileHandle?
     var bridgeOutput: FileHandle?
-    var bridgeBuffer = Data()
     var lastSnapshotTime: TimeInterval = 0
+    var microphoneItem: NSMenuItem?
+    var latestVoice: [String: Any]?
+    var lastVoiceEvent: [String: Any]?
+    var voicePlayer: AVAudioPlayer?
+    var voiceTicket: [String: Any]?
+    var microphoneEnabled = false
 
     init(project: URL) {
         projectURL = project; initialProjectURL = project
@@ -247,6 +275,8 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         statusItem?.button?.title = "🐶"; statusItem?.button?.toolTip = "Motchi · Project companion"
         let menu = NSMenu()
         let report = menu.addItem(withTitle: "Chat with Motchi / show projects", action: #selector(toggleReport), keyEquivalent: ""); report.target = self
+        microphoneItem = menu.addItem(withTitle: "Enable microphone", action: #selector(toggleMicrophone), keyEquivalent: "")
+        microphoneItem?.target = self
         let android = menu.addItem(withTitle: "Connect Android calendar…", action: #selector(pairAndroid), keyEquivalent: ""); android.target = self
         shortcutEnabled = UserDefaults.standard.object(forKey: shortcutPreference) as? Bool ?? true
         shortcutItem = menu.addItem(withTitle: "Double right-click for Motchi", action: #selector(toggleShortcut), keyEquivalent: "")
@@ -267,32 +297,77 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
             RunLoop.main.add(timer!, forMode: .common)
         }
     }
+    @objc func toggleMicrophone() {
+        requestBridge(["action":"desktopVoice", "enabled":!microphoneEnabled])
+    }
+    func finishVoicePlayback() {
+        voicePlayer?.stop(); voicePlayer = nil
+        if var ticket = voiceTicket {
+            ticket["speaking"] = false; requestBridge(ticket)
+        }
+        voiceTicket = nil
+    }
+    func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) { finishVoicePlayback() }
+    func audioPlayerDecodeErrorDidOccur(_ player: AVAudioPlayer, error: Error?) { finishVoicePlayback() }
+    func receiveVoice(_ value: [String: Any]) {
+        let state = value["state"] as? [String: Any] ?? [:]
+        microphoneEnabled = state["enabled"] as? Bool ?? false
+        microphoneItem?.title = microphoneEnabled ? "Pause microphone" : "Enable microphone"
+        statusItem?.button?.toolTip = microphoneEnabled ? "Motchi · Microphone on · say Motchi / 莫奇" : "Motchi · Microphone paused"
+        if !microphoneEnabled { finishVoicePlayback() }
+        var visible = [[String: Any]]()
+        for var event in value["events"] as? [[String: Any]] ?? [] {
+            if event["stopPlayback"] as? Bool == true { finishVoicePlayback() }
+            if let encoded = event.removeValue(forKey: "wav") as? String, let data = Data(base64Encoded: encoded) {
+                finishVoicePlayback()
+                let ticket: [String: Any] = ["action":"desktopVoice", "heartbeat":true,
+                    "playbackTurnId":event["turnId"] ?? "", "playbackOperationId":event["operationId"] ?? ""]
+                voiceTicket = ticket
+                do {
+                    let player = try AVAudioPlayer(data: data); voicePlayer = player; player.delegate = self
+                    if player.play() { var start = ticket; start["speaking"] = true; requestBridge(start) }
+                    else { finishVoicePlayback() }
+                } catch { finishVoicePlayback() }
+            }
+            if event["audioOnly"] as? Bool == true { continue }
+            lastVoiceEvent = event; visible.append(event)
+            if presentsVoice(event, attention: hasPendingAttention, visible: reportPanel?.isVisible == true) {
+                showReport()
+            }
+        }
+        latestVoice = ["type":"desktopVoice", "state":state, "events":visible]
+        if let latestVoice = latestVoice { sendToDialog(latestVoice) }
+    }
     @objc func pairAndroid() { requestBridge(["action": "androidPairing"]) }
     func startBridge() {
         guard bridge?.isRunning != true else { return }
         let script = Bundle.main.path(forResource: "dog_bridge", ofType: "py") ?? option("--bridge")
         guard !script.isEmpty else { output("Project/chat bridge is missing."); return }
-        bridgeBuffer.removeAll(); bridgeOutput?.readabilityHandler = nil
+        bridgeOutput?.readabilityHandler = nil
         let process = Process(); process.executableURL = URL(fileURLWithPath: option("--python", fallback: "/usr/bin/python3"))
         process.arguments = [script, "--project", initialProjectURL.path]
         let input = Pipe(), outputPipe = Pipe(); process.standardInput = input; process.standardOutput = outputPipe; process.standardError = FileHandle.nullDevice
         bridgeInput = input.fileHandleForWriting; bridgeOutput = outputPipe.fileHandleForReading
+        let decoder = BridgeLineDecoder()
+        let decoding = DispatchQueue(label: "motchi.bridge.decode")
         bridgeOutput?.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
-            DispatchQueue.main.async { self?.readBridge(data) }
+            decoding.async {
+                let messages = decoder.append(data)
+                DispatchQueue.main.async {
+                    guard let self = self, self.bridge === process else { return }
+                    if data.isEmpty {
+                        self.bridgeOutput?.readabilityHandler = nil
+                        self.sendToDialog(["type":"error", "error":"Project connection closed. Reopen Motchi to reconnect."])
+                    } else { self.readBridge(messages) }
+                }
+            }
         }
         do { try process.run(); bridge = process; output("Local project and chat bridge started.") }
         catch { output("Cannot start project bridge: \(error.localizedDescription)") }
     }
-    func readBridge(_ data: Data) {
-        guard !data.isEmpty else {
-            bridgeOutput?.readabilityHandler = nil
-            sendToDialog(["type": "error", "error": "Project connection closed. Reopen Motchi to reconnect."]); return
-        }
-        bridgeBuffer.append(data)
-        while let end = bridgeBuffer.firstIndex(of: 10) {
-            let line = bridgeBuffer[..<end]; bridgeBuffer.removeSubrange(...end)
-            guard var value = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any] else { continue }
+    func readBridge(_ messages: [[String: Any]]) {
+        for var value in messages {
             if value["type"] as? String == "androidPairing", let ticket = value["ticket"] as? String {
                 let alert = NSAlert(); alert.messageText = "Connect Motchi on Android"
                 alert.informativeText = "On the calendar, open Motchi and paste this pairing code. It expires in five minutes. Both devices must be on the same Wi-Fi.\n\nMac: \(value["address"] as? String ?? "")"
@@ -304,6 +379,7 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
                 if alert.runModal() == .alertFirstButtonReturn { NSPasteboard.general.clearContents(); NSPasteboard.general.setString(ticket, forType: .string) }
                 continue
             }
+            if value["type"] as? String == "desktopVoice" { receiveVoice(value); continue }
             if value["type"] as? String == "snapshot" {
                 catalog = value["items"] as? [[String: Any]] ?? []
                 if !catalog.contains(where: { $0["id"] as? String == selectedID }) {
@@ -397,8 +473,13 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
         case "ready":
             dialogReady = true
             if let latestSnapshot = latestSnapshot { sendToDialog(latestSnapshot) }
+            if var voice = latestVoice {
+                voice["events"] = lastVoiceEvent.map { [$0] } ?? []
+                sendToDialog(voice)
+            }
             presentEntrance()
             refreshReport(force: true)
+        case "desktopVoice": requestBridge(value)
         case "dismiss": hideReport()
         case "select":
             if let selected = value["selection"] as? String, catalog.contains(where: { $0["id"] as? String == selected }) {
@@ -595,7 +676,11 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
     }
     func applicationWillTerminate(_ notification: Notification) {
         for monitor in [globalRightClickMonitor, localRightClickMonitor, globalDismissMonitor, localDismissMonitor] { if let monitor = monitor { NSEvent.removeMonitor(monitor) } }
-        bridgeOutput?.readabilityHandler = nil; try? bridgeInput?.close(); bridge?.terminate()
+        finishVoicePlayback()
+        bridgeOutput?.readabilityHandler = nil; try? bridgeInput?.close()
+        let end = Date().addingTimeInterval(2)
+        while bridge?.isRunning == true && Date() < end { Thread.sleep(forTimeInterval: 0.05) }
+        if bridge?.isRunning == true { bridge?.terminate() }
     }
     @objc func showPreview() { show(name: (try? readProject().name) ?? "My project", isPreview: true) }
     func saveReceipt(_ ids: [String]?) {
@@ -672,8 +757,22 @@ final class Companion: NSObject, NSApplicationDelegate, WKScriptMessageHandler, 
 if flag("--self-test") {
     var gesture = RightClickGesture()
     func check(_ condition: Bool, _ label: String) { if !condition { fatalError(label) } }
+    let decoder = BridgeLineDecoder()
+    var decoded = [[String: Any]]()
+    for byte in Data("{\"text\":\"莫奇\"}\ninvalid\n{\"ready\":true}\n".utf8) { decoded += decoder.append(Data([byte])) }
+    check(decoded.count == 2 && decoded[0]["text"] as? String == "莫奇" && decoded[1]["ready"] as? Bool == true, "fragmented UTF-8 and invalid lines preserve event order")
+    let large = Data(("{\"text\":\"" + String(repeating:"x", count:2_000_000) + "\"}\n{\"type\":\"desktopVoice\"}\n").utf8)
+    let decodeStart = Date(); decoded = []
+    for start in stride(from:0, to:large.count, by:640) { decoded += decoder.append(large[start..<min(start+640,large.count)]) }
+    check(decoded.count == 2 && decoded[1]["type"] as? String == "desktopVoice", "wake events survive large fragmented project snapshots")
+    output("2 MB fragmented snapshot decoded in \(Int(Date().timeIntervalSince(decodeStart)*1000)) ms")
     let p = NSPoint(x: 100, y: 100)
     check(!gesture.receive(time: 1, point: p, interval: 0.5), "single click")
+    check(presentsVoice(["ready":true,"partial":true], attention:false, visible:false), "wake opens shortcut popup")
+    check(!presentsVoice(["ready":true,"partial":true,"followup":true], attention:false, visible:false), "follow-up does not replay entrance")
+    check(presentsVoice(["ready":true,"partial":true], attention:true, visible:false), "wake opens existing permission view")
+    check(presentsVoice(["text":"Answer"], attention:false, visible:false), "dismissed voice answer returns")
+    check(!presentsVoice(["audioOnly":true], attention:false, visible:false), "audio receipt does not open popup")
     check(gesture.receive(time: 1.2, point: p, interval: 0.5), "double click")
     check(!gesture.receive(time: 1.3, point: p, interval: 0.5), "triple click must not repeat")
     gesture.reset()
@@ -700,7 +799,7 @@ if flag("--self-test") {
     check(delivery.finish(id: "four", selection: "project-b") && delivery.finish(id: "three", selection: "project-a"), "concurrent replies retain their project routing")
     check(AnnouncementTiming.fadeStart(lifetime: AnnouncementTiming.lifetime) == 1.3, "announcement fade begins at 1.3 seconds")
     check(AnnouncementTiming.fadeStart(lifetime: AnnouncementTiming.lifetime) + AnnouncementTiming.fade == 1.5, "announcement lifetime includes fade and totals 1.5 seconds")
-    output("19 shortcut, placement, answer delivery and announcement timing checks passed"); exit(0)
+    output("21 bridge, shortcut, placement, answer delivery and announcement timing checks passed"); exit(0)
 }
 // Rendering our own scene provides deterministic visual QA without recording the desktop.
 let renderPath = option("--render-preview")

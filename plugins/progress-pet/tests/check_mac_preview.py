@@ -22,7 +22,7 @@ class Connection:
     def request(self,path,body=None):
         self.calls.append((path,body))
         if path=='/v1/projects':return {'projects':[{'id':'alpha','name':'Alpha'}]}
-        if path=='/v1/mac-voice':
+        if path in ('/v1/mac-voice','/v1/desktop-voice'):
             self.enabled=body.get('enabled',False)
             if body.get('activate'):self.turn='replacement-turn'
             events,self.events=self.events,[]
@@ -133,6 +133,19 @@ try:
     check(connection.calls[-1][1]['confirmed'] is True,'Confirmed new-chat intent is forwarded intact')
 finally:
     preview.server.shutdown();preview.close();thread.join(timeout=2)
+
+connection=Connection();preview=LivePreview(connection,desktop_voice=True)
+try:
+    preview.call({'action':'voiceInfo'})
+    check(connection.calls[-1][0]=='/v1/desktop-voice','Desktop mirror attaches without an explicit Talk press')
+    count=len(connection.calls);preview.call({'action':'releaseVoice'})
+    check(len(connection.calls)==count,'Closing a desktop preview tab does not pause the app microphone')
+    preview.call({'action':'wakeListening','enabled':False})
+    check(connection.calls[-1]==('/v1/desktop-voice',{'enabled':False}),'Explicit Pause reaches the desktop owner')
+    preview.call({'action':'wakeListening','enabled':True})
+    count=len(connection.calls);preview.close()
+    check(len(connection.calls)==count,'Stopping the preview server leaves the app microphone active')
+finally:preview.close()
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'skills/completion-pet/scripts'))
 import microphone_policy as policy

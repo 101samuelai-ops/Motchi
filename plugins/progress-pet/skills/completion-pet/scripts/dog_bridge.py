@@ -1187,6 +1187,11 @@ def serve_stdio(bridge):
     def emit(value):
         with output_lock:
             print(json.dumps(value, ensure_ascii=False), flush=True)
+    desktop = None
+    if bridge.android_portal:
+        from desktop_voice import DesktopVoice
+        desktop = DesktopVoice(bridge.android_portal, emit)
+        desktop.thread.start()
     def answer(request):
         try:
             result = bridge.handle_action(request)
@@ -1201,6 +1206,9 @@ def serve_stdio(bridge):
                 request = json.loads(line)
                 if request.get("action") in ("ask", "replyQuestion", "askApproval", "decideApproval", "startTask", "sendTurn", "stopTask", "addWork", "addChecklist", "setChecklistDone", "undoChecklistChange", "retryWork"):
                     workers.submit(answer, request)
+                elif request.get('action') == 'desktopVoice':
+                    if desktop: desktop.control(request)
+                    else: emit({'type':'desktopVoice', 'state':{'enabled':False, 'issue':'Enable the Mac project service to use voice.'}, 'events':[]})
                 elif request.get("action") in ("snapshot", "refresh"):
                     if request.get("action") == "refresh":
                         bridge.catalog_time = 0

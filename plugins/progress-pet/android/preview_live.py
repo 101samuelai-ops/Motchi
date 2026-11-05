@@ -87,12 +87,13 @@ class MacConnection:
 
 
 class LivePreview:
-    def __init__(self, connection, port=0, voice_test=False, work_controls=False):
+    def __init__(self, connection, port=0, voice_test=False, work_controls=False, desktop_voice=False):
         self.connection = connection
         self.lock = threading.RLock()
         self.enabled = False
         self.voice_test = voice_test
         self.work_controls = work_controls
+        self.desktop_voice = desktop_voice
         self.test_started = False
         self.context = {'projectId': None, 'selection': None}
         self.language = 'auto'
@@ -162,14 +163,14 @@ class LivePreview:
             self.test_started = True
         if self.voice_test and self.test_started:
             if not allowed(self.connection.root, self.connection.device_id):
-                self.connection.request('/v1/mac-voice', {'enabled': False})
+                self.connection.request('/v1/desktop-voice' if self.desktop_voice else '/v1/mac-voice', {'enabled': False})
                 self.enabled = False; self.events.clear()
                 self.state = dict(self.state, enabled=False, running=False, busy=False, rms=0, recentRms=0,
                                   stage='idle', issue='', status='Voice test ended · tap Talk to start a new test')
                 return self.state
         payload = dict(self.context, enabled=True, heartbeat=not restart_test,
                        conversationVersion=2, language=self.language, **extra)
-        state = self.connection.request('/v1/mac-voice', payload)
+        state = self.connection.request('/v1/desktop-voice' if self.desktop_voice else '/v1/mac-voice', payload)
         self.enabled = bool(state.get('enabled'))
         next_turn = state.get('turnId', '')
         if next_turn and next_turn != self.turn:
@@ -205,15 +206,17 @@ class LivePreview:
             if action == 'voiceContext':
                 self.context = {k: body.get(k) or None for k in ('projectId', 'selection')}
                 return {'saved': True}
+            if action == 'releaseVoice':
+                return {'keptListening': True} if self.desktop_voice else self.call({'action':'wakeListening','enabled':False})
             if action == 'voiceInfo':
                 playback = {k:body.get(k) for k in ('playbackTurnId','playbackOperationId') if body.get(k)}
-                return self.control(speaking=body.get('speaking') is True, **playback) if self.enabled else self.state
+                return self.control(speaking=body.get('speaking') is True, **playback) if self.enabled or self.desktop_voice else self.state
             if action == 'voiceEvents':
                 result = list(self.events); self.events.clear(); return {'events': result}
             if action == 'wakeListening':
                 if type(body.get('enabled')) is not bool: raise ValueError('Choose whether to enable listening.')
                 if body['enabled']: return self.control(restart_test=True)
-                self.connection.request('/v1/mac-voice', {'enabled': False})
+                self.connection.request('/v1/desktop-voice' if self.desktop_voice else '/v1/mac-voice', {'enabled': False})
                 self.enabled = False; self.events.clear()
                 self.state = dict(self.state, enabled=False, running=False, speaking=False, busy=False,
                                   issue='', stage='idle', rms=0, recentRms=0, status='Mac microphone paused')
@@ -230,7 +233,7 @@ class LivePreview:
             if self.closed: return
             self.closed = True
             try:
-                if self.enabled: self.connection.request('/v1/mac-voice', {'enabled': False})
+                if self.enabled and not self.desktop_voice: self.connection.request('/v1/desktop-voice' if self.desktop_voice else '/v1/mac-voice', {'enabled': False})
             finally:
                 try:
                     if self.voice_test:
@@ -240,14 +243,14 @@ class LivePreview:
                 finally: self.server.server_close()
 
 
-def run(root, port=0, endpoint=None, voice_test=False, work_controls=False):
+def run(root, port=0, endpoint=None, voice_test=False, work_controls=False, desktop_voice=False):
     connection = MacConnection(root, endpoint)
     from microphone_policy import read, finish_test
     try:
         if voice_test:
             if not read(root)['paused']:
                 raise ValueError('Pause Motchi microphones before starting a scoped voice test.')
-        preview = LivePreview(connection, port, voice_test=voice_test, work_controls=work_controls)
+        preview = LivePreview(connection, port, voice_test=voice_test, work_controls=work_controls, desktop_voice=desktop_voice)
     except BaseException:
         if voice_test:
             finish_test(root, connection.device_id)

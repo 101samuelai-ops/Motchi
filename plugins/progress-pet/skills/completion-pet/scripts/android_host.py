@@ -217,6 +217,14 @@ class AndroidPortal:
                             save_private(portal.root/'speech-provider.json',{'provider':provider})
                         elif self.command != 'GET': raise ValueError('Use the speech provider controls.')
                         self.response(200,doubao_speech.info(portal.root)); return
+                    if self.path == '/v1/desktop-voice':
+                        # An authenticated local preview may mirror the desktop.
+                        # LAN calendars retain their isolated voice sessions.
+                        desktop = getattr(portal, 'desktop_voice', None)
+                        if self.client_address[0] not in ('127.0.0.1', '::1', portal.host) or desktop is None:
+                            self.response(403, {'error':'Desktop voice is available only on this Mac.'}); return
+                        if self.command not in ('GET', 'POST'): raise ValueError('Use the microphone controls.')
+                        self.response(200, desktop.poll(device, self.body(4096) if self.command == 'POST' else None)); return
                     if self.path == '/v1/mac-voice':
                         if self.command == 'POST':
                             portal.mac_voice.control(device,self.body(4096))
@@ -519,6 +527,10 @@ class AndroidPortal:
             return text[:3000]
 
     def device_permitted(self, device):
+        desktop = getattr(self, 'desktop_voice', None)
+        if desktop is not None:
+            from desktop_voice import DEVICE
+            if device == DEVICE: return desktop.enabled and not self.closed
         with self.store.lock:
             row=self.store.db.execute('SELECT revoked FROM devices WHERE id=?', (device,)).fetchone()
         return bool(row and not row[0])
@@ -642,6 +654,7 @@ class AndroidPortal:
     def close(self):
         if self.closed:return
         self.closed=True
+        if getattr(self, 'desktop_voice', None): self.desktop_voice.close()
         self.mac_voice.close()
         self.qwen.close()
         if self.thread.is_alive(): self.server.shutdown()

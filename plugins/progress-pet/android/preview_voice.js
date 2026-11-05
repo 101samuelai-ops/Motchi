@@ -12,7 +12,7 @@
   if(action==='listenNow'||action==='wakeListening'&&!extra.enabled)stop();
   if(action==='voiceInfo')extra=Object.assign({},extra,{speaking:speaking},playback||{});
   if(action==='voiceEvents')return request(action,extra).then(function(result){var visible=[];(result.events||[]).forEach(function(event){if(event.turnId&&turn&&event.turnId!==turn)return;if(event.stopPlayback||!event.audioOnly&&!event.partial&&!event.processing)stop();if(event.spokenReply)play(event);if(!event.audioOnly)visible.push(event);});return {events:visible};});
-  return request(action,extra).then(function(result){if(action==='voiceInfo'||action==='listenNow'||action==='wakeListening'||action==='finishVoice'){if(result.turnId&&result.turnId!==turn){turn=result.turnId;stop();}result.speaking=speaking;}return result;});
+  return request(action,extra).then(function(result){if(action==='voiceInfo'||action==='listenNow'||action==='wakeListening'||action==='finishVoice'){if(result.turnId&&result.turnId!==turn){turn=result.turnId;stop();}result.speaking=speaking||result.speaking===true;}return result;});
  };
- window.addEventListener('pagehide',function(){stop();fetch('/api',{method:'POST',headers:{'Content-Type':'application/json','X-Motchi-Preview':nonce},body:JSON.stringify({action:'wakeListening',enabled:false}),keepalive:true}).catch(function(){});});
+ window.addEventListener('pagehide',function(){stop();fetch('/api',{method:'POST',headers:{'Content-Type':'application/json','X-Motchi-Preview':nonce},body:JSON.stringify({action:'releaseVoice'}),keepalive:true}).catch(function(){});});
 })();

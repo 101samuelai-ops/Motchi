@@ -6,11 +6,33 @@
 <main>
   <div class="dashboard-layout">
    <section class="companion" aria-label="Talk with Motchi">
-    <img class="companion-dog" src="dog.svg" alt="Motchi, your puppy project companion">
+    <button id="motchi-pet" class="companion-dog" type="button" aria-label="Talk to Motchi"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 210" role="img" aria-label="Motchi, an anime puppy with floppy brown ears and a green scarf">
+<ellipse class="pet-shadow" cx="120" cy="193" rx="65" ry="8" fill="#cfddd1"/>
+<g class="tail"><ellipse cx="182" cy="148" rx="15" ry="34" transform="rotate(20 182 148)" fill="#c28a51" stroke="#594333" stroke-width="3"/></g>
+<ellipse cx="120" cy="145" rx="48" ry="46" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="120" cy="154" rx="26" ry="28" fill="#fff9e9"/>
+<ellipse cx="91" cy="184" rx="24" ry="12" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<ellipse cx="149" cy="184" rx="24" ry="12" fill="#ffedc5" stroke="#594333" stroke-width="3"/>
+<g class="pet-head"><ellipse cx="120" cy="85" rx="73" ry="59" fill="#ffedc5" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="53" cy="71" rx="20" ry="45" transform="rotate(12 53 71)" fill="#c28a51" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="187" cy="71" rx="20" ry="45" transform="rotate(-12 187 71)" fill="#c28a51" stroke="#594333" stroke-width="3.5"/>
+<ellipse cx="52" cy="75" rx="8" ry="26" fill="#eab09a"/><ellipse cx="188" cy="75" rx="8" ry="26" fill="#eab09a"/>
+<ellipse cx="120" cy="111" rx="34" ry="19" fill="#fff9e9"/>
+<g class="pet-eyes"><g fill="#50392c"><ellipse cx="89" cy="80" rx="13" ry="18"/><ellipse cx="151" cy="80" rx="13" ry="18"/></g>
+<g fill="#fff"><ellipse cx="85" cy="73" rx="5.5" ry="6"/><ellipse cx="147" cy="73" rx="5.5" ry="6"/><circle cx="94" cy="87" r="3"/><circle cx="156" cy="87" r="3"/></g>
+<g fill="#b68047"><ellipse cx="89" cy="93" rx="7" ry="3"/><ellipse cx="151" cy="93" rx="7" ry="3"/></g>
+</g><g fill="#efad9c"><ellipse cx="69" cy="107" rx="13" ry="6"/><ellipse cx="171" cy="107" rx="13" ry="6"/></g>
+<ellipse cx="120" cy="104" rx="10" ry="6" fill="#50392c"/>
+<ellipse class="pet-mouth" cx="120" cy="120" rx="10" ry="10" fill="#efa5a0"/>
+<path d="M120 109 Q111 125 101 115 M120 109 Q129 125 139 115" fill="none" stroke="#594333" stroke-width="3" stroke-linecap="round"/>
+</g><path d="M79 137 Q120 150 161 137 L159 152 Q120 163 81 152Z" fill="#629b7d" stroke="#527960" stroke-width="2.5"/>
+<path d="M141 151 L156 151 L158 178 L144 173Z" fill="#78aa8c" stroke="#527960" stroke-width="2.5"/>
+<path d="M85 181V187 M96 181V187 M144 181V187 M155 181V187" stroke="#c5aa84" stroke-width="2" stroke-linecap="round"/>
+</svg>
+</button>
     <div class="companion-conversation">
-     <div class="speech-bubble"><p id="discussion-scope" class="eyebrow" hidden></p><h1 id="greeting">Let’s discuss your idea.</h1><p id="voice-live-reply" class="companion-answer" role="status" hidden></p><p id="answer-next" class="answer-next" hidden></p><p id="answer-caveat" class="hint answer-caveat" hidden></p><details id="answer-explanation" class="answer-explanation" hidden><summary>Why this assessment</summary><p id="answer-details"></p><div id="answer-evidence"></div><p id="answer-sources" class="hint" hidden></p></details><div id="project-choices" hidden></div></div>
+     <div class="speech-bubble"><p id="discussion-scope" class="eyebrow" hidden></p><h1 id="greeting">Let’s discuss your idea.</h1><p id="reply-status" class="companion-answer" role="status" aria-live="polite" hidden></p><p id="voice-live-reply" class="companion-answer" role="status" hidden></p><p id="answer-next" class="answer-next" hidden></p><p id="answer-caveat" class="hint answer-caveat" hidden></p><details id="answer-explanation" class="answer-explanation" hidden><summary>Why this assessment</summary><p id="answer-details"></p><div id="answer-evidence"></div><p id="answer-sources" class="hint" hidden></p></details><div id="project-choices" hidden></div></div>
      <section id="work-draft" class="work-draft" aria-label="Codex work draft" hidden></section>
-     <p id="reply-status" class="reply-status hint" role="status" aria-live="polite" hidden></p>
      <p id="voice-transcript" class="companion-transcript" aria-live="polite" hidden></p>
      <div class="greeting-controls"><button id="pause-greetings" class="quiet-button" aria-pressed="false">Pause greetings</button><button id="next-greeting" class="quiet-button" aria-label="Next greeting">›</button></div>
      <div class="voice-line"><svg class="voice-wave" viewBox="0 0 180 40" preserveAspectRatio="none" role="img" aria-label="Microphone idle"><path d="M0 20 Q22 17 45 20 T90 20 T135 20 T180 20"></path></svg><span id="voice-state">Tap the mic to talk</span></div>

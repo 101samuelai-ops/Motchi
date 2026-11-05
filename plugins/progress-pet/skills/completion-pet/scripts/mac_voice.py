@@ -229,6 +229,11 @@ class MacVoice:
         self.playback_ticket = None
         self.playback_active = self.playback_done = False
 
+    def publish_event(self, event):
+        self.events.append(event)
+        listener = getattr(self, 'event_listener', None)
+        if listener: listener(event)
+
     def activate(self, pre_roll=(), keyword='', followup=False):
         self.invalidate(preserve_choice=not self.busy)
         self.activated_at = self.clock()
@@ -246,7 +251,7 @@ class MacVoice:
         self.last_wake = int(time.time()*1000)
         chinese = self.language == 'zh' or bool(re.search(r'[\u3400-\u9fff]',keyword))
         text = '我在听，请说。' if chinese else "I'm listening. Go ahead."
-        self.events.append({'wake': True, 'partial': True, 'heard': '',
+        self.publish_event({'wake': True, 'partial': True, 'heard': '',
                             'text': text, 'stage': 'listening',
                             'followup': followup,
                             'turnId': self.turn_id, 'stopPlayback': True, 'ready': True})
@@ -403,7 +408,7 @@ class MacVoice:
         with self.lock:
             if self.owner==device and self.epoch==epoch:
                 self.valid(device, epoch)
-                self.events.append({'wake':True,'partial':True,'heard':text,'transcript':text,'text':text,'provider':'doubao','turnId':self.turn_id})
+                self.publish_event({'wake':True,'partial':True,'heard':text,'transcript':text,'text':text,'provider':'doubao','turnId':self.turn_id})
 
     def valid(self, device, epoch):
         if (self.owner != device or self.epoch != epoch or not self.portal.device_permitted(device)
@@ -425,7 +430,7 @@ class MacVoice:
         self.continuation_until = self.clock()+CONTINUATION_SECONDS if resumable else 0
         self.answer_gate.set()
         if transcript and self.conversation_version >= 2:
-            self.events.append({'wake': True, 'partial': True, 'processing': True,
+            self.publish_event({'wake': True, 'partial': True, 'processing': True,
                                 'heard': transcript, 'transcript': transcript, 'turnId': self.turn_id})
         if self.conversation_version >= 2 and hasattr(self.portal, 'synthesize_mac_reply'):
             threading.Thread(target=self.processing_notices,
@@ -591,7 +596,7 @@ class MacVoice:
                 permitted()
                 self.text_decision = cue
                 if transcript:
-                    self.events.append({'wake': True, 'partial': True, 'heard': transcript,
+                    self.publish_event({'wake': True, 'partial': True, 'heard': transcript,
                                         'transcript': transcript, 'turnId': self.turn_id})
             acoustic_complete = score >= (.9 if quiet < ENDPOINT_PATIENT_FRAMES else .65)
             text_candidate = (cue['state'] == 'request' and quiet >= ENDPOINT_PATIENT_FRAMES and
@@ -853,7 +858,7 @@ class MacVoice:
                         if result.get('heard') and self.conversation_version >= 2:
                             self.segmenter.reset()
                             self.followup_until = self.clock()+FOLLOWUP_SECONDS
-                    self.events.append(result)
+                    self.publish_event(result)
                     # Keep the caller's context until it receives the reply.
                     # Mutating it here makes the next old-context heartbeat
                     # invalidate the generation and erase this very answer.
@@ -874,7 +879,7 @@ class MacVoice:
                     self.issue = str(error)[:400]
                     if not preview:
                         self.active_until = 0
-                        self.events.append({'wake':True, 'failed':True, 'text':self.issue,
+                        self.publish_event({'wake':True, 'failed':True, 'text':self.issue,
                                             'transcript':transcript or '', 'turnId':self.turn_id,
                                             'operationId':request['operationId']})
         finally:
@@ -902,7 +907,7 @@ class MacVoice:
                     result.get('noticeRevision')!=self.question_revision or result.get('turnId')!=self.turn_id):
                 raise ValueError('The waiting notice is no longer needed.')
             # A text answer is already visible. This event only starts playback.
-            self.events.append({**result, 'wake': True, 'audioOnly': True, 'spokenReply': True})
+            self.publish_event({**result, 'wake': True, 'audioOnly': True, 'spokenReply': True})
             self.playback_ticket = (result.get('turnId'), result.get('operationId'))
             self.playback_active = self.playback_done = False
             self.muted_until = self.clock()+4

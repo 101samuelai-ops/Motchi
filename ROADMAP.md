@@ -33,6 +33,13 @@ AND-06 rollout: the signed release and live flows are installed/verified. The ca
 
 AND-07 partial verification: after user-approved file access, a normal unlocked Mac restart reconnected the calendar and answered a live progress question. Locked startup/login, sleep/wake, roaming, power cycling and real multilingual/far-field speech remain unverified.
 
+## Mac desktop interaction — requested 2026-11-05
+
+- [x] **MIC-01: Keep the microphone active for the running Mac companion** — Done when: Maintain capture independently of the preview, persist explicit Pause against paired restarts, restore it on local Resume, recover a failed helper and verify live capture with the preview closed.
+- [x] **UI-02: Animate interaction and open the desktop popup by voice** — Done when: Use real listening/thinking/speaking animation with Reduce Motion, show processing inside Motchi’s bubble, and verify a human wake name opens the same native top-right popup as double right-click with visible speech intake.
+
+The signed Mac update passes lifecycle, event-isolation and UI checks, with live Pause/Resume and preview-independent capture. The user now confirms wake opens the native popup. The installed caption/meter correction is accepted: the user confirmed both the meter and recognized words appear in the native popup. See [implementation and runtime evidence](docs/DESKTOP_INTERACTION.md). This does not complete AND-10 or PERS-03.
+
 ## Character customization — requested 2026-10-25
 
 This requirement supersedes dog-only presentation. The proposed build sequence is in [next milestone](docs/NEXT_MILESTONE.md); the initial character roster remains to be decided.
