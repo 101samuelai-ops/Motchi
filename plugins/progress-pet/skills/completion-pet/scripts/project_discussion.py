@@ -55,6 +55,43 @@ def work_request(text):
     return text if re.search(english,candidate,re.I) or re.search(chinese,candidate) else None
 
 
+def project_inventory(text):
+    text = str(text).strip().rstrip('?.!。？！').strip()
+    # Do not turn status/work requests into a catalogue query.
+    if re.search(r'任务|进度|完成|修复|添加|删除|\b(?:tasks?|progress|finished|add|remove|fix)\b', text, re.I): return False
+    return bool(re.fullmatch(
+        r'(?:(?:我们|我|目前|现在|当前|手头|的|正在做|正在进行)\s*)*项目(?:还有|都|还|有)*(?:哪些|哪几个|什么)|'
+        r'(?:我们|我|目前|现在|当前|手头|的)*(?:有|还|都)*(?:哪些|哪几个)项目|'
+        r'(?:列出|看看|查看|显示)(?:我们|我的|我们的|所有|全部|目前|现在|的)*项目|'
+        r'(?:what|which) projects (?:do (?:we|i) (?:currently )?have|are (?:we|you) (?:currently )?(?:tracking|working on))|'
+        r'(?:list|show|name)(?: me)? (?:all |my |our |the |current )*projects', text, re.I))
+
+
+def inventory_answer(projects, question):
+    chinese = bool(re.search(r'[\u3400-\u9fff]', question))
+    names = [str(p['name']) for p in projects]
+    if names:
+        text = (f'我目前能看到 {len(names)} 个本地项目：' if chinese else f'I can see {len(names)} local projects: ') + ('、' if chinese else ', ').join(names) + ('。' if chinese else '.')
+    else:
+        text = '我暂时没有发现本地项目。请先在 Codex 中打开一个项目。' if chinese else 'I have not found local projects yet. Open a project in Codex first.'
+    return {'scope':'overview','text':text,'details':'','nextStep':'','caveat':'',
+            'evidence':[],'sources':[],'answerSource':'localCatalog',
+            'projects':[{'id':p['id'],'name':p['name']} for p in projects],
+            'routeReason':'Listed the current local project catalog without requiring AI inference.'}
+
+
+def provider_notice(code, chinese):
+    messages = {
+        'authentication': ('我的 AI 连接缺少有效的登录凭据，暂时不能生成回答。请检查 Motchi 使用的 Codex 登录或 API 密钥配置。', 'My AI connection is missing valid credentials. Check the Codex sign-in or API key configuration used by Motchi.'),
+        'rate_limit': ('我的 AI 服务暂时达到用量限制。请稍后再试；本地项目列表仍可查看。', 'My AI service has reached a usage limit. Try again later; the local project list is still available.'),
+        'timeout': ('我的 AI 服务这次没有及时回答。请稍后再试；本地项目列表仍可查看。', 'My AI service did not answer in time. Try again shortly; the local project list is still available.'),
+        'connection': ('我暂时连接不上 AI 服务。请检查网络后再试；本地项目列表仍可查看。', 'I cannot reach my AI service right now. Check the connection and try again; the local project list is still available.'),
+        'configuration': ('我的 AI 模型配置暂时不可用。请检查 Codex 的模型设置。', 'My configured AI model is unavailable. Check the model settings in Codex.'),
+        'unavailable': ('我的 AI 服务暂时无法回答。请稍后再试；本地项目列表仍可查看。', 'My AI service cannot answer right now. Try again shortly; the local project list is still available.'),
+        'invalid_response': ('我收到的回答未通过核实，暂时不能可靠地答复你。请换个说法再试。', 'The answer I received could not be verified. Please rephrase and try again.')}
+    return messages.get(code, messages['unavailable'])[0 if chinese else 1]
+
+
 def question_kind(text):
     if work_request(text):return 'work'
     if re.search(r"what can you (?:do|help)|how can you help|your capabilities|你(?:能|可以)(?:做|帮)|你有什么功能",text,re.I):return 'capabilities'
@@ -128,12 +165,13 @@ def presentation(raw, context, project_ids, question=''):
                 (f"清单已勾选 {c['completed']}/{c['total']} 项" if chinese else f"{c['completed']} of {c['total']} checklist tasks checked")
                 if c.get('total') else ('进度未知' if chinese else 'progress unknown')))
         text = ('；' if chinese else '; ').join(counts) if question_kind(question)=='status' or not question else ''
+        failure = context.get('providerFailure', 'invalid_response')
         if text and len(projects) > 3: text += (f'；另有 {len(projects)-3} 个项目' if chinese else f'; plus {len(projects)-3} other projects')
-        if not text: text = '暂时无法生成可靠的回答，请再试一次。' if chinese else 'I could not produce a reliable answer. Please try again.'
+        if not text: text = provider_notice(failure, chinese)
         caveat = ('实时总结暂不可用。这些是记录的清单数量，不能确认项目已可交付。' if chinese else
                   'The live summary is unavailable. Recorded checklist counts do not confirm readiness.') if projects and question_kind(question)=='status' else (
                   '回答服务暂不可用，或返回的内容未通过核实。' if chinese else 'The answer service is unavailable or its response could not be verified.')
-        return {'text': text, 'details': '', 'nextStep': '', 'evidence': [], 'summaryUnavailable': True, 'caveat': caveat}
+        return {'text': text, 'details': '', 'nextStep': '', 'evidence': [], 'summaryUnavailable': True, 'providerIssue': failure, 'caveat': caveat}
 
 def terms(text):
     text = str(text).casefold().replace('’', "'")

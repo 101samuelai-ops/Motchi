@@ -723,7 +723,21 @@
         "at": "2026-11-05"
       },
       "manualOverride": true
+    },
+    {
+      "id": "CHAT-09",
+      "title": "Recover desktop AI access and explain answer failures",
+      "done": false,
+      "phase": "P2",
+      "milestone": "Natural project discussion and changes",
+      "acceptance": "GUI startup reuses the existing configured provider credential without storing secrets in project files, basic project lists remain available locally, failures explain the cause, and the installed service returns a real answer after normal startup.",
+      "evidence": {
+        "kind": "Source verification; installed restart pending",
+        "quote": "185 release-tree checks and real GUI-environment model answer pass. Normal Mac startup awaits existing project-file access; final service check pending.",
+        "at": "2026-11-07"
+      },
+      "manualOverride": true
     }
   ],
-  "revision": 23
+  "revision": 24
 }

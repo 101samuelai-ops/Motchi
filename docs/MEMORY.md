@@ -1,8 +1,16 @@
 # Persistent Motchi project memory
 
-Updated: 2026-11-05. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
+Updated: 2026-11-07. This file is durable project memory for future development sessions; it does not implement a user-facing memory engine by itself.
 
 
+
+## Desktop answer connection recovery — 2026-11-07
+
+The user reported repeated Chinese “could not produce a reliable answer” replies despite visible speech. The installed service reproduced the failure. The selected Codex provider requires a shell environment credential; the GUI app had no such credential. A CLI run without that variable reproduced an authentication failure in 0.31 seconds, while the configured shell succeeded. This is an answer-backend failure, not evidence of a failed microphone or speaker identification.
+
+Source now resolves only the selected user-configured provider env_key from the user's login shell when absent from the existing process environment. It passes that value privately to Codex subprocesses for answers, checklist inference and controlled chats, caches it only in memory and never persists or logs it. Existing environment values take precedence; no new key, provider, model, approval policy or trust record is configured. Failures become safe categorical explanations. Basic English/Chinese project-list questions use the grouped local catalog without model inference. Motchi still has one configured AI answer provider, with local recorded-data fallback rather than an independent backup LLM.
+
+The exact release tree passed 185 relevant checks, and a GUI-environment reproduction recovered the existing credential and returned a real Chinese model answer in 11.3 seconds. The signed Mac update is installed. The Mac is confirmed locked and its normal restart is held in the native saved-project file read; the user was asked to unlock/allow existing Documents access for the final live check. Calendar rollout and unrelated pending spoken-reply changes remain excluded. See ANSWER_CONNECTION.md.
 
 ## Unified desktop conversation — 2026-11-05
 

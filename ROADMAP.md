@@ -81,6 +81,8 @@ This requirement supersedes dog-only presentation. The proposed build sequence i
 
 - [x] **CHAT-08: Converse and prepare Codex work in the main section** — Done when: Answer ordinary/project questions naturally, retain relevant discussion context, prepare editable exact-project/chat work drafts, require explicit submission, show truthful delivery capability/receipts, prevent duplicate or uncertain replay, and verify the installed Mac preview.
 
+- [ ] **CHAT-09: Recover desktop AI access and explain answer failures** — Done when: GUI startup reuses the existing configured provider credential without storing secrets in project files, basic project lists remain available locally, failures explain the cause, and the installed service returns a real answer after normal startup.
+
 ## P3 — Returning to work and managing multiple projects
 
 - [ ] **RETURN-01: Provide a where-we-left-off summary** — Done when: On request, summarize completed work, current work, postponed scope and the next unresolved decision since the user last checked the project.

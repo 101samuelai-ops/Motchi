@@ -4,6 +4,7 @@ The same Store/flock as the checklist CLI protects every mutation. Original
 messages stay in a private local queue; projects store evidence and checkpoints.
 """
 import copy
+import provider_access
 import hashlib
 import json
 import os
@@ -597,7 +598,7 @@ def model_infer(codex, cwd, history, tasks, flags):
         command = [codex, '--ask-for-approval', 'never', *flags(cwd), '-c', 'model_reasoning_effort="low"',
                    'exec', '--sandbox', 'read-only', '--ephemeral', '--skip-git-repo-check', '--color', 'never',
                    '--cd', cwd, '--output-schema', str(schema_path), '--output-last-message', str(output), '-']
-        proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        proc = subprocess.Popen(command, env=provider_access.environment(), stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 text=True, start_new_session=True)
         try:
             proc.stdin.write(prompt); proc.stdin.close()

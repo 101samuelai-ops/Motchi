@@ -5,6 +5,7 @@ explanation can grant access. Desktop-log notifications are never promoted to
 answerable requests.
 """
 import copy
+import provider_access
 import fcntl
 import json
 from pathlib import Path
@@ -41,7 +42,7 @@ class CodexConnection:
                 if self.closed:
                     raise RuntimeError('The Codex connection ended. Reopen Motchi to reconnect.')
                 return
-            self.proc = subprocess.Popen(self.command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            self.proc = subprocess.Popen(self.command, env=provider_access.environment(), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                          stderr=subprocess.DEVNULL, text=True, bufsize=1)
             threading.Thread(target=self.read, daemon=True).start()
             self.call('initialize', {'clientInfo': {'name': 'mochi_control', 'version': '0.10.0'},

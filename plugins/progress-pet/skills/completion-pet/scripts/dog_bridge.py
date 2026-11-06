@@ -30,6 +30,7 @@ from codex_control import ManagedCodex
 from checklist_sync import Checklists, model_infer
 from hook_approvals import HookApprovals, run_hook
 import project_discussion as discussion
+import provider_access
 
 VOICE_ANSWER_SECONDS = 12
 DISCUSSION_ANSWER_SECONDS = 20
@@ -141,7 +142,7 @@ class AppServer:
         if self.proc and self.proc.poll() is None:
             return
         # Metadata-only connection. Do not resume or steer users' ongoing work.
-        self.proc = subprocess.Popen([self.codex, "app-server", "--stdio"], stdin=subprocess.PIPE,
+        self.proc = subprocess.Popen([self.codex, "app-server", "--stdio"], env=provider_access.environment(), stdin=subprocess.PIPE,
                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, bufsize=1)
         self.responses = queue.Queue()
         response_queue = self.responses
@@ -895,7 +896,7 @@ class DogBridge:
                     json.dump(discussion.answer_schema(), stream)
                 command[-1:-1]=['--output-schema',schema_file]
             # Consume the final result instead of waiting for CLI/MCP shutdown.
-            process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            process = subprocess.Popen(command, env=provider_access.environment(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                        text=True, start_new_session=True)
             events = queue.Queue()
             def read_events():
@@ -913,6 +914,7 @@ class DogBridge:
                                          else DISCUSSION_ANSWER_SECONDS if discussion_context is not None else 50)
             answer = ""
             final_text = ""
+            failure = "timeout"
             while time.monotonic() < deadline:
                 if permitted: permitted()
                 saved = Path(filename).read_text().strip()
@@ -939,8 +941,14 @@ class DogBridge:
                 elif event.get("type") == "turn.completed":
                     answer = final_text
                     break
-                elif event.get("type") in ("turn.failed", "eof"):
+                elif event.get("type") in ("error", "turn.failed"):
+                    failure = provider_access.failure_code(event.get("message") or event.get("error", ""))
+                    if event.get("type") == "turn.failed": break
+                elif event.get("type") == "eof":
+                    if failure == "timeout": failure = "unavailable"
                     break
+            if discussion_context is not None and not answer:
+                discussion_context['providerFailure'] = failure
             if not answer:
                 # A useful grounded response remains available during provider delays.
                 answer = ("The explanation connection is unavailable. Your permission request is still pending; no decision was sent. "
@@ -958,6 +966,7 @@ class DogBridge:
                 self.history.setdefault(history_key, []).extend([{"role": "user", "text": question}, {"role": "assistant", "text": history_answer}])
             return answer[:20000 if discussion_context is not None else 12000]
         except OSError:
+            if discussion_context is not None: discussion_context['providerFailure'] = 'unavailable'
             if approval_context is not None:
                 return "The explanation connection is unavailable. No approval was sent. The request remains pending."
             return "The live answer connection is unavailable.\n\n" + (discussion_context["fallback"] if discussion_context else self.local_answer(item, "what has been done?"))
@@ -989,6 +998,8 @@ class DogBridge:
             except (ValueError, RuntimeError):
                 text += "\n\nThis approval is no longer pending. No additional decision was sent."
             return {"text": text, "routedSelection": target}
+        if discussion.project_inventory(request.get('text', '')):
+            return {**self.discuss_result(request), 'routedSelection': request.get('selection')}
         target = self.route_topic(request.get("selection"), request.get("text", ""), request.get("autoFollow", False))
         # Serialize context/history within a project while other projects stay responsive.
         lock = self.ask_locks.setdefault(target, threading.Lock())
@@ -1011,6 +1022,9 @@ class DogBridge:
             if owner is None or (selected and selected!=owner):
                 raise ValueError('Chat does not belong to the selected project. Refresh before asking again.')
             selected=owner
+        if discussion.project_inventory(question):
+            if permitted: permitted()
+            return discussion.inventory_answer(projects, question)
         routing=discussion.route(question,projects,selected)
         chosen=routing['projects']
         if routing['scope']=='choice':
